@@ -80,9 +80,9 @@ public class SerialDeviceJssC implements SerialDevice {
 	    		return false;
 	    	}
 	    	
-	    	logger.fine("seteando parámetros de configuración");
+//	    	logger.fine("seteando parámetros de configuración");
 	    	
-	    	params.setParams(serialPort);
+//	    	params.setParams(serialPort);
 	    	
 	    	
 	    	int mask = SerialPort.MASK_RXCHAR;
@@ -103,6 +103,7 @@ public class SerialDeviceJssC implements SerialDevice {
 			serialPort.closePort();
 			serialPort = null;
 		} catch (SerialPortException e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
 			throw new SerialException(e);
 		}
 		
@@ -113,8 +114,12 @@ public class SerialDeviceJssC implements SerialDevice {
 	public void writeBytes(byte[] data) throws SerialException {
 		try {
 			logger.finest("escribiendo bytes : " + Utils.getHex(data));
-			serialPort.writeBytes(data);
+			if (!serialPort.writeBytes(data)) {
+				logger.log(Level.SEVERE, "No se pudo escribir en el puerto. writeBytes == false");
+				throw new SerialException("Escritura fallida");
+			}
 		} catch (SerialPortException e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
 			throw new SerialException(e);
 		}
 	}
