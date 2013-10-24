@@ -26,7 +26,7 @@ public class SerialDeviceJssC implements SerialDevice {
 	
 		try {
 		
-	    	serialPort = new SerialPort("/dev/ttyUSB0");
+	    	serialPort = new SerialPort("/dev/ttyS3");
 	    	if (!serialPort.openPort()) {
 	    		return false;
 	    	}
