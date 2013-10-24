@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.CmdResult;
 import ar.com.dcsys.firmware.cmd.Identify;
@@ -57,6 +58,22 @@ public class App
 						@Override
 						public void onFailure() {
 							System.out.println("Error ejecutando el comando");
+						}
+						
+						@Override
+						public void onFailure(int code) {
+							System.out.println("Error");
+							switch (code) {
+							case CamabioUtils.ERR_BAD_CUALITY:
+								System.out.println("Mala calidad de la imagen!!");
+								break;
+							case CamabioUtils.ERR_ALL_TMPL_EMPTY:
+								System.out.println("No existe ninguna huella enrolada");
+								break;
+							case CamabioUtils.ERR_TIME_OUT:
+								System.out.println("Timeout");
+								break;
+							}
 						}
 					});
 	    			

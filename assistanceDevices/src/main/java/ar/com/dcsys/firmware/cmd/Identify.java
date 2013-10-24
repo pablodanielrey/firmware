@@ -60,7 +60,7 @@ public class Identify implements Cmd {
 					ret = getDataIn4ByteInt(d);
 					
 					if (ret == CamabioUtils.ERR_TIME_OUT || ret == CamabioUtils.ERR_ALL_TMPL_EMPTY || ret == CamabioUtils.ERR_BAD_CUALITY) {
-						result.onFailure();
+						result.onFailure(ret);
 						return;
 					}
 					

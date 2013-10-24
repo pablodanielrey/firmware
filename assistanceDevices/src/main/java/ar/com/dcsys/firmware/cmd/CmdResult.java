@@ -6,4 +6,5 @@ public interface CmdResult {
 	public void onSuccess(int i);
 	public void onSuccess(byte[] data);
 	public void onFailure();
+	public void onFailure(int code);
 }
