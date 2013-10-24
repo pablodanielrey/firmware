@@ -11,10 +11,9 @@ import ar.com.dcsys.firmware.cmd.TestConnection;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialDeviceJssC;
 import ar.com.dcsys.firmware.serial.SerialException;
-import ar.com.dcsys.firmware.serial.SerialRxTxDevice;
 
 /**
- * Hello world!
+ * Aplicación principal del proyecto para el firmware del reloj.
  *
  */
 public class App 
