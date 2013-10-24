@@ -1,0 +1,96 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>ar.com.dcsys.firmware</groupId>
+  <artifactId>assistanceDevices</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>assistanceDevices</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  
+  <repositories>
+  	<repository>
+  		<id>maven-repo</id>
+  		<name>Local maven repository</name>
+  		<url>file:///home/pablo/java/libs/maven-repo/</url>
+  	</repository>
+  </repositories>  
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>jssc</groupId>
+      <artifactId>jssc</artifactId>
+      <version>2.6.0</version>
+      <scope>compile</scope>
+    </dependency>    
+
+  </dependencies>
+
+
+  <build>
+  	<plugins>
+	
+	      <plugin>
+        	<groupId>org.apache.maven.plugins</groupId>
+	        <artifactId>maven-compiler-plugin</artifactId>
+        	<version>3.1</version>
+	        <configuration>
+        	  <source>1.7</source>
+	          <target>1.7</target>
+	        </configuration>
+	      </plugin>
+
+
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-jar-plugin</artifactId>
+			<version>2.4</version>
+			<configuration>
+			    <archive>
+			        <manifest>  
+			            <addClasspath>true</addClasspath>
+			            <classpathPrefix>lib/</classpathPrefix>
+			            <mainClass>ar.com.dcsys.firmware.App</mainClass>
+			            <!--  <mainClass>ar.com.dcsys.firmware.serial.TestJssc</mainClass> -->
+			        </manifest>
+			    </archive>
+		    </configuration>
+		</plugin>  
+
+
+		<plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-dependency-plugin</artifactId>
+		    <version>2.4</version>
+		    <executions>
+		        <execution>
+		            <id>copy</id>
+		            <phase>install</phase>
+		            <goals>
+		                <goal>copy-dependencies</goal>
+		            </goals>
+		            <configuration>
+		                <outputDirectory>
+		                    ${project.build.directory}/lib
+		                </outputDirectory>
+		            </configuration>
+		        </execution>
+		    </executions>
+		</plugin>  		
+  	</plugins>
+  </build>
+</project>
