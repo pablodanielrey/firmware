@@ -25,10 +25,7 @@ public class Identify implements Cmd {
 			serialPort.writeBytes(cmd);
 			
 			while (true) {
-//				System.out.println("Leyendo datos desde el lector");
-				
 				byte[] data = SerialUtils.readPackage(serialPort);
-				
 				System.out.println("Datos recibidos : " + Utils.getHex(data));
 				
 				int id = CamabioUtils.getId(data);
@@ -45,7 +42,7 @@ public class Identify implements Cmd {
 					ret = getDataIn4ByteInt(d);
 					
 					if (ret == CamabioUtils.GD_NEED_RELEASE_FINGER) {
-//						System.out.println("Debe levantar el dedo del lector");
+						System.out.println("Debe levantar el dedo del lector");
 						continue;
 					}
 					
@@ -67,6 +64,11 @@ public class Identify implements Cmd {
 					if (ret == CamabioUtils.ERR_IDENTIFY) {
 //						System.out.println("No se pudo encontrar la persona dentro de la base");
 						result.onSuccess();
+						return;
+					}
+					
+					if (ret == CamabioUtils.ERR_FP_CANCEL) {
+						result.onFailure(CamabioUtils.ERR_FP_CANCEL);
 						return;
 					}
 					

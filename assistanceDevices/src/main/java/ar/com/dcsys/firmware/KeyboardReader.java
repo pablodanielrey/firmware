@@ -1,7 +1,8 @@
 package ar.com.dcsys.firmware;
 
+import java.io.Console;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.Reader;
 
 public class KeyboardReader implements Runnable {
 
@@ -9,33 +10,35 @@ public class KeyboardReader implements Runnable {
 	@Override
 	public void run() {
 		
-		InputStream in = System.in;
+//		InputStream in = System.in;
+		
+		Console con = System.console();
+		if (con == null) {
+			return;
+		}
+
+		Reader reader = con.reader();
 		
 		while (true) {
-			
+	
 			try {
 				
-				while (in.available() <= 0) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-
-				StringBuffer st = new StringBuffer();
-
-				while (in.available() > 0) {
-					byte[] buffer = new byte[in.available()];
-					in.read(buffer);
-					st.append(buffer);					 
+				int c = reader.read();
+				if (c == -1) {
+					return;
 				}
 				
-				System.out.println("\n-----------------------\n" + st.toString() + "\n------------------\n");
+				String chars = new String(Character.toChars(c));
+				
+				System.out.println("\n-----------------------\n" + chars + "\n------------------\n");
 				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			
+			
+			
+			
 			
 		}
 		
