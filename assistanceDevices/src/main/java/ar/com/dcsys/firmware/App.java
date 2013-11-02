@@ -1,9 +1,5 @@
 package ar.com.dcsys.firmware;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.CmdResult;
@@ -22,13 +18,14 @@ public class App
 
     public static void main( String[] args )
     {
+    	
+    	System.out.println("Inicializando Sistema Control de Asistencia");
+    	
     	try {
     		SerialDevice sd = new SerialDeviceJssC();
     		if (!sd.open()) {
     			return;
     		}
-	    	
-	    	BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 	    	
 	    	Identify identify = new Identify();
 	    	TestConnection testConnection = new TestConnection();
@@ -76,14 +73,6 @@ public class App
 							}
 						}
 					});
-	    			
-	    			
-					
-					System.out.println("Escriba n o N para salir. si no cualquier otro caracter o enter");
-		    		String line = in.readLine();
-		    		if (line.trim().equals("n") || line.trim().equals("N")) {
-		    			end = true;
-		    		}
 		    		
 	    		} catch (CmdException e) {
 	    			e.printStackTrace();
@@ -93,7 +82,7 @@ public class App
 	    	sd.close();
 	    	
 	    	
-    	} catch (SerialException | IOException e) {
+    	} catch (SerialException e) {
     		System.out.println(e.getMessage());
     		e.printStackTrace();
     	}
