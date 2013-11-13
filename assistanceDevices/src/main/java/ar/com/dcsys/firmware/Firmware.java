@@ -42,11 +42,19 @@ public class Firmware {
 	    		tkeyboardReader.start();
 	    		
 	    		try {
-					tidentifier.join();
+					tkeyboardReader.join();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
     		
+	    		
+	    		identifier.terminate();
+	    		try {
+					tidentifier.join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+	    		
     		} finally {
     			sd.close();
     		}

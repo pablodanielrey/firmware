@@ -3,12 +3,14 @@ package ar.com.dcsys.firmware;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.CmdResult;
+import ar.com.dcsys.firmware.cmd.FpCancel;
 import ar.com.dcsys.firmware.cmd.Identify;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 
 public class Identifier implements Runnable {
 
 	private final SerialDevice sd;
+	private volatile boolean exit = false;
 	
 	public Identifier(SerialDevice sd) {
 		this.sd = sd;
@@ -20,7 +22,8 @@ public class Identifier implements Runnable {
 		
 		Identify identify = new Identify();
 		
-		while (true) {
+		exit = false;
+		while (!exit) {
 		
 			try {
 				
@@ -67,6 +70,41 @@ public class Identifier implements Runnable {
 				e.printStackTrace();
 			}		
 		
+		}
+	}
+	
+	public void terminate() {
+		FpCancel fpCancel = new FpCancel();
+		try {
+			fpCancel.execute(sd, new CmdResult() {
+				@Override
+				public void onSuccess(byte[] data) {
+					exit = true;
+				}
+				
+				@Override
+				public void onSuccess(int i) {
+					exit = true;
+				}
+				
+				@Override
+				public void onSuccess() {
+					exit = true;
+				}
+				
+				@Override
+				public void onFailure(int code) {
+					exit = true;
+				}
+				
+				@Override
+				public void onFailure() {
+					exit = true;
+				}
+			});
+		} catch (CmdException e) {
+			exit = true;
+			e.printStackTrace();
 		}
 	}
 	

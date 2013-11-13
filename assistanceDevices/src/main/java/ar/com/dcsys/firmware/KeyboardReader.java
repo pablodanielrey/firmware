@@ -1,8 +1,8 @@
 package ar.com.dcsys.firmware;
 
+import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
-import java.io.Reader;
 
 public class KeyboardReader implements Runnable {
 
@@ -17,28 +17,23 @@ public class KeyboardReader implements Runnable {
 			return;
 		}
 
-		Reader reader = con.reader();
-		
-		while (true) {
+		BufferedReader reader = new BufferedReader(con.reader());
+		boolean exit = false;
+		while (!exit) {
 	
 			try {
+
+				String line = reader.readLine();
+				System.out.println("\n-----------------------\n" + line + "\n------------------\n");
+
 				
-				int c = reader.read();
-				if (c == -1) {
-					return;
+				if (line.equals("salir")) {
+					exit = true;
 				}
-				
-				String chars = new String(Character.toChars(c));
-				
-				System.out.println("\n-----------------------\n" + chars + "\n------------------\n");
 				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
-			
-			
-			
 			
 		}
 		
