@@ -52,6 +52,13 @@ public class Identifier implements Runnable {
 					@Override
 					public void onFailure(int code) {
 						System.out.println("Error");
+						
+						try {
+							Thread.sleep(5000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						
 						switch (code) {
 						case CamabioUtils.ERR_BAD_CUALITY:
 							System.out.println("Mala calidad de la imagen!!");
@@ -79,26 +86,31 @@ public class Identifier implements Runnable {
 			fpCancel.execute(sd, new CmdResult() {
 				@Override
 				public void onSuccess(byte[] data) {
+					System.out.println("Cancel ok");
 					exit = true;
 				}
 				
 				@Override
 				public void onSuccess(int i) {
+					System.out.println("Cancel ok");
 					exit = true;
 				}
 				
 				@Override
 				public void onSuccess() {
+					System.out.println("Cancel ok");
 					exit = true;
 				}
 				
 				@Override
 				public void onFailure(int code) {
+					System.out.println("Cancel Failure");
 					exit = true;
 				}
 				
 				@Override
 				public void onFailure() {
+					System.out.println("Cancel Failure");
 					exit = true;
 				}
 			});
