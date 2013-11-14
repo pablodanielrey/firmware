@@ -473,4 +473,14 @@ public class CamabioUtils {
 	}
 
 	
+	
+	
+	
+	public static int getDataIn4ByteInt(byte[] data) throws CamabioException {
+		if (data.length != 4) {
+			throw new CamabioException("longitud erronea");
+		}
+		int result = (data[0] & 0xff) + ((data[1] & 0xff) << 8) + ((data[2] & 0xff) << 16) + ((data[3] & 0xff) << 24);
+		return result;
+	}	
 }

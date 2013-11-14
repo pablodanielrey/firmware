@@ -18,11 +18,11 @@ public class Firmware {
 	private final KeyboardReader reader;
 	
 	@Inject
-	public Firmware(SerialDevice sd) {
+	public Firmware(SerialDevice sd, Identifier identifier) {
 		logger.info("Inicializando Firmware");
 		
 		this.sd = sd;
-		this.identifier = new Identifier(sd);
+		this.identifier = identifier;
 		this.reader = new KeyboardReader();
 	}
 	

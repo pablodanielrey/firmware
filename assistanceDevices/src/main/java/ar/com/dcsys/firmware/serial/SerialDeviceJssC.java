@@ -3,12 +3,15 @@ package ar.com.dcsys.firmware.serial;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
+import javax.inject.Singleton;
+
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import ar.com.dcsys.firmware.Utils;
 
+@Singleton
 public class SerialDeviceJssC implements SerialDevice {
 
 	private  SerialPort serialPort;
@@ -30,7 +33,7 @@ public class SerialDeviceJssC implements SerialDevice {
 	    	if (!serialPort.openPort()) {
 	    		return false;
 	    	}
-	    	serialPort.setParams(SerialPort.BAUDRATE_115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE, false, false);
+	    	serialPort.setParams(SerialPort.BAUDRATE_9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE, false, false);
 	    	
 	    	
 	    	int mask = SerialPort.MASK_RXCHAR;
