@@ -41,12 +41,15 @@ public class Firmware {
 	    		Thread tkeyboardReader = new Thread(reader);
 	    		tkeyboardReader.start();
 	    		
+	    		// espero a que el thread del teclado decida finalizar.
+	    		
 	    		try {
 					tkeyboardReader.join();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-    		
+	    		
+	    		// cierro todos los threads y finalizo.
 	    		
 	    		identifier.terminate();
 	    		try {

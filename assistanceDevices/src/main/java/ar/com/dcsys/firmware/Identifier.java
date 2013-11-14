@@ -1,26 +1,26 @@
 package ar.com.dcsys.firmware;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
+import ar.com.dcsys.firmware.cmd.Cmd;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.CmdResult;
-import ar.com.dcsys.firmware.cmd.FpCancel;
-import ar.com.dcsys.firmware.cmd.Identify;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 
 public class Identifier implements Runnable {
 
 	private final SerialDevice sd;
-	private final Identify identify;
-	private final FpCancel fpCancel;
+	private final Cmd identify;
+	private final Cmd cancel;
 	private volatile boolean exit = false;
 	
 	@Inject
-	public Identifier(SerialDevice sd, Identify identify, FpCancel fpCancel) {
+	public Identifier(SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel) {
 		this.sd = sd;
 		this.identify = identify;
-		this.fpCancel = fpCancel;
+		this.cancel = cancel;
 	}
 	
 	
@@ -28,7 +28,7 @@ public class Identifier implements Runnable {
 	public void run() {
 		exit = false;
 		while (!exit) {
-		
+
 			try {
 				identify.execute(sd, new CmdResult() {
 					
@@ -83,7 +83,7 @@ public class Identifier implements Runnable {
 	
 	public void terminate() {
 		try {
-			fpCancel.execute(sd, new CmdResult() {
+			cancel.execute(sd, new CmdResult() {
 				@Override
 				public void onSuccess(byte[] data) {
 					System.out.println("Cancel ok");

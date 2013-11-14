@@ -9,7 +9,6 @@ import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
-import ar.com.dcsys.firmware.Utils;
 
 @Singleton
 public class SerialDeviceJssC implements SerialDevice {
@@ -41,17 +40,12 @@ public class SerialDeviceJssC implements SerialDevice {
 	    	serialPort.addEventListener(new SerialPortEventListener() {
 				@Override
 				public void serialEvent(SerialPortEvent event) {
-					System.out.println("SerialEvent");
 					if (event.isRXCHAR()) {
 						int bytes = event.getEventValue();
-						
-						System.out.println("llegaron : " + String.valueOf(bytes));
 						
 						if (bytes > 0) {
 							try {
 								byte[] data = serialPort.readBytes(bytes);
-								
-								System.out.println("Datos : " + Utils.getHex(data));
 								
 								for (byte b : data) {
 									queue.add(b);

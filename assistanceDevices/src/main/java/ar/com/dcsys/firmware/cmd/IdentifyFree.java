@@ -12,13 +12,14 @@ import ar.com.dcsys.firmware.camabio.SerialUtils;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
+
 @Named
-public class Identify implements Cmd {
+public class IdentifyFree implements Cmd {
 	
 	private final Logger logger;
 	
 	@Inject
-	public Identify(Logger logger) {
+	public IdentifyFree(Logger logger) {
 		this.logger = logger;
 	}
 	
@@ -51,7 +52,7 @@ public class Identify implements Cmd {
 					}
 					
 					result.onSuccess(ret);
-					return;
+//					return;
 					
 				} else if (ret == CamabioUtils.ERR_FAIL) {
 					
@@ -60,18 +61,18 @@ public class Identify implements Cmd {
 					
 					if (ret == CamabioUtils.ERR_TIME_OUT || ret == CamabioUtils.ERR_ALL_TMPL_EMPTY || ret == CamabioUtils.ERR_BAD_CUALITY) {
 						result.onFailure(ret);
-						return;
+//						return;
 					}
 					
 					if (ret == CamabioUtils.ERR_IDENTIFY) {
-//						System.out.println("No se pudo encontrar la persona dentro de la base");
+						// no se pudo encontrar la persona dentro de la base.
 						result.onSuccess();
-						return;
+//						return;
 					}
 					
 					if (ret == CamabioUtils.ERR_FP_CANCEL) {
 						result.onFailure(CamabioUtils.ERR_FP_CANCEL);
-						return;
+//						return;
 					}
 					
 					throw new CmdException("Resultado inesperado");
