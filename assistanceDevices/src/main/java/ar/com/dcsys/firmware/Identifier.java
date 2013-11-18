@@ -1,5 +1,7 @@
 package ar.com.dcsys.firmware;
 
+import java.util.logging.Logger;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -11,13 +13,15 @@ import ar.com.dcsys.firmware.serial.SerialDevice;
 
 public class Identifier implements Runnable {
 
+	private final Logger logger;
 	private final SerialDevice sd;
 	private final Cmd identify;
 	private final Cmd cancel;
 	private volatile boolean exit = false;
 	
 	@Inject
-	public Identifier(SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel) {
+	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel) {
+		this.logger = logger;
 		this.sd = sd;
 		this.identify = identify;
 		this.cancel = cancel;
@@ -34,41 +38,45 @@ public class Identifier implements Runnable {
 					
 					@Override
 					public void onSuccess(byte[] data) {
-						System.out.println("Datos : " + Utils.getHex(data));
+						logger.info("Datos : " + Utils.getHex(data));
 					}
 					
 					@Override
 					public void onSuccess(int i) {
-						System.out.println("Huella identificada : " + String.valueOf(i));
+						logger.info("Huella identificada : " + String.valueOf(i));
+						
+						
+						
+						
 					}
 					
 					@Override
 					public void onSuccess() {
-						System.out.println("No se pudo identificar la huella");
+						// nunca es llamado
 					}
 					
 					@Override
 					public void onFailure() {
-						System.out.println("Error ejecutando el comando");
+						logger.info("No se pudo identificar la huella");
 					}
 					
 					@Override
 					public void onFailure(int code) {
-						System.out.println("Error " + String.valueOf(code)) ;
+						logger.info("Error " + String.valueOf(code)) ;
 						
 						switch (code) {
 							case CamabioUtils.ERR_FP_CANCEL:
-								System.out.println("Comando cancelado");
+								logger.info("Comando cancelado");
 								exit = true;
 								break;
 							case CamabioUtils.ERR_BAD_CUALITY:
-								System.out.println("Mala calidad de la imagen!!");
+								logger.info("Mala calidad de la imagen!!");
 								break;
 							case CamabioUtils.ERR_ALL_TMPL_EMPTY:
-								System.out.println("No existe ninguna huella enrolada");
+								logger.info("No existe ninguna huella enrolada");
 								break;
 							case CamabioUtils.ERR_TIME_OUT:
-								System.out.println("Timeout");
+								logger.info("Timeout");
 								break;
 						}
 					}
@@ -86,27 +94,27 @@ public class Identifier implements Runnable {
 			cancel.execute(sd, new CmdResult() {
 				@Override
 				public void onSuccess(byte[] data) {
-					System.out.println("Cancel ok");
+					logger.info("Cancel ok");
 				}
 				
 				@Override
 				public void onSuccess(int i) {
-					System.out.println("Cancel ok");
+					logger.info("Cancel ok");
 				}
 				
 				@Override
 				public void onSuccess() {
-					System.out.println("Cancel ok");
+					logger.info("Cancel ok");
 				}
 				
 				@Override
 				public void onFailure(int code) {
-					System.out.println("Cancel Failure");
+					logger.info("Cancel Failure");
 				}
 				
 				@Override
 				public void onFailure() {
-					System.out.println("Cancel Failure");
+					logger.info("Cancel Failure");
 				}
 			});
 		} catch (CmdException e) {

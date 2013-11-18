@@ -1,5 +1,21 @@
 package ar.com.dcsys.firmware.cmd;
 
+/**
+ * Identifica una huella dentro de la base de datos del lector.
+ * En el caso de identificación exitosa retorna :
+ * 
+ * onSuccess(numero de huella)
+ * 
+ * en el caso de no poder identificar la huella llama :
+ * 
+ * onFailure
+ * 
+ * en el caso de algun error de lectura, etc llama :
+ * 
+ * onFailure(codigo de error)
+ * 
+ */
+
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
@@ -46,7 +62,7 @@ public class Identify implements Cmd {
 					ret = CamabioUtils.getDataIn4ByteInt(d);
 					
 					if (ret == CamabioUtils.GD_NEED_RELEASE_FINGER) {
-						System.out.println("Debe levantar el dedo del lector");
+						logger.info("Debe levantar el dedo del lector");
 						continue;
 					}
 					
@@ -64,8 +80,8 @@ public class Identify implements Cmd {
 					}
 					
 					if (ret == CamabioUtils.ERR_IDENTIFY) {
-//						System.out.println("No se pudo encontrar la persona dentro de la base");
-						result.onSuccess();
+						logger.info("No se pudo encontrar la huella dentro de la base");
+						result.onFailure();
 						return;
 					}
 					

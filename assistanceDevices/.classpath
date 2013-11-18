@@ -10,5 +10,7 @@
   <classpathentry kind="var" path="M2_REPO/org/jboss/weld/se/weld-se/2.1.0.Final/weld-se-2.1.0.Final.jar"/>
   <classpathentry kind="var" path="M2_REPO/ar/com/dcsys/data/personEntities/1.0-SNAPSHOT/personEntities-1.0-SNAPSHOT.jar"/>
   <classpathentry kind="var" path="M2_REPO/ar/com/dcsys/data/personDAO/1.0-SNAPSHOT/personDAO-1.0-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/hsqldb/hsqldb/2.3.1/hsqldb-2.3.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/ar/com/dcsys/dcsysUtils/1.0-SNAPSHOT/dcsysUtils-1.0-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/postgresql/postgresql/9.3-1100-jdbc41/postgresql-9.3-1100-jdbc41.jar"/>
 </classpath>
