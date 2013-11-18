@@ -48,14 +48,11 @@ public class Identifier implements Runnable {
 		BufferedInputStream bin;
 		AudioInputStream ain;
 		DataLine.Info info;
-		
-		public Clip getClip() throws LineUnavailableException  {
-			Clip source = (Clip)AudioSystem.getLine(info);
-			return source;
-		}
+		Clip clip;
 		
 		public void close() {
 			try {
+				clip.close();
 				ain.close();
 				bin.close();
 			} catch (Exception e) {
@@ -73,11 +70,14 @@ public class Identifier implements Runnable {
 				try {
 					AudioFormat format = asound.getFormat();
 					DataLine.Info info = new DataLine.Info(Clip.class, format);
+					Clip source = (Clip)AudioSystem.getLine(info);
+					source.open(asound);
 					
 					Sound s = new Sound();
 					s.bin = sound;
 					s.ain = asound;
 					s.info = info;
+					s.clip = source;
 					return s;
 					
 					
@@ -90,20 +90,18 @@ public class Identifier implements Runnable {
 				throw e;
 			}
 			
-		} catch (UnsupportedAudioFileException | IOException e) {
+		} catch (LineUnavailableException | UnsupportedAudioFileException | IOException e) {
 			return null;
 		}
 		
 	}
 	
-	private void play(Sound s) throws IOException, LineUnavailableException {
+	private void play(Sound s) throws IOException {
 		if (s == null) {
 			return;
 		}
-		Clip clip = s.getClip();
-		clip.open(s.ain);
-		clip.start();
-		clip.close();
+		s.clip.setFramePosition(0);
+		s.clip.start();
 	}
 	
 	
@@ -128,7 +126,7 @@ public class Identifier implements Runnable {
 						logger.info("Huella identificada : " + String.valueOf(i));
 						try {
 							play(ok);
-						} catch (IOException | LineUnavailableException e1) {
+						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
 						
@@ -154,7 +152,7 @@ public class Identifier implements Runnable {
 						logger.info("No se pudo identificar la huella");
 						try {
 							play(error);
-						} catch (IOException | LineUnavailableException e) {
+						} catch (IOException e) {
 							e.printStackTrace();
 						}
 						
@@ -165,7 +163,7 @@ public class Identifier implements Runnable {
 						logger.info("Error " + String.valueOf(code)) ;
 						try {
 							play(error);
-						} catch (IOException | LineUnavailableException e) {
+						} catch (IOException e) {
 							e.printStackTrace();
 						}
 						
