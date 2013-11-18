@@ -47,11 +47,15 @@ public class Identifier implements Runnable {
 	private class Sound {
 		BufferedInputStream bin;
 		AudioInputStream ain;
-		Clip clip;
+		DataLine.Info info;
+		
+		public Clip getClip() throws LineUnavailableException  {
+			Clip source = (Clip)AudioSystem.getLine(info);
+			return source;
+		}
 		
 		public void close() {
 			try {
-				clip.close();
 				ain.close();
 				bin.close();
 			} catch (Exception e) {
@@ -70,12 +74,12 @@ public class Identifier implements Runnable {
 					AudioFormat format = asound.getFormat();
 					DataLine.Info info = new DataLine.Info(Clip.class, format);
 					
-					Clip source = (Clip)AudioSystem.getLine(info);
 					Sound s = new Sound();
 					s.bin = sound;
 					s.ain = asound;
-					s.clip = source;
+					s.info = info;
 					return s;
+					
 					
 				} catch (Exception e) {
 					asound.close();
@@ -86,7 +90,7 @@ public class Identifier implements Runnable {
 				throw e;
 			}
 			
-		} catch (LineUnavailableException | UnsupportedAudioFileException | IOException e) {
+		} catch (UnsupportedAudioFileException | IOException e) {
 			return null;
 		}
 		
@@ -96,8 +100,10 @@ public class Identifier implements Runnable {
 		if (s == null) {
 			return;
 		}
-		s.clip.open(s.ain);
-		s.clip.start();
+		Clip clip = s.getClip();
+		clip.open(s.ain);
+		clip.start();
+		clip.close();
 	}
 	
 	
