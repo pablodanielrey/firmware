@@ -44,7 +44,24 @@ public class Identifier implements Runnable {
 	}
 	
 	
-	private Clip getSound(String file) {
+	private class Sound {
+		BufferedInputStream bin;
+		AudioInputStream ain;
+		Clip clip;
+		
+		public void close() {
+			try {
+				clip.close();
+				ain.close();
+				bin.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	private Sound getSound(String file) {
 		try {
 			BufferedInputStream sound = new BufferedInputStream(App.class.getResourceAsStream(file));
 			try {
@@ -54,14 +71,12 @@ public class Identifier implements Runnable {
 					DataLine.Info info = new DataLine.Info(Clip.class, format);
 					
 					Clip source = (Clip)AudioSystem.getLine(info);
-					try {
-						source.open(asound);
-						return source;
-						
-					} catch (Exception e) {
-						source.close();
-						throw e;
-					}
+					Sound s = new Sound();
+					s.bin = sound;
+					s.ain = asound;
+					s.clip = source;
+					return s;
+					
 				} catch (Exception e) {
 					asound.close();
 					throw e;
@@ -77,18 +92,19 @@ public class Identifier implements Runnable {
 		
 	}
 	
-	private void play(Clip c) {
-		if (c == null) {
+	private void play(Sound s) throws IOException, LineUnavailableException {
+		if (s == null) {
 			return;
 		}
-		c.start();
+		s.clip.open(s.ain);
+		s.clip.start();
 	}
 	
 	
 	@Override
 	public void run() {
-		final Clip error = getSound("/error.wav");
-		final Clip ok = getSound("/ok.wav");
+		final Sound error = getSound("/error.wav");
+		final Sound ok = getSound("/ok.wav");
 		
 		exit = false;
 		while (!exit) {
@@ -104,7 +120,11 @@ public class Identifier implements Runnable {
 					@Override
 					public void onSuccess(int i) {
 						logger.info("Huella identificada : " + String.valueOf(i));
-						play(ok);
+						try {
+							play(ok);
+						} catch (IOException | LineUnavailableException e1) {
+							e1.printStackTrace();
+						}
 						
 			    		try {
 							List<Person> persons = personDAO.findAll();
@@ -126,14 +146,22 @@ public class Identifier implements Runnable {
 					@Override
 					public void onFailure() {
 						logger.info("No se pudo identificar la huella");
-						play(error);
+						try {
+							play(error);
+						} catch (IOException | LineUnavailableException e) {
+							e.printStackTrace();
+						}
 						
 					}
 					
 					@Override
 					public void onFailure(int code) {
 						logger.info("Error " + String.valueOf(code)) ;
-						play(error);
+						try {
+							play(error);
+						} catch (IOException | LineUnavailableException e) {
+							e.printStackTrace();
+						}
 						
 						switch (code) {
 							case CamabioUtils.ERR_FP_CANCEL:
