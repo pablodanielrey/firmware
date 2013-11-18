@@ -1,10 +1,14 @@
 package ar.com.dcsys.firmware;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import ar.com.dcsys.data.person.Person;
+import ar.com.dcsys.data.person.PersonDAO;
+import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.cmd.Cmd;
 import ar.com.dcsys.firmware.cmd.CmdException;
@@ -17,14 +21,17 @@ public class Identifier implements Runnable {
 	private final SerialDevice sd;
 	private final Cmd identify;
 	private final Cmd cancel;
+	private final PersonDAO personDAO;
+	
 	private volatile boolean exit = false;
 	
 	@Inject
-	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel) {
+	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel, PersonDAO personDAO) {
 		this.logger = logger;
 		this.sd = sd;
 		this.identify = identify;
 		this.cancel = cancel;
+		this.personDAO = personDAO;
 	}
 	
 	
@@ -45,7 +52,14 @@ public class Identifier implements Runnable {
 					public void onSuccess(int i) {
 						logger.info("Huella identificada : " + String.valueOf(i));
 						
-						
+			    		try {
+							List<Person> persons = personDAO.findAll();
+				    		for (Person p2 : persons) {
+				    			System.out.println(p2.getId());
+				    		}
+						} catch (PersonException e) {
+							e.printStackTrace();
+						}						
 						
 						
 					}
