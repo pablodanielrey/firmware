@@ -1,10 +1,19 @@
 package ar.com.dcsys.firmware;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.data.person.PersonDAO;
@@ -35,8 +44,52 @@ public class Identifier implements Runnable {
 	}
 	
 	
+	private Clip getSound(String file) {
+		try {
+			BufferedInputStream sound = new BufferedInputStream(App.class.getResourceAsStream(file));
+			try {
+				AudioInputStream asound = AudioSystem.getAudioInputStream(sound);
+				try {
+					AudioFormat format = asound.getFormat();
+					DataLine.Info info = new DataLine.Info(Clip.class, format);
+					
+					Clip source = (Clip)AudioSystem.getLine(info);
+					try {
+						source.open(asound);
+						return source;
+						
+					} catch (Exception e) {
+						source.close();
+						throw e;
+					}
+				} catch (Exception e) {
+					asound.close();
+					throw e;
+				}
+			} catch (Exception e) {
+				sound.close();
+				throw e;
+			}
+			
+		} catch (LineUnavailableException | UnsupportedAudioFileException | IOException e) {
+			return null;
+		}
+		
+	}
+	
+	private void play(Clip c) {
+		if (c == null) {
+			return;
+		}
+		c.start();
+	}
+	
+	
 	@Override
 	public void run() {
+		final Clip error = getSound("/error.wav");
+		final Clip ok = getSound("/ok.wav");
+		
 		exit = false;
 		while (!exit) {
 
@@ -51,6 +104,7 @@ public class Identifier implements Runnable {
 					@Override
 					public void onSuccess(int i) {
 						logger.info("Huella identificada : " + String.valueOf(i));
+						play(ok);
 						
 			    		try {
 							List<Person> persons = personDAO.findAll();
@@ -72,11 +126,14 @@ public class Identifier implements Runnable {
 					@Override
 					public void onFailure() {
 						logger.info("No se pudo identificar la huella");
+						play(error);
+						
 					}
 					
 					@Override
 					public void onFailure(int code) {
 						logger.info("Error " + String.valueOf(code)) ;
+						play(error);
 						
 						switch (code) {
 							case CamabioUtils.ERR_FP_CANCEL:
@@ -101,6 +158,9 @@ public class Identifier implements Runnable {
 			}		
 		
 		}
+		
+		error.close();
+		ok.close();
 	}
 	
 	public void terminate() {
