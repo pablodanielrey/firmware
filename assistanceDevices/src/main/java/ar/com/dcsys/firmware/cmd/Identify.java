@@ -66,7 +66,11 @@ public class Identify implements Cmd {
 						continue;
 					}
 					
-					result.onSuccess(ret);
+					try {
+						result.onSuccess(ret);
+					} catch (Exception e) {
+						
+					}
 					return;
 					
 				} else if (ret == CamabioUtils.ERR_FAIL) {
@@ -75,18 +79,30 @@ public class Identify implements Cmd {
 					ret = CamabioUtils.getDataIn4ByteInt(d);
 					
 					if (ret == CamabioUtils.ERR_TIME_OUT || ret == CamabioUtils.ERR_ALL_TMPL_EMPTY || ret == CamabioUtils.ERR_BAD_CUALITY) {
-						result.onFailure(ret);
+						try {
+							result.onFailure(ret);
+						} catch (Exception e) {
+							
+						}
 						return;
 					}
 					
 					if (ret == CamabioUtils.ERR_IDENTIFY) {
 						logger.info("No se pudo encontrar la huella dentro de la base");
-						result.onFailure();
+						try {
+							result.onFailure();
+						} catch (Exception e) {
+							
+						}
 						return;
 					}
 					
 					if (ret == CamabioUtils.ERR_FP_CANCEL) {
-						result.onFailure(CamabioUtils.ERR_FP_CANCEL);
+						try {
+							result.onFailure(CamabioUtils.ERR_FP_CANCEL);
+						} catch (Exception e) {
+							
+						}
 						return;
 					}
 					
