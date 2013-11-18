@@ -26,7 +26,7 @@ public class Identifier implements Runnable {
 	private volatile boolean exit = false;
 	
 	@Inject
-	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel, PersonDAO personDAO) {
+	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel, @Named("personHsqlDAO") PersonDAO personDAO) {
 		this.logger = logger;
 		this.sd = sd;
 		this.identify = identify;
