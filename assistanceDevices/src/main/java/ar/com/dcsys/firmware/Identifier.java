@@ -23,6 +23,7 @@ import ar.com.dcsys.firmware.cmd.Cmd;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.CmdResult;
 import ar.com.dcsys.firmware.serial.SerialDevice;
+import ar.com.dcsys.firmware.sound.Player;
 
 public class Identifier implements Runnable {
 
@@ -31,6 +32,9 @@ public class Identifier implements Runnable {
 	private final Cmd identify;
 	private final Cmd cancel;
 	private final PersonDAO personDAO;
+
+	private final String soundOk = "/ok.wav";
+	private final String soundError = "/error.wav";
 	
 	private volatile boolean exit = false;
 	
@@ -44,80 +48,8 @@ public class Identifier implements Runnable {
 	}
 	
 	
-	private class Sound {
-		BufferedInputStream bin;
-		AudioInputStream ain;
-		DataLine.Info info;
-		Clip clip;
-		
-		public void close() {
-			try {
-				clip.close();
-				ain.close();
-				bin.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	
-	private Sound getSound(String file) {
-		try {
-			BufferedInputStream sound = new BufferedInputStream(App.class.getResourceAsStream(file));
-			try {
-				AudioInputStream asound = AudioSystem.getAudioInputStream(sound);
-				try {
-					AudioFormat format = asound.getFormat();
-					DataLine.Info info = new DataLine.Info(Clip.class, format);
-					Clip source = (Clip)AudioSystem.getLine(info);
-					source.open(asound);
-					
-					Sound s = new Sound();
-					s.bin = sound;
-					s.ain = asound;
-					s.info = info;
-					s.clip = source;
-					return s;
-					
-					
-				} catch (Exception e) {
-					asound.close();
-					throw e;
-				}
-			} catch (Exception e) {
-				sound.close();
-				throw e;
-			}
-			
-		} catch (LineUnavailableException | UnsupportedAudioFileException | IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-		
-	}
-	
-	private void play(Sound s) throws IOException {
-		if (s == null) {
-			return;
-		}
-		s.clip.setFramePosition(0);
-		s.clip.start();
-	}
-	
-	private void close(Sound s) {
-		if (s == null) {
-			return;
-		}
-		s.close();
-	}
-	
-	
 	@Override
 	public void run() {
-		final Sound error = getSound("/error.wav");
-		final Sound ok = getSound("/ok.wav");
-		
 		exit = false;
 		while (!exit) {
 
@@ -133,8 +65,8 @@ public class Identifier implements Runnable {
 					public void onSuccess(int i) {
 						logger.info("Huella identificada : " + String.valueOf(i));
 						try {
-							play(ok);
-						} catch (IOException e1) {
+							Player.play(soundOk);
+						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
 						
@@ -159,8 +91,8 @@ public class Identifier implements Runnable {
 					public void onFailure() {
 						logger.info("No se pudo identificar la huella");
 						try {
-							play(error);
-						} catch (IOException e) {
+							Player.play(soundError);
+						} catch (Exception e) {
 							e.printStackTrace();
 						}
 						
@@ -170,8 +102,8 @@ public class Identifier implements Runnable {
 					public void onFailure(int code) {
 						logger.info("Error " + String.valueOf(code)) ;
 						try {
-							play(error);
-						} catch (IOException e) {
+							Player.play(soundError);
+						} catch (Exception e) {
 							e.printStackTrace();
 						}
 						
@@ -198,9 +130,6 @@ public class Identifier implements Runnable {
 			}		
 		
 		}
-		
-		close(error);
-		close(ok);
 	}
 	
 	public void terminate() {
