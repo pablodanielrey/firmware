@@ -1,19 +1,10 @@
 package ar.com.dcsys.firmware;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 
 import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.data.person.PersonDAO;
@@ -32,6 +23,7 @@ public class Identifier implements Runnable {
 	private final Cmd identify;
 	private final Cmd cancel;
 	private final PersonDAO personDAO;
+	private final Player player;
 
 	private final String soundOk = "/ok.wav";
 	private final String soundError = "/error.wav";
@@ -39,12 +31,13 @@ public class Identifier implements Runnable {
 	private volatile boolean exit = false;
 	
 	@Inject
-	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel, @Named("personHsqlDAO") PersonDAO personDAO) {
+	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel, @Named("personHsqlDAO") PersonDAO personDAO, Player player) {
 		this.logger = logger;
 		this.sd = sd;
 		this.identify = identify;
 		this.cancel = cancel;
 		this.personDAO = personDAO;
+		this.player = player;
 	}
 	
 	
@@ -65,7 +58,7 @@ public class Identifier implements Runnable {
 					public void onSuccess(int i) {
 						logger.info("Huella identificada : " + String.valueOf(i));
 						try {
-							Player.play(soundOk);
+							player.play(soundOk);
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
@@ -91,7 +84,7 @@ public class Identifier implements Runnable {
 					public void onFailure() {
 						logger.info("No se pudo identificar la huella");
 						try {
-							Player.play(soundError);
+							player.play(soundError);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -102,7 +95,7 @@ public class Identifier implements Runnable {
 					public void onFailure(int code) {
 						logger.info("Error " + String.valueOf(code)) ;
 						try {
-							Player.play(soundError);
+							player.play(soundError);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
