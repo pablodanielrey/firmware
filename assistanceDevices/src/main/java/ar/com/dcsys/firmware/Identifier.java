@@ -91,6 +91,7 @@ public class Identifier implements Runnable {
 			}
 			
 		} catch (LineUnavailableException | UnsupportedAudioFileException | IOException e) {
+			e.printStackTrace();
 			return null;
 		}
 		
@@ -102,6 +103,13 @@ public class Identifier implements Runnable {
 		}
 		s.clip.setFramePosition(0);
 		s.clip.start();
+	}
+	
+	private void close(Sound s) {
+		if (s == null) {
+			return;
+		}
+		s.close();
 	}
 	
 	
@@ -191,8 +199,8 @@ public class Identifier implements Runnable {
 		
 		}
 		
-		error.close();
-		ok.close();
+		close(error);
+		close(ok);
 	}
 	
 	public void terminate() {
