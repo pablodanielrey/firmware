@@ -136,7 +136,7 @@ public class Identify {
 			}
 			
 			
-		} catch (SerialException | CmdException | ProcessingException e) {
+		} catch (SerialException | ProcessingException e) {
 			logger.log(Level.SEVERE,e.getMessage(),e);
 			throw new CmdException(e);
 		}

@@ -1,10 +1,12 @@
 package ar.com.dcsys.firmware;
 
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
+import ar.com.dcsys.firmware.cmd.Cmd;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.FpCancel;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
@@ -13,7 +15,7 @@ import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.sound.Player;
 
-public class Identifier implements Runnable {
+public class Identifier implements Runnable, Cmd {
 
 	private final Logger logger;
 	private final SerialDevice sd;
@@ -25,6 +27,8 @@ public class Identifier implements Runnable {
 	private final String soundError = "/error.wav";
 	
 	private volatile boolean exit = false;
+	
+	private Semaphore terminate = new Semaphore(0);
 	
 	@Inject
 	public Identifier(Logger logger, SerialDevice sd, Identify identify, FpCancel cancel, Player player) {
@@ -98,20 +102,24 @@ public class Identifier implements Runnable {
 				logger.log(Level.SEVERE,e.getMessage(),e);
 			}
 		}
-			
+		
+		// señala la finalización para que terminate() pueda retornar;
+		terminate.release();
 	}
 	
-	public void terminate() {
+	@Override
+	public void terminate() throws CmdException {
 		try {
 			cancel.execute(sd, new FpCancelResult() {
-				
 				@Override
 				public void onSuccess() {
-					//ok
+					// espera a que se señalice el semáforo terminate.
+					terminate.acquireUninterruptibly();
 				};
 			});
 		} catch (CmdException e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE,e.getMessage(),e);
+			throw e;
 		}
 	}
 	
