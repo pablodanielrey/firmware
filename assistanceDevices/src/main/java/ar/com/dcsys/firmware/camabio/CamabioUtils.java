@@ -483,6 +483,7 @@ public class CamabioUtils {
 		rsp.prefix = getId(data);
 		rsp.rcm = getCmd(data);
 		rsp.len = getLength(data);
+		rsp.ret = getRet(data);
 		rsp.data = getData(data);
 		return rsp;
 		
