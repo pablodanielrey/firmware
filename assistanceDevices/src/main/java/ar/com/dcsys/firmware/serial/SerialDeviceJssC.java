@@ -2,8 +2,11 @@ package ar.com.dcsys.firmware.serial;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Logger;
 
 import javax.inject.Singleton;
+
+import ar.com.dcsys.firmware.Utils;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -12,9 +15,11 @@ import jssc.SerialPortException;
 
 @Singleton
 public class SerialDeviceJssC implements SerialDevice {
-
+	
+	private static final Logger logger = Logger.getLogger(SerialDevice.class.getName());
+	
 	private  SerialPort serialPort;
-	private ConcurrentLinkedQueue<Byte> queue;
+	private final ConcurrentLinkedQueue<Byte> queue;
 	private final Semaphore sem;
 	
 	public SerialDeviceJssC() {
@@ -44,8 +49,11 @@ public class SerialDeviceJssC implements SerialDevice {
 						int bytes = event.getEventValue();
 						
 						if (bytes > 0) {
+							
 							try {
 								byte[] data = serialPort.readBytes(bytes);
+
+								logger.finest("bytes leidos : " + Utils.getHex(data));
 								
 								for (byte b : data) {
 									queue.add(b);
