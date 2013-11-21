@@ -1,11 +1,16 @@
 package ar.com.dcsys.firmware.camabio;
 
+import java.util.logging.Logger;
+
 import jssc.SerialPortException;
+import ar.com.dcsys.firmware.Utils;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
 public class SerialUtils {
 
+	private static final Logger logger = Logger.getLogger(SerialUtils.class.getName());
+	
 	/**
 	 * Lee un packete de datos o de comando desde el serialPort.
 	 * @param serialPort
@@ -14,8 +19,11 @@ public class SerialUtils {
 	 */
 	public static byte[] readPackage(SerialDevice serialPort) throws SerialException {
 		
+		
 		byte[] id = serialPort.readBytes(2);
 		int i = CamabioUtils.getId(id);
+
+		logger.finest("Recibido id : " + i);
 		
 		if (i == CamabioUtils.CMD || i == CamabioUtils.RSP) {
 			byte[] cmd = new byte[24];
@@ -27,6 +35,9 @@ public class SerialUtils {
 				cmd[inx] = b;
 				inx++;
 			}
+
+			logger.finest("recibido : " + Utils.getHex(cmd));
+			
 			return cmd;
 			
 		} else if (i == CamabioUtils.CMD_DATA || i == CamabioUtils.RSP_DATA) {
@@ -39,6 +50,9 @@ public class SerialUtils {
 				cmd[inx] = b;
 				inx++;
 			}
+			
+			logger.finest("recibido : " + Utils.getHex(cmd));
+			
 			return cmd;
 		}
 		
