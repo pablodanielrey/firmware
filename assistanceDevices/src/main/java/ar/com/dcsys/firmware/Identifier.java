@@ -10,7 +10,6 @@ import ar.com.dcsys.firmware.cmd.FpCancel;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
 import ar.com.dcsys.firmware.cmd.Identify;
 import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
-import ar.com.dcsys.firmware.database.Database;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.sound.Player;
 
@@ -20,7 +19,6 @@ public class Identifier implements Runnable {
 	private final SerialDevice sd;
 	private final Identify identify;
 	private final FpCancel cancel;
-	private final Database database;
 	private final Player player;
 
 	private final String soundOk = "/ok.wav";
@@ -29,12 +27,11 @@ public class Identifier implements Runnable {
 	private volatile boolean exit = false;
 	
 	@Inject
-	public Identifier(Logger logger, SerialDevice sd, Identify identify, FpCancel cancel, Database database, Player player) {
+	public Identifier(Logger logger, SerialDevice sd, Identify identify, FpCancel cancel, Player player) {
 		this.logger = logger;
 		this.sd = sd;
 		this.identify = identify;
 		this.cancel = cancel;
-		this.database = database;
 		this.player = player;
 	}
 	
