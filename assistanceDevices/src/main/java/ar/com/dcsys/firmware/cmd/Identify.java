@@ -128,9 +128,10 @@ public class Identify {
 						} else {
 							canceled = true;
 						}
+						continue;
 					}
 					
-					throw new CmdException("Resultado inesperado");
+					throw new CmdException("Datos inesperados - rcm " + rsp.rcm + " ret " + rsp.ret + " code " + code);
 				}
 			}
 			
