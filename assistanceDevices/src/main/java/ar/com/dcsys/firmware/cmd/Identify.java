@@ -20,7 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
@@ -28,7 +27,6 @@ import ar.com.dcsys.firmware.camabio.SerialUtils;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
-@Named
 public class Identify {
 	
 	public interface IdentifyResult {
@@ -45,27 +43,37 @@ public class Identify {
 		this.logger = logger;
 	}
 	
-	private void checkPreconditions(int rcm, CamabioResponse rsp) throws CmdException {
+	private void checkPreconditions(CamabioResponse rsp) throws CmdException {
 		if (rsp.prefix != CamabioUtils.RSP) {
 			throw new CmdException("Prefijo inválido : " + rsp.prefix);
 		}
 		
-		if (rsp.rcm != rcm) {
+		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_IDENTIFY) {
 			throw new CmdException("RCM != Identify");
 		}
 	}	
-	
+
 	
 	public void execute(SerialDevice serialPort, IdentifyResult result) throws CmdException {
 		try {
 			byte[] cmd = CamabioUtils.identify();
-			int rcm = CamabioUtils.getCmd(cmd);
 			serialPort.writeBytes(cmd);
+			
+			boolean canceled = false;
 			
 			while (true) {
 				byte[] data = SerialUtils.readPackage(serialPort);
 				CamabioResponse rsp = CamabioUtils.getResponse(data);
-				checkPreconditions(rcm, rsp);
+				checkPreconditions(rsp);
+		
+				// evaluo la respuesta del FP_CANCEL.
+				if (rsp.rcm == CamabioUtils.CMD_FP_CANCEL && rsp.ret == CamabioUtils.ERR_SUCCESS) {
+					if (canceled) {
+						return;
+					} else {
+						canceled = true;
+					}
+				}
 				
 				if (rsp.ret == CamabioUtils.ERR_SUCCESS) {
 
@@ -99,7 +107,6 @@ public class Identify {
 					}
 					
 					if (code == CamabioUtils.ERR_IDENTIFY) {
-						logger.info("No se pudo encontrar la huella dentro de la base");
 						try {
 							result.onNotFound();
 						} catch (Exception e) {
@@ -114,7 +121,12 @@ public class Identify {
 						} catch (Exception e) {
 							logger.log(Level.SEVERE,e.getMessage(),e);
 						}
-						return;
+
+						if (canceled) {
+							return;
+						} else {
+							canceled = true;
+						}
 					}
 					
 					throw new CmdException("Resultado inesperado");

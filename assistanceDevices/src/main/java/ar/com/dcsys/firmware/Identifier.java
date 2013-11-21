@@ -46,7 +46,9 @@ public class Identifier implements Runnable {
 					
 					@Override
 					public void onSuccess(int fpNumber) {
+						
 						logger.info("Huella identificada : " + String.valueOf(fpNumber));
+						
 						try {
 						    player.play(soundOk);
 						} catch (Exception e1) {
@@ -56,6 +58,9 @@ public class Identifier implements Runnable {
 					
 					@Override
 					public void onNotFound() {
+						
+						logger.info("Huella no encontrada");
+						
 						try {
 						    player.play(soundError);
 						} catch (Exception e1) {
@@ -65,6 +70,9 @@ public class Identifier implements Runnable {
 					
 					@Override
 					public void onFailure(int errorCode) {
+						
+						logger.info("Error identificando la huella : " + errorCode);
+						
 						try {
 						    player.play(soundError);
 						} catch (Exception e1) {
@@ -74,6 +82,9 @@ public class Identifier implements Runnable {
 					
 					@Override
 					public void onCancel() {
+						
+						logger.info("Cancelando la identificación");
+						
 						exit = true;
 						try {
 						    player.play(soundOk);

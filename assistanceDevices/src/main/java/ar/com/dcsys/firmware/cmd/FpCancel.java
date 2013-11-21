@@ -3,13 +3,11 @@ package ar.com.dcsys.firmware.cmd;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
-@Named
 public class FpCancel {
 
 	public interface FpCancelResult {

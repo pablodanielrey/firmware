@@ -11,6 +11,46 @@ public class CamabioUtils {
 	public static final String ALGORITHM = "Camabio";
 	public static final String CODIFICATION = "none";
 	
+	
+	public static final int CMD_VERIFY = 0x101;
+	public static final int CMD_IDENTIFY = 0x102;
+	public static final int CMD_ENROLL = 0x103;
+	public static final int CMD_ENROLL_ONE_TIME = 0x104;
+	public static final int CMD_CLEAR_TEMPLATE = 0x105;
+	public static final int CMD_CLEAR_ALL_TEMPLATE = 0x106;
+	public static final int CMD_GET_EMTPY_ID = 0x107;
+	public static final int CMD_GET_TEMPLATE_STATUS = 0x108;
+	public static final int CMD_GET_BROKEN_TEMPLATE = 0x109;
+	public static final int CMD_READ_TEMPLATE = 0x10A;
+	public static final int CMD_WRITE_TEMPLATE = 0x10B;
+	public static final int CMD_SET_SECURITY_LEVEL = 0x10C;
+	public static final int CMD_GET_SECURITY_LEVEL = 0x10D;
+	public static final int CMD_SET_FINGER_TIME_OUT = 0x10E;
+	public static final int CMD_GET_FINGER_TIME_OUT = 0x10F;
+	public static final int CMD_SET_DEVICE_ID = 0x110;
+	public static final int CMD_GET_DEVICE_ID = 0x111;
+	public static final int CMD_GET_FW_VERSION = 0x112;
+	public static final int CMD_FINGER_DETECT = 0x113;
+	public static final int CMD_SET_BAUDRATE = 0x114;
+	public static final int CMD_SET_DUPLICATION_CHECK = 0x115;
+	public static final int CMD_GET_DUPLICATION_CHECK = 0x116;
+	public static final int CMD_ENTER_STAND_BY = 0x117;
+	public static final int CMD_ENROLL_AND_STORE_IN_RAM = 0x118;
+	public static final int CMD_GET_ENROLL_DATA = 0x119;
+	public static final int CMD_GET_FEATURE_DATA_CAPTURED_FP = 0x11A;
+	public static final int CMD_VERIFY_DOWNLOADED_CAPTURED_FP = 0x11B;
+	public static final int CMD_IDENTIFY_DOWNLOADED_CAPTURED_FP = 0x11C;
+	public static final int CMD_GET_DEVICE_NAME = 0x121;
+	public static final int CMD_SENSOR_LED_CONTROL = 0x124;
+	public static final int CMD_IDENTIFY_FREE = 0x125;
+	public static final int CMD_SET_DEVICE_PASSWORD = 0x126;
+	public static final int CMD_VERIFY_DEVICE_PASSWORD = 0x127;
+	public static final int CMD_GET_ENROLL_COUNT = 0x128;
+	public static final int CMD_FP_CANCEL = 0x130;
+	public static final int CMD_TEST_CONNECTION = 0x150;
+	public static final int CMD_INCORRECT_COMMAND = 0x160;
+	
+	
 
 	public static final int CMD = 0xAA55;
 	public static final int CMD_DATA = 0xA55A;
@@ -164,36 +204,36 @@ public class CamabioUtils {
 	
 	
 	public static byte[] verify(int template) {
-		return cmdWithTemplateId(0x0101, template);
+		return cmdWithTemplateId(CMD_VERIFY, template);
 	}
 	
 	
 	public static byte[] identify() {
-		return cmd(0x0102);
+		return cmd(CMD_IDENTIFY);
 	}
 	
 	public static byte[] enroll(int template) {
-		return cmdWithTemplateId(0x0103, template);
+		return cmdWithTemplateId(CMD_ENROLL, template);
 	}
 	
 	
 	public static byte[] enrollOneTime(int template) {
-		return cmdWithTemplateId(0x0104, template);
+		return cmdWithTemplateId(CMD_ENROLL_ONE_TIME, template);
 	}
 	
 	
 	public static byte[] clearTemplate(int template) {
-		return cmdWithTemplateId(0x0105, template);
+		return cmdWithTemplateId(CMD_CLEAR_TEMPLATE, template);
 	}
 	
 	
 	public static byte[] clearAllTemplate() {
-		return cmd(0x0106);
+		return cmd(CMD_CLEAR_ALL_TEMPLATE);
 	}	
 	
 	
 	public static byte[] getEmptyId() {
-		return cmd(0x0107);
+		return cmd(CMD_GET_EMTPY_ID);
 	}	
 	
 	/**
@@ -202,7 +242,7 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static byte[] getTemplateStatus(int template) {
-		return cmdWithTemplateId(0x0108, template);
+		return cmdWithTemplateId(CMD_GET_TEMPLATE_STATUS, template);
 	}
 	
 	/**
@@ -210,19 +250,19 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static byte[] getBrokenTemplate() {
-		return cmd(0x0109);
+		return cmd(CMD_GET_BROKEN_TEMPLATE);
 	}	
 
 	public static byte[] readTemplate(int template) {
-		return cmdWithTemplateId(0x010a, template);
+		return cmdWithTemplateId(CMD_READ_TEMPLATE, template);
 	}	
 	
 	public static byte[] setSecurityLevel(int level) {
-		return cmdWith2ByteParam(0x010c, level);
+		return cmdWith2ByteParam(CMD_SET_SECURITY_LEVEL, level);
 	}
 	
 	public static byte[] getSecurityLevel() {
-		return cmd(0x010d);
+		return cmd(CMD_GET_SECURITY_LEVEL);
 	}	
 	
 	/**
@@ -233,11 +273,11 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static byte[] setFingerTimeOut(int time) {
-		return cmdWith2ByteParam(0x010e, time);
+		return cmdWith2ByteParam(CMD_SET_FINGER_TIME_OUT, time);
 	}
 	
 	public static byte[] getFingerTimeOut() {
-		return cmd(0x010f);
+		return cmd(CMD_GET_FINGER_TIME_OUT);
 	}		
 
 	/**
@@ -248,19 +288,19 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static byte[] setDeviceId(int id) {
-		return cmdWith2ByteParam(0x0110, id);
+		return cmdWith2ByteParam(CMD_SET_DEVICE_ID, id);
 	}
 	
 	public static byte[] getDeviceId() {
-		return cmd(0x0111);
+		return cmd(CMD_GET_DEVICE_ID);
 	}		
 
 	public static byte[] getFirmwareVersion() {
-		return cmd(0x0112);
+		return cmd(CMD_GET_FW_VERSION);
 	}		
 	
 	public static byte[] detectFinger() {
-		return cmd(0x0113);
+		return cmd(CMD_FINGER_DETECT);
 	}		
 
 	/**
@@ -276,27 +316,27 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static byte[] setBaudRateIndex(int id) {
-		return cmdWith2ByteParam(0x0114, id);
+		return cmdWith2ByteParam(CMD_SET_BAUDRATE, id);
 	}
 	
 	public static byte[] setDupplicationCheck(boolean v) {
 		if (v) {
-			return cmdWith2ByteParam(0x0115, 1);
+			return cmdWith2ByteParam(CMD_SET_DUPLICATION_CHECK, 1);
 		} else {
-			return cmdWith2ByteParam(0x0115, 0);
+			return cmdWith2ByteParam(CMD_SET_DUPLICATION_CHECK, 0);
 		}
 	}
 	
 	public static byte[] getDupplicationCheck() {
-		return cmd(0x0116);
+		return cmd(CMD_GET_DUPLICATION_CHECK);
 	}		
 	
 	public static byte[] enterStandByMode() {
-		return cmd(0x0117);
+		return cmd(CMD_ENTER_STAND_BY);
 	}		
 	
 	public static byte[] enrollAndStoreInRam() {
-		return cmd(0x0118);
+		return cmd(CMD_ENROLL_AND_STORE_IN_RAM);
 	}		
 	
 	/**
@@ -305,7 +345,7 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static byte[] getEnrollData() {
-		return cmd(0x0119);
+		return cmd(CMD_GET_ENROLL_DATA);
 	}		
 
 	/**
@@ -315,11 +355,11 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static byte[] getFeatureDataOfCapturedFP() {
-		return cmd(0x011a);
+		return cmd(CMD_GET_FEATURE_DATA_CAPTURED_FP);
 	}		
 	
 	public static byte[] getDeviceName() {
-		return cmd(0x0121);
+		return cmd(CMD_GET_DEVICE_NAME);
 	}		
 	
 	/**
@@ -331,26 +371,26 @@ public class CamabioUtils {
 	 */
 	public static byte[] sensorLedControl(boolean v) {
 		if (v) {
-			return cmdWith2ByteParam(0x0124, 1);
+			return cmdWith2ByteParam(CMD_SENSOR_LED_CONTROL, 1);
 		} else {
-			return cmdWith2ByteParam(0x0124, 0);
+			return cmdWith2ByteParam(CMD_SENSOR_LED_CONTROL, 0);
 		}
 	}
 	
 	public static byte[] identifyFree() {
-		return cmd(0x0125);
+		return cmd(CMD_IDENTIFY_FREE);
 	}	
 	
 	public static byte[] getEnrollCount() {
-		return cmd(0x0128);
+		return cmd(CMD_GET_ENROLL_COUNT);
 	}	
 
 	public static byte[] fpCancel() {
-		return cmd(0x0130);
+		return cmd(CMD_FP_CANCEL);
 	}
 	
 	public static byte[] testConnection() {
-		return cmd(0x0150);
+		return cmd(CMD_TEST_CONNECTION);
 	}	
 	
 	/**
