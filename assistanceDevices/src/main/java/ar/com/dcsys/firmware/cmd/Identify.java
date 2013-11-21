@@ -73,6 +73,7 @@ public class Identify {
 					} else {
 						canceled = true;
 					}
+					continue;
 				}
 				
 				if (rsp.ret == CamabioUtils.ERR_SUCCESS) {
@@ -135,6 +136,7 @@ public class Identify {
 			
 			
 		} catch (SerialException | CmdException | ProcessingException e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
 			throw new CmdException(e);
 		}
 	}
