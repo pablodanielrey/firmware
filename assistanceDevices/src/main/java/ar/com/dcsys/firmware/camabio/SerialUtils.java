@@ -18,8 +18,6 @@ public class SerialUtils {
 	 * @throws SerialPortException
 	 */
 	public static byte[] readPackage(SerialDevice serialPort) throws SerialException {
-		
-		
 		byte[] id = serialPort.readBytes(2);
 		int i = CamabioUtils.getId(id);
 
@@ -57,6 +55,36 @@ public class SerialUtils {
 		}
 		
 		return null;
+	}
+		
+	/**
+	 * Lee la cantidad de bytes especificadas por el parametro size.
+	 * @param size
+	 * @param serialPort
+	 * @return
+	 * @throws SerialException
+	 */
+	public static byte[] readPackage(int size, SerialDevice serialPort) throws SerialException {		
+		byte[] id = serialPort.readBytes(2);
+		int i = CamabioUtils.getId(id);
+
+		logger.finest("Recibido id : " + i);
+
+		byte[] cmd = new byte[size + 2];
+		byte[] data = serialPort.readBytes(size);
+		int inx = 2;
+		cmd[0] = id[0];
+		cmd[1] = id[1];
+		for (byte b : data) {
+			cmd[inx] = b;
+			inx++;
+		}
+
+		logger.finest("recibido : " + Utils.getHex(cmd));
+		
+		return cmd;
+			
+	
 	}		
 	
 }

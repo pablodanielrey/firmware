@@ -64,7 +64,13 @@ public class GetEnrollData {
 			int tmplSize = 0;
 			
 			while (true) {
-				byte[] data = SerialUtils.readPackage(sd);
+				
+				byte[] data;
+				if (tmplSize <= 0) {
+					data = SerialUtils.readPackage(sd);	
+				} else {
+					data = SerialUtils.readPackage(tmplSize,sd);
+				}
 				CamabioResponse rsp = CamabioUtils.getResponse(data);
 				checkPreconditions(rsp);
 

@@ -66,6 +66,8 @@ public class SerialDeviceJssC implements SerialDevice {
 						}
 					}
 					sem.release();
+					
+					logger.finest("Tamaño de la cola de bytes leídos : " + queue.size());
 				}
 			});    	
 	    	
