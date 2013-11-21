@@ -6,6 +6,8 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
+import ar.com.dcsys.firmware.Utils;
+
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
@@ -84,7 +86,9 @@ public class GetEnrollData {
 					
 					logger.fine("Recibido paquete de respuesta");
 					tmplSize = CamabioUtils.getDataIn4ByteInt(rsp.data);
-						
+					
+					logger.info("Tamaño del template : " + tmplSize);
+					
 				} else if (rsp.ret == CamabioUtils.ERR_SUCCESS && rsp.prefix == CamabioUtils.RSP_DATA) {
 						
 					logger.fine("Recibido paquete de datos");
@@ -92,6 +96,11 @@ public class GetEnrollData {
 					if (tmplSize != len) {
 						throw new CmdException("Len != templSize");
 					}
+					
+					logger.info("Leyendo huella con tamaño : " + len);
+					logger.info("Tamaño del paquete : " + rsp.data.length);
+					logger.info("Paquete : " + Utils.getHex(rsp.data));
+					
 				    FingerprintCredentials fp = getFingerprint(len, rsp.data, edata);
 				    try {
 				    	result.onSuccess(fp);
