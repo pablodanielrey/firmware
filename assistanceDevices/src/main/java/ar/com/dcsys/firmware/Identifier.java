@@ -74,6 +74,7 @@ public class Identifier implements Runnable {
 					
 					@Override
 					public void onCancel() {
+						exit = true;
 						try {
 						    player.play(soundOk);
 						} catch (Exception e1) {
