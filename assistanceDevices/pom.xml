@@ -39,13 +39,6 @@
     </dependency>    
 
     <dependency>
-        <groupId>org.hsqldb</groupId>
-        <artifactId>hsqldb</artifactId>
-        <version>2.3.1</version>
-        <scope>compile</scope>
-    </dependency>
-
-    <dependency>
 	<groupId>org.jboss.weld.se</groupId>
 	<artifactId>weld-se</artifactId>
 	<version>2.1.0.Final</version>
@@ -60,57 +53,22 @@
     </dependency>
 
     <dependency>
-        <groupId>ar.com.dcsys.data</groupId>
-        <artifactId>hsql</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <scope>compile</scope>
-    </dependency>
-
-    <dependency>
       <groupId>ar.com.dcsys.data</groupId>
-      <artifactId>personEntities</artifactId>
+      <artifactId>personHsqlDAO</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>ar.com.dcsys.data</groupId>
-      <artifactId>personDAO</artifactId>
+      <artifactId>assistanceHsqlDAO</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>ar.com.dcsys.data</groupId>
-      <artifactId>assistanceEntities</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>ar.com.dcsys.data</groupId>
-      <artifactId>assistanceDAO</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>ar.com.dcsys.security</groupId>
-      <artifactId>fingerprintCredentials</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>ar.com.dcsys.data</groupId>
-      <artifactId>fingerprintDAO</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>ar.com.dcsys.security</groupId>
-      <artifactId>userPasswordCredentials</artifactId>
+      <artifactId>fingerprintHsqlDAO</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
@@ -121,7 +79,6 @@
       <version>1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
-
 
     <dependency>
       <groupId>ar.com.dcsys.data</groupId>
