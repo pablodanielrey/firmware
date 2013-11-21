@@ -30,6 +30,7 @@ import ar.com.dcsys.firmware.serial.SerialException;
 public class Identify {
 	
 	public interface IdentifyResult {
+		public void releaseFinger();
 		public void onSuccess(int fpNumber);
 		public void onNotFound();
 		public void onCancel();
@@ -81,7 +82,11 @@ public class Identify {
 					int code = CamabioUtils.getDataIn4ByteInt(rsp.data);
 					
 					if (code == CamabioUtils.GD_NEED_RELEASE_FINGER) {
-						logger.info("Debe levantar el dedo del lector");
+						try {
+							result.releaseFinger();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
 						continue;
 					}
 					

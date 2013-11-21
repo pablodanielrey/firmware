@@ -45,12 +45,12 @@ public class GetEnrollData {
 		return fp;
 	}
 	
-	private void checkPreconditions(int rcm, CamabioResponse rsp) throws CmdException {
+	private void checkPreconditions(CamabioResponse rsp) throws CmdException {
 		if (rsp.prefix != CamabioUtils.RSP || rsp.prefix != CamabioUtils.RSP_DATA) {
 			throw new CmdException("Prefijo inválido : " + rsp.prefix);
 		}
 		
-		if (rsp.rcm != rcm) {
+		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_GET_ENROLL_DATA) {
 			throw new CmdException("RCM != GetEnrollData");
 		}
 	}
@@ -59,7 +59,6 @@ public class GetEnrollData {
 	public void execute(SerialDevice sd, EnrollResult result, EnrollData edata) throws CmdException {
 		try {
 			byte[] cmd = CamabioUtils.getEnrollData();
-			int rcm = CamabioUtils.getCmd(cmd);
 			sd.writeBytes(cmd);
 
 			int tmplSize = 0;
@@ -67,38 +66,37 @@ public class GetEnrollData {
 			while (true) {
 				byte[] data = SerialUtils.readPackage(sd);
 				CamabioResponse rsp = CamabioUtils.getResponse(data);
-				checkPreconditions(rcm, rsp);
+				checkPreconditions(rsp);
+
+				// evaluo la respuesta del FP_CANCEL.
+				if (rsp.rcm == CamabioUtils.CMD_FP_CANCEL && rsp.ret == CamabioUtils.ERR_SUCCESS) {
+					result.onCancel();
+					return;
+				}						
 				
-				if (rsp.ret == CamabioUtils.ERR_SUCCESS) {
+				if (rsp.ret == CamabioUtils.ERR_SUCCESS && rsp.prefix == CamabioUtils.RSP) {
 					
-					if (rsp.prefix == CamabioUtils.RSP) {
+					logger.fine("Recibido paquete de respuesta");
+					tmplSize = CamabioUtils.getDataIn4ByteInt(rsp.data);
 						
-						logger.fine("Recibido paquete de respuesta");
-						tmplSize = CamabioUtils.getDataIn2ByteInt(rsp.data);
+				} else if (rsp.ret == CamabioUtils.ERR_SUCCESS && rsp.prefix == CamabioUtils.RSP_DATA) {
 						
-					} else if (rsp.prefix == CamabioUtils.RSP_DATA) {
-						
-						logger.fine("Recibido paquete de datos");
-						int len = rsp.len - 2;
-						if (tmplSize != len) {
-							throw new CmdException("Len != templSize");
-						}
-					    FingerprintCredentials fp = getFingerprint(len, rsp.data, edata);
-					    try {
-					    	result.onSuccess(fp);
-					    } catch (Exception e) {
-					    	logger.log(Level.SEVERE,e.getMessage(),e);
-					    }
-					    return;
-						
-					} else {
-						logger.log(Level.SEVERE,"Prefijo inválido : " + rsp.prefix);
-						throw new CmdException("Prefijo inválido : " + rsp.prefix);
+					logger.fine("Recibido paquete de datos");
+					int len = rsp.len - 2;
+					if (tmplSize != len) {
+						throw new CmdException("Len != templSize");
 					}
-					
+				    FingerprintCredentials fp = getFingerprint(len, rsp.data, edata);
+				    try {
+				    	result.onSuccess(fp);
+				    } catch (Exception e) {
+				    	logger.log(Level.SEVERE,e.getMessage(),e);
+				    }
+				    return;
+						
 				} else if (rsp.ret == CamabioUtils.ERR_FAIL) {
 					
-					int error = CamabioUtils.getDataIn2ByteInt(rsp.data);
+					int error = CamabioUtils.getDataIn4ByteInt(rsp.data);
 					try {
 						result.onFailure(error);
 					} catch (Exception e) {

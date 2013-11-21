@@ -16,14 +16,16 @@ public class Firmware {
 	
 	private final SerialDevice sd;
 	private final Identifier identifier;
+	private final Enroller enroller;
 	private final KeyboardReader reader;
 	
 	@Inject
-	public Firmware(SerialDevice sd, Identifier identifier) {
+	public Firmware(SerialDevice sd, Identifier identifier, Enroller enroller) {
 		logger.info("Inicializando Firmware");
 		
 		this.sd = sd;
 		this.identifier = identifier;
+		this.enroller = enroller;
 		this.reader = new KeyboardReader();
 	}
 	
@@ -35,7 +37,8 @@ public class Firmware {
     			return;
     		}
     		try {
-	    	
+    			
+    			/*
 	    		Thread tidentifier = new Thread(identifier);
 	    		tidentifier.start();
 	    		
@@ -58,6 +61,10 @@ public class Firmware {
 		    			// ocurrio una exception asi que no se ejecuto bien el comando terminate.
 		    		}
 	    		}
+	    		*/
+    			
+    			enroller.run();
+    			
 	    		
     		} finally {
     			sd.close();

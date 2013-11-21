@@ -28,7 +28,7 @@ public class Identifier implements Runnable, Cmd {
 	
 	private volatile boolean exit = false;
 	
-	private Semaphore terminate = new Semaphore(0);
+	private final Semaphore terminate = new Semaphore(0);
 	
 	@Inject
 	public Identifier(Logger logger, SerialDevice sd, Identify identify, FpCancel cancel, Player player) {
@@ -58,6 +58,11 @@ public class Identifier implements Runnable, Cmd {
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
+					}
+					
+					@Override
+					public void releaseFinger() {
+						logger.info("Debe retirar el dedo del lector");
 					}
 					
 					@Override

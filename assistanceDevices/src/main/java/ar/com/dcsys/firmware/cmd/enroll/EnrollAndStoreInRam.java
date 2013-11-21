@@ -1,5 +1,6 @@
 package ar.com.dcsys.firmware.cmd.enroll;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
@@ -23,48 +24,77 @@ public class EnrollAndStoreInRam {
 		this.getEnrollData = getEnrollData;
 	}
 	
-	private void checkPreconditions(int rcm, CamabioResponse rsp) throws CmdException {
-		if (rsp.prefix != CamabioUtils.RSP || rsp.prefix != CamabioUtils.RSP_DATA) {
+	private void checkPreconditions(CamabioResponse rsp) throws CmdException {
+		if (rsp.prefix != CamabioUtils.RSP && rsp.prefix != CamabioUtils.RSP_DATA) {
 			throw new CmdException("Prefijo inválido : " + rsp.prefix);
 		}
 		
-		if (rsp.rcm != rcm) {
-			throw new CmdException("RCM != GetEnrollData");
+		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_ENROLL_AND_STORE_IN_RAM) {
+			throw new CmdException("RCM != EnrollAndStoreInRam");
 		}
 	}	
 	
 	public void execute(SerialDevice serialPort, EnrollResult result, EnrollData edata) throws CmdException {
 		try {
 			byte[] cmd = CamabioUtils.enrollAndStoreInRam();
-			int rcm = CamabioUtils.getCmd(cmd);
 			serialPort.writeBytes(cmd);
+			
+			boolean canceled = false;
 			
 			while (true) {
 				byte[] data = SerialUtils.readPackage(serialPort);
 				CamabioResponse rsp = CamabioUtils.getResponse(data);
-				checkPreconditions(rcm, rsp);
+				checkPreconditions(rsp);
+				
+				
+				// evaluo la respuesta del FP_CANCEL.
+				if (rsp.rcm == CamabioUtils.CMD_FP_CANCEL && rsp.ret == CamabioUtils.ERR_SUCCESS) {
+					if (canceled) {
+						return;
+					} else {
+						canceled = true;
+					}
+					continue;
+				}				
+				
 				
 				if (rsp.ret == CamabioUtils.ERR_SUCCESS) {
 
 					int code = CamabioUtils.getDataIn2ByteInt(rsp.data);
 					
 					if (code == CamabioUtils.GD_NEED_FIRST_SWEEP) {
-						logger.info("Primera toma");
+						try {
+							result.needFirstSweep();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
 						continue;
 					}
 					
 					if (code == CamabioUtils.GD_NEED_SECOND_SWEEP) {
-						logger.info("Segunda toma");
+						try {
+							result.needSecondSweep();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
 						continue;
 					}
 					
 					if (code == CamabioUtils.GD_NEED_THIRD_SWEEP) {
-						logger.info("Tercera toma");
+						try {
+							result.needThirdSweep();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
 						continue;
 					}
 
 					if (code == CamabioUtils.GD_NEED_RELEASE_FINGER) {
-						logger.info("Debe levantar el dedo");
+						try {
+							result.releaseFinger();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
 						continue;
 					}
 					
@@ -77,23 +107,42 @@ public class EnrollAndStoreInRam {
 					int code = CamabioUtils.getDataIn2ByteInt(rsp.data);
 
 					// errores no fatales.
-						if (code == CamabioUtils.ERR_TIME_OUT ||
+					if (code == CamabioUtils.ERR_TIME_OUT ||
 						code == CamabioUtils.ERR_BAD_CUALITY) {
 						continue;
 					}
 					
 						// error fatal.
 					if (code == CamabioUtils.ERR_GENERALIZE) {
-						result.onFailure(code);
+						try {
+							result.onFailure(code);
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
 						return;
 					}
 					
-					throw new CmdException("Resultado inesperado");
+					if (code == CamabioUtils.ERR_FP_CANCEL) {
+						try {
+							result.onCancel();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
+
+						if (canceled) {
+							return;
+						} else {
+							canceled = true;
+						}
+						continue;
+					}					
+					
+					throw new CmdException("Datos inesperados - rcm " + rsp.rcm + " ret " + rsp.ret + " code " + code);
 				}
 			}
 			
 			
-		} catch (SerialException | CmdException | ProcessingException e) {
+		} catch (SerialException | ProcessingException e) {
 			throw new CmdException(e);
 		}
 	}
