@@ -46,7 +46,7 @@ public class GetEnrollData {
 	}
 	
 	private void checkPreconditions(CamabioResponse rsp) throws CmdException {
-		if (rsp.prefix != CamabioUtils.RSP || rsp.prefix != CamabioUtils.RSP_DATA) {
+		if (rsp.prefix != CamabioUtils.RSP && rsp.prefix != CamabioUtils.RSP_DATA) {
 			throw new CmdException("Prefijo inválido : " + rsp.prefix);
 		}
 		
