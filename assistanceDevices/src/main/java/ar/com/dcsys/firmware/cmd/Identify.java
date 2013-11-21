@@ -16,20 +16,27 @@ package ar.com.dcsys.firmware.cmd;
  * 
  */
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ar.com.dcsys.firmware.Utils;
-import ar.com.dcsys.firmware.camabio.CamabioException;
+import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
 @Named
-public class Identify implements Cmd {
+public class Identify {
+	
+	public interface IdentifyResult {
+		public void onSuccess(int fpNumber);
+		public void onNotFound();
+		public void onCancel();
+		public void onFailure(int errorCode);
+	}
 	
 	private final Logger logger;
 	
@@ -38,70 +45,74 @@ public class Identify implements Cmd {
 		this.logger = logger;
 	}
 	
+	private void checkPreconditions(int rcm, CamabioResponse rsp) throws CmdException {
+		if (rsp.prefix != CamabioUtils.RSP) {
+			throw new CmdException("Prefijo inválido : " + rsp.prefix);
+		}
+		
+		if (rsp.rcm != rcm) {
+			throw new CmdException("RCM != Identify");
+		}
+	}	
 	
-	@Override
-	public void execute(SerialDevice serialPort, CmdResult result) throws CmdException {
+	
+	public void execute(SerialDevice serialPort, IdentifyResult result) throws CmdException {
 		try {
 			byte[] cmd = CamabioUtils.identify();
-			logger.fine("Enviando comando : " + Utils.getHex(cmd));
+			int rcm = CamabioUtils.getCmd(cmd);
 			serialPort.writeBytes(cmd);
 			
 			while (true) {
 				byte[] data = SerialUtils.readPackage(serialPort);
-				logger.fine("Datos recibidos : " + Utils.getHex(data));
+				CamabioResponse rsp = CamabioUtils.getResponse(data);
+				checkPreconditions(rcm, rsp);
 				
-				int id = CamabioUtils.getId(data);
-				if (id != CamabioUtils.RSP) {
-					throw new CmdException();
-				}
-				int ret = CamabioUtils.getRet(data);
-				
-				if (ret == CamabioUtils.ERR_SUCCESS) {
+				if (rsp.ret == CamabioUtils.ERR_SUCCESS) {
 
-					byte[] d = CamabioUtils.getData(data);
-					ret = CamabioUtils.getDataIn4ByteInt(d);
+					int code = CamabioUtils.getDataIn4ByteInt(rsp.data);
 					
-					if (ret == CamabioUtils.GD_NEED_RELEASE_FINGER) {
+					if (code == CamabioUtils.GD_NEED_RELEASE_FINGER) {
 						logger.info("Debe levantar el dedo del lector");
 						continue;
 					}
 					
 					try {
-						result.onSuccess(ret);
+						result.onSuccess(code);
 					} catch (Exception e) {
-						
+						logger.log(Level.SEVERE,e.getMessage(),e);
 					}
 					return;
 					
-				} else if (ret == CamabioUtils.ERR_FAIL) {
+				} else if (rsp.ret == CamabioUtils.ERR_FAIL) {
+		
+					int code = CamabioUtils.getDataIn4ByteInt(rsp.data);
 					
-					byte[] d = CamabioUtils.getData(data);
-					ret = CamabioUtils.getDataIn4ByteInt(d);
-					
-					if (ret == CamabioUtils.ERR_TIME_OUT || ret == CamabioUtils.ERR_ALL_TMPL_EMPTY || ret == CamabioUtils.ERR_BAD_CUALITY) {
+					if (code == CamabioUtils.ERR_TIME_OUT || 
+						code == CamabioUtils.ERR_ALL_TMPL_EMPTY || 
+						code == CamabioUtils.ERR_BAD_CUALITY) {
 						try {
-							result.onFailure(ret);
+							result.onFailure(code);
 						} catch (Exception e) {
-							
+							logger.log(Level.SEVERE,e.getMessage(),e);
 						}
 						return;
 					}
 					
-					if (ret == CamabioUtils.ERR_IDENTIFY) {
+					if (code == CamabioUtils.ERR_IDENTIFY) {
 						logger.info("No se pudo encontrar la huella dentro de la base");
 						try {
-							result.onFailure();
+							result.onNotFound();
 						} catch (Exception e) {
-							
+							logger.log(Level.SEVERE,e.getMessage(),e);
 						}
 						return;
 					}
 					
-					if (ret == CamabioUtils.ERR_FP_CANCEL) {
+					if (code == CamabioUtils.ERR_FP_CANCEL) {
 						try {
-							result.onFailure(CamabioUtils.ERR_FP_CANCEL);
+							result.onCancel();
 						} catch (Exception e) {
-							
+							logger.log(Level.SEVERE,e.getMessage(),e);
 						}
 						return;
 					}
@@ -111,7 +122,7 @@ public class Identify implements Cmd {
 			}
 			
 			
-		} catch (SerialException | CmdException | CamabioException | ProcessingException e) {
+		} catch (SerialException | CmdException | ProcessingException e) {
 			throw new CmdException(e);
 		}
 	}

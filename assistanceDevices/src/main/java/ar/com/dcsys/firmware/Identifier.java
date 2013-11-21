@@ -1,18 +1,16 @@
 package ar.com.dcsys.firmware;
 
-import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
-import ar.com.dcsys.data.person.Person;
-import ar.com.dcsys.data.person.PersonDAO;
-import ar.com.dcsys.exceptions.PersonException;
-import ar.com.dcsys.firmware.camabio.CamabioUtils;
-import ar.com.dcsys.firmware.cmd.Cmd;
 import ar.com.dcsys.firmware.cmd.CmdException;
-import ar.com.dcsys.firmware.cmd.CmdResult;
+import ar.com.dcsys.firmware.cmd.FpCancel;
+import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
+import ar.com.dcsys.firmware.cmd.Identify;
+import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
+import ar.com.dcsys.firmware.database.Database;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.sound.Player;
 
@@ -20,9 +18,9 @@ public class Identifier implements Runnable {
 
 	private final Logger logger;
 	private final SerialDevice sd;
-	private final Cmd identify;
-	private final Cmd cancel;
-	private final PersonDAO personDAO;
+	private final Identify identify;
+	private final FpCancel cancel;
+	private final Database database;
 	private final Player player;
 
 	private final String soundOk = "/ok.wav";
@@ -31,12 +29,12 @@ public class Identifier implements Runnable {
 	private volatile boolean exit = false;
 	
 	@Inject
-	public Identifier(Logger logger, SerialDevice sd, @Named("identify") Cmd identify, @Named("fpCancel") Cmd cancel, @Named("personHsqlDAO") PersonDAO personDAO, Player player) {
+	public Identifier(Logger logger, SerialDevice sd, Identify identify, FpCancel cancel, Database database, Player player) {
 		this.logger = logger;
 		this.sd = sd;
 		this.identify = identify;
 		this.cancel = cancel;
-		this.personDAO = personDAO;
+		this.database = database;
 		this.player = player;
 	}
 	
@@ -47,111 +45,61 @@ public class Identifier implements Runnable {
 		while (!exit) {
 
 			try {
-				identify.execute(sd, new CmdResult() {
+				identify.execute(sd, new IdentifyResult() {
 					
 					@Override
-					public void onSuccess(byte[] data) {
-						logger.info("Datos : " + Utils.getHex(data));
-					}
-					
-					@Override
-					public void onSuccess(int i) {
-						logger.info("Huella identificada : " + String.valueOf(i));
+					public void onSuccess(int fpNumber) {
+						logger.info("Huella identificada : " + String.valueOf(fpNumber));
 						try {
-							player.play(soundOk);
+						    player.play(soundOk);
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
-						
-			    		try {
-							List<Person> persons = personDAO.findAll();
-				    		for (Person p2 : persons) {
-				    			System.out.println(p2.getId());
-				    		}
-						} catch (PersonException e) {
-							e.printStackTrace();
-						}						
-						
-						
 					}
 					
 					@Override
-					public void onSuccess() {
-						// nunca es llamado
-					}
-					
-					@Override
-					public void onFailure() {
-						logger.info("No se pudo identificar la huella");
+					public void onNotFound() {
 						try {
-							player.play(soundError);
-						} catch (Exception e) {
-							e.printStackTrace();
+						    player.play(soundError);
+						} catch (Exception e1) {
+							e1.printStackTrace();
 						}
-						
 					}
 					
 					@Override
-					public void onFailure(int code) {
-						logger.info("Error " + String.valueOf(code)) ;
+					public void onFailure(int errorCode) {
 						try {
-							player.play(soundError);
-						} catch (Exception e) {
-							e.printStackTrace();
+						    player.play(soundError);
+						} catch (Exception e1) {
+							e1.printStackTrace();
 						}
-						
-						switch (code) {
-							case CamabioUtils.ERR_FP_CANCEL:
-								logger.info("Comando cancelado");
-								exit = true;
-								break;
-							case CamabioUtils.ERR_BAD_CUALITY:
-								logger.info("Mala calidad de la imagen!!");
-								break;
-							case CamabioUtils.ERR_ALL_TMPL_EMPTY:
-								logger.info("No existe ninguna huella enrolada");
-								break;
-							case CamabioUtils.ERR_TIME_OUT:
-								logger.info("Timeout");
-								break;
+					}
+					
+					@Override
+					public void onCancel() {
+						try {
+						    player.play(soundOk);
+						} catch (Exception e1) {
+							e1.printStackTrace();
 						}
 					}
 				});
-	    		
+				
 			} catch (CmdException e) {
-				e.printStackTrace();
-			}		
-		
+				logger.log(Level.SEVERE,e.getMessage(),e);
+			}
 		}
+			
 	}
 	
 	public void terminate() {
 		try {
-			cancel.execute(sd, new CmdResult() {
-				@Override
-				public void onSuccess(byte[] data) {
-					logger.info("Cancel ok");
-				}
-				
-				@Override
-				public void onSuccess(int i) {
-					logger.info("Cancel ok");
-				}
+			cancel.execute(sd, new FpCancelResult() {
 				
 				@Override
 				public void onSuccess() {
-					logger.info("Cancel ok");
-				}
-				
-				@Override
-				public void onFailure(int code) {
-					logger.info("Cancel Failure");
-				}
-				
-				@Override
-				public void onFailure() {
-					logger.info("Cancel Failure");
-				}
+					//ok
+				};
 			});
 		} catch (CmdException e) {
 			e.printStackTrace();

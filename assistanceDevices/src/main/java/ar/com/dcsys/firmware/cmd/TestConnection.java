@@ -1,33 +1,56 @@
 package ar.com.dcsys.firmware.cmd;
 
-import ar.com.dcsys.firmware.Utils;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.inject.Inject;
+
+import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
-public class TestConnection implements Cmd {
+public class TestConnection {
 
-	@Override
-	public void execute(SerialDevice serialPort, CmdResult result) throws CmdException {
+	public interface TestConnectionResult {
+		public void onSuccess();
+		public void onFailure();
+	}
+
+	private final Logger logger;
+	
+	@Inject
+	public TestConnection(Logger logger) {
+		this.logger = logger;
+	}
+	
+	private void checkPreconditions(int rcm, CamabioResponse rsp) throws CmdException {
+		if (rsp.prefix != CamabioUtils.RSP) {
+			throw new CmdException("Prefijo inválido : " + rsp.prefix);
+		}
+		
+		if (rsp.rcm != rcm) {
+			throw new CmdException("RCM != TestConnection");
+		}
+	}	
+	
+	public void execute(SerialDevice serialPort, TestConnectionResult result) throws CmdException {
 		
 		try {
 			byte[] cmd = CamabioUtils.testConnection();
-			System.out.println(Utils.getHex(cmd));
+			int rcm = CamabioUtils.getCmd(cmd);
 			serialPort.writeBytes(cmd);
 			
 			byte[] data = SerialUtils.readPackage(serialPort);
+			CamabioResponse rsp = CamabioUtils.getResponse(data);
+			checkPreconditions(rcm, rsp);
 			
-			int id = CamabioUtils.getId(data);
-			if (id == 0x55aa) {
-				CamabioUtils.printPacket(data);
-				result.onSuccess();
-			} else {
-				result.onFailure();
-			}
+			result.onSuccess();
 			
 		} catch (SerialException | ProcessingException e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE,e.getMessage(),e);
+			throw new CmdException(e);
 		}
 		
 	}

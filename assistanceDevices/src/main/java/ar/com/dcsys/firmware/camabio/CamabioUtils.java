@@ -6,6 +6,11 @@ import ar.com.dcsys.firmware.Utils;
 import ar.com.dcsys.firmware.cmd.ProcessingException;
 
 public class CamabioUtils {
+	
+	
+	public static final String ALGORITHM = "Camabio";
+	public static final String CODIFICATION = "none";
+	
 
 	public static final int CMD = 0xAA55;
 	public static final int CMD_DATA = 0xA55A;
@@ -473,14 +478,24 @@ public class CamabioUtils {
 	}
 
 	
+	public static CamabioResponse getResponse(byte[] data) throws ProcessingException {
+		CamabioResponse rsp = new CamabioResponse();
+		rsp.prefix = getId(data);
+		rsp.rcm = getCmd(data);
+		rsp.len = getLength(data);
+		rsp.data = getData(data);
+		return rsp;
+		
+	}
 	
-	
-	
-	public static int getDataIn4ByteInt(byte[] data) throws CamabioException {
-		if (data.length != 4) {
-			throw new CamabioException("longitud erronea");
-		}
+	public static int getDataIn4ByteInt(byte[] data) {
 		int result = (data[0] & 0xff) + ((data[1] & 0xff) << 8) + ((data[2] & 0xff) << 16) + ((data[3] & 0xff) << 24);
 		return result;
-	}	
+	}
+	
+	public static int getDataIn2ByteInt(byte[] data) {
+		int result = (data[0] & 0xff) + ((data[1] & 0xff) << 8);
+		return result;
+	}		
+	
 }
