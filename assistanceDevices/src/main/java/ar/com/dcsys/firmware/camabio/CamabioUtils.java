@@ -111,6 +111,14 @@ public class CamabioUtils {
 		cmd[3] = (byte)((command & 0xff00) >> 8);
 	}
 	
+	private static void writeCommandData(byte[] cmd, int command) {
+		cmd[0] = (byte)0xA5;
+		cmd[1] = (byte)0x5A;
+		
+		cmd[2] = (byte)(command & 0xff);
+		cmd[3] = (byte)((command & 0xff00) >> 8);
+	}	
+	
 	private static void writeLength(byte[] cmd, int length) {
 		cmd[4] = (byte)(length & 0xff);
 		cmd[5] = (byte)((length & 0xff00) >> 8);
@@ -181,6 +189,34 @@ public class CamabioUtils {
 		
  		return cmd;
 	}
+
+	
+	/**
+	 * Template del comando para los que llevan como parametro el id del template y datos adicionales por ejemplo el template mismo.
+	 * @param command
+	 * @param template
+	 * @return
+	 */
+	public static byte[] cmdWithTemplateIdAndData(int command, int template, byte[] data) {
+		
+		byte[] cmd = new byte[24];
+		zeroBuffer(cmd);
+		
+		writeCommandData(cmd, command);
+		writeLength(cmd, data.length + 2);
+		
+		cmd[6] = (byte)(template & 0xff);
+		cmd[7] = (byte)((template & 0xff00) >> 8);
+
+		// copio los datos.
+		for (int i = 0; i < data.length; i++) {
+			cmd[8 + i] = data[i];
+		}
+		
+		calcChksum(cmd);
+		
+ 		return cmd;
+	}	
 	
 	
 	/**
@@ -269,6 +305,16 @@ public class CamabioUtils {
 	public static byte[] readTemplate(int template) {
 		return cmdWithTemplateId(CMD_READ_TEMPLATE, template);
 	}	
+	
+	
+	public static byte[] writeTemplate(int size) {
+		return cmdWith2ByteParam(CMD_WRITE_TEMPLATE, size);
+	}
+	
+	public static byte[] writeTemplateData(int number, byte[] template) {
+		return cmdWithTemplateIdAndData(CMD_WRITE_TEMPLATE, number, template);
+	}
+	
 	
 	public static byte[] setSecurityLevel(int level) {
 		return cmdWith2ByteParam(CMD_SET_SECURITY_LEVEL, level);

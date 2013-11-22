@@ -13,6 +13,11 @@ import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollAndStoreInRam;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollResult;
+import ar.com.dcsys.firmware.cmd.template.GetEmptyId;
+import ar.com.dcsys.firmware.cmd.template.GetEmptyId.GetEmptyIdResult;
+import ar.com.dcsys.firmware.cmd.template.TemplateData;
+import ar.com.dcsys.firmware.cmd.template.WriteTemplate;
+import ar.com.dcsys.firmware.cmd.template.WriteTemplate.WriteTemplateResult;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.security.Finger;
 import ar.com.dcsys.security.FingerprintCredentials;
@@ -22,16 +27,20 @@ public class Enroller implements Runnable, Cmd {
 	private final Logger logger;
 	private final SerialDevice sd;
 	private final EnrollAndStoreInRam enroll;
+	private final GetEmptyId getEmptyId;
+	private final WriteTemplate writeTemplate;
 	private final FpCancel cancel;
 	private final Semaphore terminate = new Semaphore(0);
 	
 	
 	@Inject
-	public Enroller(Logger logger, SerialDevice sd, EnrollAndStoreInRam enroll, FpCancel cancel) {
+	public Enroller(Logger logger, SerialDevice sd, EnrollAndStoreInRam enroll, GetEmptyId getEmptyId, WriteTemplate writeTemplate, FpCancel cancel) {
 		this.logger = logger;
 		this.sd = sd;
 		this.enroll = enroll;
 		this.cancel = cancel;
+		this.getEmptyId = getEmptyId;
+		this.writeTemplate = writeTemplate;
 	}
 	
 	@Override
@@ -59,19 +68,83 @@ public class Enroller implements Runnable, Cmd {
 				
 				@Override
 				public void onTimeout() {
-					logger.info("Expir� el tiempo de espera para tomar una huella");
+					logger.info("Expiró el tiempo de espera para tomar una huella");
 				}
 				
 				@Override
-				public void onSuccess(FingerprintCredentials fp) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("Huella exitósamente obtenida\n");
-					sb.append("Algoritmo ").append(fp.getAlgorithm()).append("\n");
-					sb.append("Codificación ").append(fp.getCodification()).append("\n");
-					sb.append("Template : ").append(Utils.getHex(fp.getTemplate())).append("\n");
-					sb.append("Tama�o del template : ").append(fp.getTemplate().length).append("\n");
+				public void onSuccess(final FingerprintCredentials fp) {
 					
-					logger.info(sb.toString());
+					try {
+						getEmptyId.execute(sd, new GetEmptyIdResult() {
+							
+							@Override
+							public void onSuccess(final int tmplNumber) {
+								
+								TemplateData tdata = new TemplateData();
+								tdata.setFingerprint(fp);
+								tdata.setNumber(tmplNumber);
+								
+								try {
+									writeTemplate.execute(sd, new WriteTemplateResult() {
+										@Override
+										public void onSuccess(int tmplNumber2) {
+											
+											if (tmplNumber2 != tmplNumber) {
+												logger.log(Level.SEVERE,"SE ESCRIBIÓ LA HUELLA EN EL NÚMERO INCORRECTO!!! NUMERO A ESCRIBIR : " + tmplNumber + " NUMERO ESCRITO : " + tmplNumber2);
+												
+												// aca ver si genero una excepción y borro la huella del lugar escrito.
+												
+											}
+											
+											// aca genero el registro en la base de datos.
+											logger.info("SE GENERA EL REGISTRO DENTRO DE LA BASE :\n HUELLA : " + Utils.getHex(fp.getTemplate()) + 
+													    " NUMERO DE HUELLA : " + tmplNumber2);
+											
+										}
+										@Override
+										public void onFailure(int errorCode) {
+											logger.info("Error código : " + errorCode);
+										}
+										@Override
+										public void onCancel() {
+											logger.info("Comando de enrolamiento cancelado");
+										}
+										@Override
+										public void onInvalidTemplateSize(int size) {
+											logger.info("Tamaño de huella inválido : " + size);
+										}
+										@Override
+										public void onInvalidTemplateNumber(int number) {
+											logger.info("Número de huella inválido : " + number);
+										}
+									}, tdata);
+								
+								} catch (CmdException e) {
+									logger.log(Level.SEVERE,e.getMessage(),e);
+								}
+								
+							}
+							
+							@Override
+							public void onFailure(int errorCode) {
+								logger.info("Error código : " + errorCode);
+							}
+							
+							@Override
+							public void onEmptyNotExistent() {
+								logger.info("No existe ningún id libre para enrolar la huella");
+							}
+							
+							@Override
+							public void onCancel() {
+								logger.info("Comando de enrolamiento cancelado");
+							}
+						});
+					
+					} catch (CmdException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}
+
 				}
 				
 				@Override
