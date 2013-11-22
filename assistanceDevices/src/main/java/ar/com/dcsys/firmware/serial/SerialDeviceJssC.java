@@ -94,6 +94,7 @@ public class SerialDeviceJssC implements SerialDevice {
 	@Override
 	public void writeBytes(byte[] data) throws SerialException {
 		try {
+			logger.finest("escribiendo bytes : " + Utils.getHex(data));
 			serialPort.writeBytes(data);
 		} catch (SerialPortException e) {
 			throw new SerialException(e);

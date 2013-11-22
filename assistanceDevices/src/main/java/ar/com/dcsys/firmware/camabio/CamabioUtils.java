@@ -112,8 +112,8 @@ public class CamabioUtils {
 	}
 	
 	private static void writeCommandData(byte[] cmd, int command) {
-		cmd[0] = (byte)0xA5;
-		cmd[1] = (byte)0x5A;
+		cmd[0] = (byte)0x5A;
+		cmd[1] = (byte)0xA5;
 		
 		cmd[2] = (byte)(command & 0xff);
 		cmd[3] = (byte)((command & 0xff00) >> 8);
@@ -199,7 +199,11 @@ public class CamabioUtils {
 	 */
 	public static byte[] cmdWithTemplateIdAndData(int command, int template, byte[] data) {
 		
-		byte[] cmd = new byte[24];
+		final int headerSize = 6;
+		final int chksum = 2;
+		final int len = headerSize + 2 + data.length + chksum;
+		
+		byte[] cmd = new byte[len];
 		zeroBuffer(cmd);
 		
 		writeCommandData(cmd, command);

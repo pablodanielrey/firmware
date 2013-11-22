@@ -74,15 +74,22 @@ public class Enroller implements Runnable, Cmd {
 				@Override
 				public void onSuccess(final FingerprintCredentials fp) {
 					
+					logger.info("Huella leida del lector : " + Utils.getHex(fp.getTemplate()));
+					logger.info("Obteniendo id vacío");
+					
 					try {
 						getEmptyId.execute(sd, new GetEmptyIdResult() {
 							
 							@Override
 							public void onSuccess(final int tmplNumber) {
 								
+								logger.info("Id vacío obtenido : " + tmplNumber);
+								
 								TemplateData tdata = new TemplateData();
 								tdata.setFingerprint(fp);
 								tdata.setNumber(tmplNumber);
+
+								logger.info("Escribiendo template");
 								
 								try {
 									writeTemplate.execute(sd, new WriteTemplateResult() {

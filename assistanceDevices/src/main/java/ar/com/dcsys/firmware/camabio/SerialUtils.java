@@ -23,7 +23,7 @@ public class SerialUtils {
 
 		logger.finest("Recibido id : " + i);
 		
-		if (i == CamabioUtils.CMD || i == CamabioUtils.RSP) {
+		if (i == CamabioUtils.RSP) {
 			byte[] cmd = new byte[24];
 			byte[] data = serialPort.readBytes(22);
 			int inx = 2;
@@ -38,12 +38,28 @@ public class SerialUtils {
 			
 			return cmd;
 			
-		} else if (i == CamabioUtils.CMD_DATA || i == CamabioUtils.RSP_DATA) {
-			byte[] cmd = new byte[512];
-			byte[] data = serialPort.readBytes(510);
-			int inx = 2;
+		} else if (i == CamabioUtils.RSP_DATA) {
+			
+			byte[] ccmd = serialPort.readBytes(2);
+			byte[] len = serialPort.readBytes(2);
+			
+			int ilen = ((len[1] & 0xff) << 8) + (len[0] & 0xff);
+			
+			logger.finest(String.format("Longitud leida desde el paquete (%h,%h) : %d",len[0],len[1],ilen));
+			
+			
+			byte[] data = serialPort.readBytes(ilen + 2);
+
+			byte[] cmd = new byte[2 + 2 + 2 + ilen + 2];
+			
 			cmd[0] = id[0];
 			cmd[1] = id[1];
+			cmd[2] = ccmd[0];
+			cmd[3] = ccmd[1];
+			cmd[4] = len[0];
+			cmd[5] = len[1];
+			
+			int inx = 6;
 			for (byte b : data) {
 				cmd[inx] = b;
 				inx++;
@@ -52,9 +68,9 @@ public class SerialUtils {
 			logger.finest("recibido : " + Utils.getHex(cmd));
 			
 			return cmd;
+		} else {
+			throw new SerialException("recibido id : " + i);
 		}
-		
-		return null;
 	}
 		
 	/**
