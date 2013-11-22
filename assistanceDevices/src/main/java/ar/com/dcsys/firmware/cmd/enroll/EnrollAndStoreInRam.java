@@ -106,13 +106,28 @@ public class EnrollAndStoreInRam {
 					
 					int code = CamabioUtils.getDataIn2ByteInt(rsp.data);
 
-					// errores no fatales.
-					if (code == CamabioUtils.ERR_TIME_OUT ||
-						code == CamabioUtils.ERR_BAD_CUALITY) {
+					/////////// errores no fatales /////////////
+					
+					if (code == CamabioUtils.ERR_TIME_OUT) {
+						try {
+							result.onTimeout();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
 						continue;
 					}
 					
-						// error fatal.
+					if (code == CamabioUtils.ERR_BAD_CUALITY) {
+						try {
+							result.onBadQuality();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
+						continue;
+					}
+					
+					/////////////// errores fatales ////////////////
+					
 					if (code == CamabioUtils.ERR_GENERALIZE) {
 						try {
 							result.onFailure(code);
@@ -121,6 +136,8 @@ public class EnrollAndStoreInRam {
 						}
 						return;
 					}
+					
+					//////////////// cancel //////////////////
 					
 					if (code == CamabioUtils.ERR_FP_CANCEL) {
 						try {

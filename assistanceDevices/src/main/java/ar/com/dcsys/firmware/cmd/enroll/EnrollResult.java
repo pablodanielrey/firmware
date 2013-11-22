@@ -10,6 +10,9 @@ public interface EnrollResult {
 	
 	public void releaseFinger();
 	
+	public void onTimeout();
+	public void onBadQuality();
+	
 	public void onSuccess(FingerprintCredentials fp);
 	public void onFailure(int errorCode);
 	public void onCancel();

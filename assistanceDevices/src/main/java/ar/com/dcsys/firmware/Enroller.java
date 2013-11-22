@@ -51,12 +51,23 @@ public class Enroller implements Runnable, Cmd {
 				}
 				
 				@Override
+				public void onBadQuality() {
+					logger.info("Mala calidad de la imagen");
+				}
+				
+				@Override
+				public void onTimeout() {
+					logger.info("Expiró el tiempo de espera para tomar una huella");
+				}
+				
+				@Override
 				public void onSuccess(FingerprintCredentials fp) {
 					StringBuilder sb = new StringBuilder();
 					sb.append("Huella exitÃ³samente obtenida\n");
 					sb.append("Algoritmo ").append(fp.getAlgorithm()).append("\n");
 					sb.append("CodificaciÃ³n ").append(fp.getCodification()).append("\n");
-					sb.append("Template : ").append(Utils.getHex(fp.getTemplate()));
+					sb.append("Template : ").append(Utils.getHex(fp.getTemplate())).append("\n");
+					sb.append("Tamaño del template : ").append(fp.getTemplate().length).append("\n");
 					
 					logger.info(sb.toString());
 				}
