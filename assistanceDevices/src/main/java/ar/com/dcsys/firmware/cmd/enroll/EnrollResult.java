@@ -1,8 +1,9 @@
 package ar.com.dcsys.firmware.cmd.enroll;
 
-import ar.com.dcsys.security.FingerprintCredentials;
+import ar.com.dcsys.firmware.cmd.template.TemplateResult;
 
-public interface EnrollResult {
+
+public interface EnrollResult extends TemplateResult {
 	
 	public void needFirstSweep();
 	public void needSecondSweep();
@@ -12,8 +13,5 @@ public interface EnrollResult {
 	
 	public void onTimeout();
 	public void onBadQuality();
-	
-	public void onSuccess(FingerprintCredentials fp);
-	public void onFailure(int errorCode);
-	public void onCancel();
+
 }

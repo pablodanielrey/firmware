@@ -25,6 +25,7 @@ public class Enroller implements Runnable, Cmd {
 	private final FpCancel cancel;
 	private final Semaphore terminate = new Semaphore(0);
 	
+	
 	@Inject
 	public Enroller(Logger logger, SerialDevice sd, EnrollAndStoreInRam enroll, FpCancel cancel) {
 		this.logger = logger;
@@ -44,6 +45,7 @@ public class Enroller implements Runnable, Cmd {
 		};
 		
 		try {
+			
 			enroll.execute(sd, new EnrollResult() {
 				@Override
 				public void releaseFinger() {

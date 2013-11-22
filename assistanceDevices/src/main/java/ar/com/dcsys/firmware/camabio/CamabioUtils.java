@@ -117,6 +117,19 @@ public class CamabioUtils {
 	}
 	
 
+	
+	/**
+	 * calcula y chequea el checksum del paquete. y retorna ok si esta ok.
+	 * @param cmd
+	 * @return
+	 */
+	public static boolean checkChksum(byte[] cmd) {
+		byte[] sum = chksum(cmd);
+		int len = cmd.length;
+		return (sum[0] == cmd[len-2] && sum[1] == cmd[len-1]);
+	}
+	
+	
 	/**
 	 * Calcula el checksum del paquete de datos y lo retorna en su orden para insertar en el paquete.
 	 * @param cmd
@@ -126,7 +139,7 @@ public class CamabioUtils {
 		byte[] csm = new byte[2];
 		
 		long sum = 0;
-		int length = cmd.length;
+		int length = cmd.length - 2;			// los 2 ultimos bytes se ignoran (son los del chksum)
 		for (int i = 0; i < length; i++) {
 			sum = sum + (cmd[i] & 0xff);
 		}
@@ -525,6 +538,16 @@ public class CamabioUtils {
 		rsp.len = getLength(data);
 		rsp.ret = getRet(data);
 		rsp.data = getData(data);
+		
+		byte[] sum = chksum(data);
+		rsp.chksum = ((sum[1] & 0xff) << 8) + (sum[0] & 0xff);
+		
+		// verifico el chksum
+		int len = data.length;
+		if (sum[0] != data[len-2] || sum[1] != data[len-1]) {
+			throw new ProcessingException(String.format("chksum = %h ==> %h,%h != %h,%h",rsp.chksum, sum[0], sum[1], data[len-2], data[len-1]));
+		}
+		
 		return rsp;
 		
 	}

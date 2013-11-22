@@ -1,4 +1,4 @@
-package ar.com.dcsys.firmware.cmd.enroll;
+package ar.com.dcsys.firmware.cmd.template;
 
 import java.util.Arrays;
 import java.util.logging.Level;
@@ -7,22 +7,31 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.Utils;
-
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.ProcessingException;
+import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 import ar.com.dcsys.security.FingerprintCredentials;
 
-public class GetEnrollData {
+public class ReadTemplate {
+	
+	public interface ReadTemplateResult extends TemplateResult {
+		
+		public void onInvalidTemplateNumber(int number);
+		public void onEmptyTemplate(int number);
+		
+	}
+	
 	
 	private final Logger logger;
 	
+	
 	@Inject
-	public GetEnrollData(Logger logger) {
+	public ReadTemplate(Logger logger) {
 		this.logger = logger;
 	}
 	
@@ -41,7 +50,7 @@ public class GetEnrollData {
 		fp.setCodification(CamabioUtils.CODIFICATION);
 		fp.setFinger(edata.getFinger());
 		
-		byte[] templ = Arrays.copyOfRange(data, 0, len);
+		byte[] templ = Arrays.copyOfRange(data, 2, len);
 		fp.setTemplate(templ);
 		
 		return fp;
@@ -52,15 +61,18 @@ public class GetEnrollData {
 			throw new CmdException("Prefijo inválido : " + rsp.prefix);
 		}
 		
-		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_GET_ENROLL_DATA) {
-			throw new CmdException("RCM != GetEnrollData");
+		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_READ_TEMPLATE) {
+			throw new CmdException("RCM != ReadTemplate");
 		}
 	}
 	
 	
-	public void execute(SerialDevice sd, EnrollResult result, EnrollData edata) throws CmdException {
+	public void execute(SerialDevice sd, ReadTemplateResult result, EnrollData edata) throws CmdException {
+		
+		final int number = 1;
+		
 		try {
-			byte[] cmd = CamabioUtils.getEnrollData();
+			byte[] cmd = CamabioUtils.readTemplate(number);
 			sd.writeBytes(cmd);
 
 			int tmplSize = 0;
@@ -112,9 +124,27 @@ public class GetEnrollData {
 						
 				} else if (rsp.ret == CamabioUtils.ERR_FAIL) {
 					
-					int error = CamabioUtils.getDataIn4ByteInt(rsp.data);
+					int code = CamabioUtils.getDataIn2ByteInt(rsp.data);
+					if (code == CamabioUtils.ERR_INVALID_TMPL_NO) {
+						try {
+							result.onInvalidTemplateNumber(number);
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
+						return;
+					}
+				
+					if (code == CamabioUtils.ERR_TMPL_EMPTY) {
+						try {
+							result.onEmptyTemplate(number);
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
+						return;
+					}
+					
 					try {
-						result.onFailure(error);
+						result.onFailure(code);
 					} catch (Exception e) {
 						logger.log(Level.SEVERE,e.getMessage(),e);
 					}
