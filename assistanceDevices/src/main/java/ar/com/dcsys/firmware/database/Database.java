@@ -15,7 +15,9 @@ import ar.com.dcsys.exceptions.AttLogException;
 import ar.com.dcsys.exceptions.DeviceException;
 import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
+import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.exceptions.DatabaseException;
+import ar.com.dcsys.security.FingerprintCredentials;
 
 public class Database {
 
@@ -37,6 +39,95 @@ public class Database {
 		this.fingerprintDAO = fingerprintDAO;
 		this.fingerprintReaderMappingDAO = fingerprintReaderMappingDAO;
 	}
+	
+
+	
+	/**
+	 * Enrola una template dentro de la base de datos. si el usuario no existe entonces lo crea.
+	 *
+	 * @param person
+	 * @param templateData
+	 * @throws DatabaseException
+	 * @throws PersonException
+	 * @throws FingerprintException
+	 */
+	public synchronized void enroll(Person person, TemplateData templateData) throws DatabaseException, PersonException, FingerprintException {
+
+		Person actualPerson = findOrCreatePerson(person);
+		
+		FingerprintCredentials fpc = templateData.getFingerprint();
+		Fingerprint fp = new Fingerprint();
+		fp.setFingerprint(fpc);
+		fp.setPerson(actualPerson);
+		String fpId = fingerprintDAO.persist(fp);
+
+		
+		int number = templateData.getNumber();
+		FingerprintReaderMapping fprm = new FingerprintReaderMapping();
+		fprm.setFingerprintId(fpId);
+		fprm.setId(Long.valueOf(number));
+		fingerprintReaderMappingDAO.persist(fprm);
+		
+	}
+	
+	
+	/**
+	 * Genera un log en la base correspondiente al usuario dueño de la huella identificada por el lector con el número = template.
+	 * @param template
+	 * @throws DatabaseException
+	 */
+	public synchronized void generateLog(int template) throws DatabaseException, FingerprintException {
+
+		try {
+			Device device = findCurrentDevice();
+			Fingerprint fp = findFingerprintByTemplateNumber(Long.valueOf(template));
+			Person person = fp.getPerson();
+			
+			AttLog log = new AttLog();
+			log.setDate(new Date());
+			log.setPerson(person);
+			log.setDevice(device);
+			log.setVerifyMode(1l);		// compatible con ZkSoftware :  0 == Clave, 1 == Huella, 2 == Tarjeta
+			attLogDAO.persist(log);
+			
+		} catch (DeviceException | AttLogException e) {
+			throw new DatabaseException(e);
+		}
+			
+	}	
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * Busca la persona y si no existe la crea dentro de la base.
+	 * @param person
+	 * @return
+	 * @throws PersonException
+	 */
+	private Person findOrCreatePerson(Person person) throws PersonException {
+		
+		String id = person.getId();
+		if (id != null) {
+			return person;
+		}
+		
+		String dni = person.getDni();
+		if (dni == null) {
+			throw new PersonException("person.dni == null");
+		}
+		
+		Person actualPerson = personDAO.findByDni(dni);
+		if (actualPerson == null) {
+			id = personDAO.persist(person);
+			actualPerson = personDAO.findById(id);
+		}
+		
+		return actualPerson;
+	}	
 	
 	
 	/**
@@ -86,56 +177,5 @@ public class Database {
 		return fp;
 	}
 	
-	
-	
-	
-	
-	/**
-	 * Genera un log en la base correspondiente al usuario dueño de la huella identificada por el lector con el número = template.
-	 * @param template
-	 * @throws DatabaseException
-	 */
-	public synchronized void generateLog(int template) throws DatabaseException {
-
-		try {
-			Device device = findCurrentDevice();
-			Person person = null;
-			
-			AttLog log = new AttLog();
-			log.setDate(new Date());
-			log.setPerson(person);
-			log.setDevice(device);
-			log.setVerifyMode(1l);		// compatible con ZkSoftware :  0 == Clave, 1 == Huella, 2 == Tarjeta
-			attLogDAO.persist(log);
-			
-		} catch (DeviceException | AttLogException e) {
-			throw new DatabaseException(e);
-		}
-			
-	}
-
-	/**
-	 * Genera un log en la base correspondiente al usuario identificado por el dni del parámetro.
-	 * @param template
-	 * @throws DatabaseException
-	 */
-	public synchronized void generateLog(String dni) throws DatabaseException {
-
-		try {
-			Device device = findCurrentDevice();
-			Person person = personDAO.findByDni(dni);
-			
-			AttLog log = new AttLog();
-			log.setDate(new Date());
-			log.setPerson(person);
-			log.setDevice(device);
-			log.setVerifyMode(0l);		// compatible con ZkSoftware :  0 == Clave, 1 == Huella, 2 == Tarjeta
-			attLogDAO.persist(log);
-			
-		} catch (DeviceException | PersonException | AttLogException e) {
-			throw new DatabaseException(e);
-		}
-			
-	}	
 	
 }

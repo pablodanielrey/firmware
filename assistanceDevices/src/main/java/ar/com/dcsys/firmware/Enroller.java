@@ -6,6 +6,10 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
+import ar.com.dcsys.data.person.Person;
+import ar.com.dcsys.data.person.PersonDAO;
+import ar.com.dcsys.exceptions.FingerprintException;
+import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.cmd.Cmd;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.FpCancel;
@@ -18,6 +22,8 @@ import ar.com.dcsys.firmware.cmd.template.GetEmptyId.GetEmptyIdResult;
 import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.cmd.template.WriteTemplate;
 import ar.com.dcsys.firmware.cmd.template.WriteTemplate.WriteTemplateResult;
+import ar.com.dcsys.firmware.database.Database;
+import ar.com.dcsys.firmware.exceptions.DatabaseException;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.security.Finger;
 import ar.com.dcsys.security.FingerprintCredentials;
@@ -30,26 +36,48 @@ public class Enroller implements Runnable, Cmd {
 	private final GetEmptyId getEmptyId;
 	private final WriteTemplate writeTemplate;
 	private final FpCancel cancel;
+	
+	private final Database database;
+	
 	private final Semaphore terminate = new Semaphore(0);
 	
 	
 	@Inject
-	public Enroller(Logger logger, SerialDevice sd, EnrollAndStoreInRam enroll, GetEmptyId getEmptyId, WriteTemplate writeTemplate, FpCancel cancel) {
+	public Enroller(Logger logger, SerialDevice sd, 
+					EnrollAndStoreInRam enroll,GetEmptyId getEmptyId, WriteTemplate writeTemplate, FpCancel cancel, 
+					Database database) {
 		this.logger = logger;
 		this.sd = sd;
 		this.enroll = enroll;
 		this.cancel = cancel;
 		this.getEmptyId = getEmptyId;
 		this.writeTemplate = writeTemplate;
+		
+		this.database = database;
 	}
+	
+	
+	private void enrollUserInDataBase(Person person, TemplateData templateData) throws DatabaseException, PersonException, FingerprintException {
+		
+	}
+	
+	
 	
 	@Override
 	public void run() {
 		
-		EnrollData edata = new EnrollData() {
+		final EnrollData edata = new EnrollData() {
 			@Override
 			public Finger getFinger() {
 				return Finger.LEFT_INDEX;
+			}
+			@Override
+			public Person getPerson() {
+				Person person = new Person();
+				person.setName("Pablo Daniel");
+				person.setLastName("Rey");
+				person.setDni("27294557");
+				return person;
 			}
 		};
 		
@@ -75,7 +103,7 @@ public class Enroller implements Runnable, Cmd {
 				public void onSuccess(final FingerprintCredentials fp) {
 					
 					logger.info("Huella leida del lector : " + Utils.getHex(fp.getTemplate()));
-					logger.info("Obteniendo id vac�o");
+					logger.info("Obteniendo id vac�o");
 					
 					try {
 						getEmptyId.execute(sd, new GetEmptyIdResult() {
@@ -83,9 +111,9 @@ public class Enroller implements Runnable, Cmd {
 							@Override
 							public void onSuccess(final int tmplNumber) {
 								
-								logger.info("Id vac�o obtenido : " + tmplNumber);
+								logger.info("Id vac�o obtenido : " + tmplNumber);
 								
-								TemplateData tdata = new TemplateData();
+								final TemplateData tdata = new TemplateData();
 								tdata.setFingerprint(fp);
 								tdata.setNumber(tmplNumber);
 
@@ -103,27 +131,36 @@ public class Enroller implements Runnable, Cmd {
 												
 											}
 											
-											// aca genero el registro en la base de datos.
-											logger.info("SE GENERA EL REGISTRO DENTRO DE LA BASE :\n HUELLA : " + Utils.getHex(fp.getTemplate()) + 
-													    " NUMERO DE HUELLA : " + tmplNumber2);
-											
+											Person person = edata.getPerson();
+											try {
+												database.enroll(person, tdata);
+												
+											} catch (DatabaseException | PersonException | FingerprintException e) {
+												logger.log(Level.SEVERE,e.getMessage(),e);
+												// aca debería borrar la huella del lector!!!
+											}												
 										}
+										
 										@Override
 										public void onFailure(int errorCode) {
 											logger.info("Error código : " + errorCode);
 										}
+										
 										@Override
 										public void onCancel() {
 											logger.info("Comando de enrolamiento cancelado");
 										}
+										
 										@Override
 										public void onInvalidTemplateSize(int size) {
 											logger.info("Tamaño de huella inválido : " + size);
 										}
+										
 										@Override
 										public void onInvalidTemplateNumber(int number) {
 											logger.info("Número de huella inválido : " + number);
 										}
+										
 									}, tdata);
 								
 								} catch (CmdException e) {

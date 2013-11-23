@@ -24,5 +24,5 @@ public class FingerprintReaderMapping implements Serializable {
 	public void setFingerprintId(String fingerprintId) {
 		this.fingerprintId = fingerprintId;
 	}
-	
+
 }
