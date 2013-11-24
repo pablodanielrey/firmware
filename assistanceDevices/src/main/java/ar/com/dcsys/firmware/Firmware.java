@@ -1,11 +1,14 @@
 package ar.com.dcsys.firmware;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import ar.com.dcsys.firmware.cmd.CmdException;
+import ar.com.dcsys.firmware.cmd.TestConnection;
+import ar.com.dcsys.firmware.cmd.TestConnection.TestConnectionResult;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
@@ -17,19 +20,22 @@ public class Firmware {
 	private final SerialDevice sd;
 	private final Identifier identifier;
 	private final Enroller enroller;
+	private final TestConnection test;
 	private final KeyboardReader reader;
 	
 	@Inject
-	public Firmware(SerialDevice sd, Identifier identifier, Enroller enroller) {
+	public Firmware(SerialDevice sd, Identifier identifier, Enroller enroller, TestConnection test) {
 		logger.info("Inicializando Firmware");
 		
 		this.sd = sd;
 		this.identifier = identifier;
 		this.enroller = enroller;
+		this.test = test;
 		this.reader = new KeyboardReader();
 	}
 	
-	public void run() {
+	public void run() throws CmdException {
+		
 		logger.info("Ejecutando Firmware");
 
     	try {
@@ -45,6 +51,19 @@ public class Firmware {
 			}
     		
     		try {
+    			
+    			test.execute(sd, new TestConnectionResult() {
+					@Override
+					public void onSuccess() {
+						enroller.run();
+					}
+					
+					@Override
+					public void onFailure() {
+						logger.log(Level.SEVERE,"Falla testeando la conexión con el lector de huellas");
+					}
+				});
+    			
     			
     			/*
 	    		Thread tidentifier = new Thread(identifier);
@@ -71,7 +90,7 @@ public class Firmware {
 	    		}
 	    		*/
     			
-    			enroller.run();
+    			
     			
 	    		
     		} finally {

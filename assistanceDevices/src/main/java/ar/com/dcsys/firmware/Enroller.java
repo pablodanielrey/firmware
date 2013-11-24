@@ -41,6 +41,7 @@ public class Enroller implements Runnable, Cmd {
 	private final Semaphore terminate = new Semaphore(0);
 	
 	
+	
 	@Inject
 	public Enroller(SerialDevice sd, 
 					EnrollAndStoreInRam enroll,GetEmptyId getEmptyId, WriteTemplate writeTemplate, FpCancel cancel, 

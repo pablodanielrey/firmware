@@ -1,6 +1,6 @@
 package ar.com.dcsys.firmware.cmd;
 
-public class CmdException extends Throwable {
+public class CmdException extends Exception {
 	private static final long serialVersionUID = 1L;
 
 	public CmdException(Throwable e) {
