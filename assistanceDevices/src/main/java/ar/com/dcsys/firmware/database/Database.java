@@ -47,7 +47,7 @@ public class Database {
 	}
 	
 
-	
+	/*
     public static void main( String[] args ) {
     	Weld weld = new Weld();
     	WeldContainer container = weld.initialize();
@@ -61,18 +61,7 @@ public class Database {
     	}
     	
     }
-	
-	
-    private void createTables() {
-		fingerprintDAO.init();
-    }
-	
-	
-	
-	
-	
-	
-	
+	*/
 	
 	
 	/**
