@@ -3,6 +3,11 @@ package ar.com.dcsys.firmware.database;
 import java.util.Date;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
+
 import ar.com.dcsys.data.device.Device;
 import ar.com.dcsys.data.device.DeviceDAO;
 import ar.com.dcsys.data.fingerprint.Fingerprint;
@@ -15,6 +20,7 @@ import ar.com.dcsys.exceptions.AttLogException;
 import ar.com.dcsys.exceptions.DeviceException;
 import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
+import ar.com.dcsys.firmware.Firmware;
 import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.exceptions.DatabaseException;
 import ar.com.dcsys.security.FingerprintCredentials;
@@ -27,7 +33,7 @@ public class Database {
 	private final FingerprintDAO fingerprintDAO;
 	private final FingerprintReaderMappingDAO fingerprintReaderMappingDAO;
 	
-
+	@Inject
 	public Database(PersonDAO personDAO,
 					DeviceDAO deviceDAO,
 					AttLogDAO attLogDAO,
@@ -41,6 +47,33 @@ public class Database {
 	}
 	
 
+	
+    public static void main( String[] args ) {
+    	Weld weld = new Weld();
+    	WeldContainer container = weld.initialize();
+    	try {
+
+    		Database database = container.instance().select(Database.class).get();
+    		database.createTables();
+    		
+    	} finally {
+    		weld.shutdown();
+    	}
+    	
+    }
+	
+	
+    private void createTables() {
+		fingerprintDAO.init();
+    }
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	/**
 	 * Enrola una template dentro de la base de datos. si el usuario no existe entonces lo crea.
@@ -93,7 +126,7 @@ public class Database {
 		} catch (DeviceException | AttLogException e) {
 			throw new DatabaseException(e);
 		}
-			
+
 	}	
 	
 	
