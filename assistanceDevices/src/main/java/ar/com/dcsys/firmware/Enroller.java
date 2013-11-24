@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 
 import ar.com.dcsys.data.person.Person;
-import ar.com.dcsys.data.person.PersonDAO;
 import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.cmd.Cmd;
@@ -30,7 +29,7 @@ import ar.com.dcsys.security.FingerprintCredentials;
 
 public class Enroller implements Runnable, Cmd {
 
-	private final Logger logger;
+	private static final Logger logger = Logger.getLogger(Enroller.class.getName());
 	private final SerialDevice sd;
 	private final EnrollAndStoreInRam enroll;
 	private final GetEmptyId getEmptyId;
@@ -43,10 +42,9 @@ public class Enroller implements Runnable, Cmd {
 	
 	
 	@Inject
-	public Enroller(Logger logger, SerialDevice sd, 
+	public Enroller(SerialDevice sd, 
 					EnrollAndStoreInRam enroll,GetEmptyId getEmptyId, WriteTemplate writeTemplate, FpCancel cancel, 
 					Database database) {
-		this.logger = logger;
 		this.sd = sd;
 		this.enroll = enroll;
 		this.cancel = cancel;
@@ -55,13 +53,7 @@ public class Enroller implements Runnable, Cmd {
 		
 		this.database = database;
 	}
-	
-	
-	private void enrollUserInDataBase(Person person, TemplateData templateData) throws DatabaseException, PersonException, FingerprintException {
-		
-	}
-	
-	
+
 	
 	@Override
 	public void run() {

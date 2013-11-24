@@ -36,6 +36,14 @@ public class Firmware {
     		if (!sd.open()) {
     			return;
     		}
+
+    		// le doy un tiempito al serie a que se estabilice.
+    		try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    		
     		try {
     			
     			/*
