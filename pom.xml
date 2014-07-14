@@ -15,6 +15,10 @@
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <weld.version>2.2.3.Final</weld.version>
+    <shiro.version>1.2.2</shiro.version>
+    <java.version>1.7</java.version>
+    <jssc.version>2.8.0</jssc.version>
   </properties>  
    
   <dependencies>
@@ -26,6 +30,36 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+        <groupId>org.jboss.weld.se</groupId>
+        <artifactId>weld-se</artifactId>
+        <version>${weld.version}</version>
+        <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.shiro</groupId>
+        <artifactId>shiro-core</artifactId>
+        <version>${shiro.version}</version>
+        <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scream3r</groupId>
+      <artifactId>jssc</artifactId>
+      <version>2.8.0</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ar.com.dcsys.config</groupId>
+      <artifactId>cdiConfig</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+
+
+
   </dependencies>
 
   <build>
@@ -35,8 +69,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                  <source>1.7</source>
-                  <target>1.7</target>
+                  <source>${java.version}</source>
+                  <target>${java.version}</target>
                 </configuration>
               </plugin>
         </plugins>

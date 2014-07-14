@@ -1,17 +1,17 @@
 package ar.com.dcsys.firmware.cmd.template;
 
-import ar.com.dcsys.security.FingerprintCredentials;
+import ar.com.dcsys.security.Fingerprint;
 
 public class TemplateData {
 
-	private FingerprintCredentials fingerprint;
+	private Fingerprint fingerprint;
 	private int number;
 	
-	public FingerprintCredentials getFingerprint() {
+	public Fingerprint getFingerprint() {
 		return fingerprint;
 	}
 	
-	public void setFingerprint(FingerprintCredentials fingerprint) {
+	public void setFingerprint(Fingerprint fingerprint) {
 		this.fingerprint = fingerprint;
 	}
 	

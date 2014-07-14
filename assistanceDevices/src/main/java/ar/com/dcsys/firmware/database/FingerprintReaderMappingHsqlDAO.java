@@ -4,15 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import ar.com.dcsys.data.HsqlConnectionProvider;
-import ar.com.dcsys.data.fingerprint.Fingerprint;
-import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.firmware.exceptions.DatabaseException;
 
 public class FingerprintReaderMappingHsqlDAO implements FingerprintReaderMappingDAO {

@@ -15,7 +15,7 @@ import ar.com.dcsys.firmware.cmd.ProcessingException;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
-import ar.com.dcsys.security.FingerprintCredentials;
+import ar.com.dcsys.security.Fingerprint;
 
 public class ReadTemplate {
 	
@@ -43,8 +43,8 @@ public class ReadTemplate {
 	 * @param edata
 	 * @return
 	 */
-	private FingerprintCredentials getFingerprint(int len, byte[] data, EnrollData edata) {
-		FingerprintCredentials fp = new FingerprintCredentials();
+	private Fingerprint getFingerprint(int len, byte[] data, EnrollData edata) {
+		Fingerprint fp = new Fingerprint();
 		
 		fp.setAlgorithm(CamabioUtils.ALGORITHM);
 		fp.setCodification(CamabioUtils.CODIFICATION);
@@ -114,7 +114,7 @@ public class ReadTemplate {
 					logger.info("Tamaño del paquete : " + rsp.data.length);
 					logger.info("Paquete : " + Utils.getHex(rsp.data));
 					
-				    FingerprintCredentials fp = getFingerprint(len, rsp.data, edata);
+				    Fingerprint fp = getFingerprint(len, rsp.data, edata);
 				    try {
 				    	result.onSuccess(fp);
 				    } catch (Exception e) {

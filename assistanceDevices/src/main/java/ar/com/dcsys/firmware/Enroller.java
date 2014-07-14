@@ -25,7 +25,7 @@ import ar.com.dcsys.firmware.database.Database;
 import ar.com.dcsys.firmware.exceptions.DatabaseException;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.security.Finger;
-import ar.com.dcsys.security.FingerprintCredentials;
+import ar.com.dcsys.security.Fingerprint;
 
 public class Enroller implements Runnable, Cmd {
 
@@ -93,7 +93,7 @@ public class Enroller implements Runnable, Cmd {
 				}
 				
 				@Override
-				public void onSuccess(final FingerprintCredentials fp) {
+				public void onSuccess(final Fingerprint fp) {
 					
 					logger.info("Huella leida del lector : " + Utils.getHex(fp.getTemplate()));
 					logger.info("Obteniendo id vac�o");

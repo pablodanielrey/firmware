@@ -13,7 +13,7 @@ import ar.com.dcsys.exceptions.DeviceException;
 import ar.com.dcsys.exceptions.PersonException;
 
 @Singleton
-public class Params implements AttLogDAO.Params, FingerprintDAO.Params {
+public class Params implements AttLogDAO.Params {
 
 	private final DeviceDAO deviceDAO;
 	private final PersonDAO personDAO;

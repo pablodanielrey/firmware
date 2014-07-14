@@ -24,28 +24,15 @@
 
   <dependencies>
 
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-
+<!--
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
       <version>1</version>
       <scope>provided</scope>
     </dependency>
-
+-->
     
-    <dependency>
-      <groupId>jssc</groupId>
-      <artifactId>jssc</artifactId>
-      <version>2.6.0</version>
-      <scope>compile</scope>
-    </dependency>
-
     <dependency>
       <groupId>ar.com.dcsys.firmware.serial</groupId>
       <artifactId>serialDevice</artifactId>
@@ -61,8 +48,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                  <source>1.7</source>
-                  <target>1.7</target>
+                  <source>${java.version}</source>
+                  <target>${java.version}</target>
                 </configuration>
               </plugin>
         </plugins>

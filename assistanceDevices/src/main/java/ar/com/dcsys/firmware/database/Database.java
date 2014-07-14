@@ -5,12 +5,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
-
 import ar.com.dcsys.data.device.Device;
 import ar.com.dcsys.data.device.DeviceDAO;
-import ar.com.dcsys.data.fingerprint.Fingerprint;
 import ar.com.dcsys.data.fingerprint.FingerprintDAO;
 import ar.com.dcsys.data.log.AttLog;
 import ar.com.dcsys.data.log.AttLogDAO;
@@ -20,10 +16,9 @@ import ar.com.dcsys.exceptions.AttLogException;
 import ar.com.dcsys.exceptions.DeviceException;
 import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
-import ar.com.dcsys.firmware.Firmware;
 import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.exceptions.DatabaseException;
-import ar.com.dcsys.security.FingerprintCredentials;
+import ar.com.dcsys.security.Fingerprint;
 
 public class Database {
 
@@ -76,13 +71,12 @@ public class Database {
 	public synchronized void enroll(Person person, TemplateData templateData) throws DatabaseException, PersonException, FingerprintException {
 
 		Person actualPerson = findOrCreatePerson(person);
+		String personId = actualPerson.getId();
 		
-		FingerprintCredentials fpc = templateData.getFingerprint();
-		Fingerprint fp = new Fingerprint();
-		fp.setFingerprint(fpc);
-		fp.setPerson(actualPerson);
-		String fpId = fingerprintDAO.persist(fp);
+		Fingerprint fpc = templateData.getFingerprint();
+		fpc.setPersonId(personId);
 
+		String fpId = fingerprintDAO.persist(fpc);
 		
 		int number = templateData.getNumber();
 		FingerprintReaderMapping fprm = new FingerprintReaderMapping();
@@ -103,7 +97,9 @@ public class Database {
 		try {
 			Device device = findCurrentDevice();
 			Fingerprint fp = findFingerprintByTemplateNumber(Long.valueOf(template));
-			Person person = fp.getPerson();
+			
+			String personId = fp.getPersonId();
+			Person person = personDAO.findById(personId);
 			
 			AttLog log = new AttLog();
 			log.setDate(new Date());
@@ -112,7 +108,7 @@ public class Database {
 			log.setVerifyMode(1l);		// compatible con ZkSoftware :  0 == Clave, 1 == Huella, 2 == Tarjeta
 			attLogDAO.persist(log);
 			
-		} catch (DeviceException | AttLogException e) {
+		} catch (DeviceException | AttLogException | PersonException e) {
 			throw new DatabaseException(e);
 		}
 
