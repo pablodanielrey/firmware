@@ -9,11 +9,11 @@ public class WebsocketConfigurator extends ServerEndpointConfig.Configurator {
 	@Override
 	public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
 		
-		if (!endpointClass.isAssignableFrom(EchoEndpoint.class)) {
+		if (!endpointClass.isAssignableFrom(CommandsEndpoint.class)) {
 			throw new InstantiationException(endpointClass.getName() + " wrong endpoint");
 		}
 		
-		EchoEndpoint e = App.getWeldContainer().instance().select(EchoEndpoint.class).get();
+		CommandsEndpoint e = App.getWeldContainer().instance().select(CommandsEndpoint.class).get();
 		
 		return (T)e;
 	}

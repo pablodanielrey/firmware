@@ -8,7 +8,7 @@ import org.jboss.weld.environment.se.WeldContainer;
 
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
-import ar.com.dcsys.firmware.websocket.EchoEndpoint;
+import ar.com.dcsys.firmware.websocket.CommandsEndpoint;
 
 
 
@@ -39,7 +39,11 @@ public class App {
 	}
 	
 	
+	private static volatile boolean end = false;
 	
+	public static void setEnd() {
+		end = true;
+	}
 	
 
     public static void main( String[] args ) {
@@ -71,14 +75,14 @@ public class App {
 		// inicializo el server de websockets para obtener comandos desde el servidor remotamente.
 		
     	
-    	Server server = new Server("localhost",8025, "/websocket", null, EchoEndpoint.class);
+    	Server server = new Server("localhost",8025, "/websocket", null, CommandsEndpoint.class);
     	try {
 			server.start();
 		} catch (DeploymentException e1) {
 			e1.printStackTrace();
 		}
     	
-    	while (true) {
+    	while (!end) {
     		try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -86,6 +90,9 @@ public class App {
 				e.printStackTrace();
 			}
     	}
+    	
+    	server.stop();
+    	getWeld().shutdown();
     	
   /*  	
     	try {
