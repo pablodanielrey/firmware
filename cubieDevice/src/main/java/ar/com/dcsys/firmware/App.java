@@ -1,5 +1,7 @@
 package ar.com.dcsys.firmware;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 import javax.websocket.DeploymentException;
 
 import org.glassfish.tyrus.server.Server;
@@ -38,14 +40,18 @@ public class App {
 		return container;
 	}
 	
-	
 	private static volatile boolean end = false;
 	
 	public static void setEnd() {
 		end = true;
 	}
 	
-
+	private static final LinkedBlockingQueue<Runnable> commands = new LinkedBlockingQueue<Runnable>();
+	
+	public static void addCommand(Runnable r) {
+		commands.add(r);
+	}
+	
     public static void main( String[] args ) {
     	
     	
@@ -67,9 +73,6 @@ public class App {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}    	
-    	
-    	
-		
 		
 		
 		// inicializo el server de websockets para obtener comandos desde el servidor remotamente.
@@ -83,9 +86,13 @@ public class App {
 		}
     	
     	while (!end) {
+    		
     		try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
+	    		Runnable r = commands.take();
+	    		Thread t = new Thread(r);
+	    		t.start();
+	    		
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}

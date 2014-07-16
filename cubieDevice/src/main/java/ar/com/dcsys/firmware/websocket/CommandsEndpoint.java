@@ -44,89 +44,117 @@ public class CommandsEndpoint {
 		logger.fine("onOpen");
 	}
 	
-	private void end(RemoteEndpoint.Basic remote) {
+	private void end(final RemoteEndpoint.Basic remote) {
 		
-		try {
-			remote.sendText("finalizando App");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		App.setEnd();
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					remote.sendText("finalizando App");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				App.setEnd();
+			}
+		};
+		App.addCommand(r);
 		
 	}
 	
 	
 	private void cancel(final RemoteEndpoint.Basic remote) throws CmdException {
 		
-		cancel.execute(sd, new FpCancelResult() {
-			
+		Runnable r = new Runnable() {
 			@Override
-			public void onSuccess() {
-				logger.fine("Cancelado exitosamente");
+			public void run() {
 				try {
-					remote.sendText("Cancelado exitosamente");
-				} catch (IOException e) {
+					cancel.execute(sd, new FpCancelResult() {
+						@Override
+						public void onSuccess() {
+							logger.fine("Cancelado exitosamente");
+							try {
+								remote.sendText("Cancelado exitosamente");
+							} catch (IOException e) {
+								e.printStackTrace();
+							}				
+						}
+					});
+				} catch (CmdException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}				
+				}
 			}
-		});
+		};
+		App.addCommand(r);
 		
 	}
+
 	
 	private void identify(final RemoteEndpoint.Basic remote) throws CmdException {
 
-		identify.execute(sd, new IdentifyResult() {
-			
+		Runnable r = new Runnable() {
 			@Override
-			public void releaseFinger() {
+			public void run() {
 				try {
-					remote.sendText("liberar dedo");
-					
-				} catch (IOException e) {
+					identify.execute(sd, new IdentifyResult() {
+						
+						@Override
+						public void releaseFinger() {
+							try {
+								remote.sendText("liberar dedo");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onSuccess(int fpNumber) {
+							try {
+								remote.sendText("huella encontrada : " + String.valueOf(fpNumber));
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onNotFound() {
+							try {
+								remote.sendText("huella no encontrada");
+							
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onFailure(int errorCode) {
+							try {
+								remote.sendText("Error : " + String.valueOf(errorCode));
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onCancel() {
+							try {
+								remote.sendText("identificación cancelada");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
+				} catch (CmdException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}
-			
-			@Override
-			public void onSuccess(int fpNumber) {
-				try {
-					remote.sendText("huella encontrada : " + String.valueOf(fpNumber));
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			@Override
-			public void onNotFound() {
-				try {
-					remote.sendText("huella no encontrada");
-				
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			@Override
-			public void onFailure(int errorCode) {
-				try {
-					remote.sendText("Error : " + String.valueOf(errorCode));
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			@Override
-			public void onCancel() {
-				try {
-					remote.sendText("identificación cancelada");
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});		
+			}					
+		};
+		App.addCommand(r);
 		
 	}
 	
