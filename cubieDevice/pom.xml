@@ -1,0 +1,170 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+        <groupId>ar.com.dcsys</groupId>
+        <artifactId>firmware</artifactId>
+        <version>1.0</version>
+  </parent>
+
+  <groupId>ar.com.dcsys.firmware</groupId>
+  <artifactId>cubieDevice</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>cubieDevice</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+ <!-- 
+  <repositories>
+  	<repository>
+  		<id>maven-repo</id>
+  		<name>Local maven repository</name>
+  		<url>file:///home/pablo/java/libs/maven-repo/</url>
+  	</repository>
+  </repositories>  
+-->
+
+   <dependencies>
+
+        <dependency>
+          <groupId>ar.com.dcsys.config</groupId>
+          <artifactId>cdiConfig</artifactId>
+          <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+    <dependency>
+      <groupId>ar.com.dcsys.firmware.serial</groupId>
+      <artifactId>serialJsscDevice</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+
+
+	<!-- person -->
+
+        <dependency>
+            <groupId>ar.com.dcsys.data</groupId>
+            <artifactId>personEntities</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ar.com.dcsys.model</groupId>
+            <artifactId>personModel</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+           <groupId>ar.com.dcsys.data</groupId>
+           <artifactId>personPostgreSqlDAO</artifactId>
+           <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+
+
+	<!-- assistance -->
+
+    <dependency>
+      <groupId>ar.com.dcsys.data</groupId>
+      <artifactId>assistanceEntities</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ar.com.dcsys.data</groupId>
+      <artifactId>assistancePostgreSqlDAO</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ar.com.dcsys.model</groupId>
+      <artifactId>assistanceModel</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+<!--
+    <dependency>
+      <groupId>ar.com.dcsys.assistance</groupId>
+      <artifactId>assistanceParams</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+-->
+
+
+    <dependency>
+      <groupId>ar.com.dcsys.data</groupId>
+      <artifactId>userPasswordDAO</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+
+<!--
+    <dependency>
+      <groupId>ar.com.dcsys.data</groupId>
+      <artifactId>firmwareConfig</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+-->
+
+  </dependencies>
+
+
+  <build>
+  	<plugins>
+	
+	      <plugin>
+        	<groupId>org.apache.maven.plugins</groupId>
+	        <artifactId>maven-compiler-plugin</artifactId>
+        	<version>3.1</version>
+	        <configuration>
+        	  <source>1.7</source>
+	          <target>1.7</target>
+	        </configuration>
+	      </plugin>
+
+
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-jar-plugin</artifactId>
+			<version>2.4</version>
+			<configuration>
+			    <archive>
+			        <manifest>  
+			            <addClasspath>true</addClasspath>
+			            <classpathPrefix>lib/</classpathPrefix>
+			            <mainClass>ar.com.dcsys.firmware.App</mainClass>
+			            <!--  <mainClass>ar.com.dcsys.firmware.serial.TestJssc</mainClass> -->
+			        </manifest>
+			    </archive>
+		    </configuration>
+		</plugin>  
+
+
+		<plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-dependency-plugin</artifactId>
+		    <version>2.4</version>
+		    <executions>
+		        <execution>
+		            <id>copy</id>
+		            <phase>install</phase>
+		            <goals>
+		                <goal>copy-dependencies</goal>
+		            </goals>
+		            <configuration>
+		                <outputDirectory>
+		                    ${project.build.directory}/lib
+		                </outputDirectory>
+		            </configuration>
+		        </execution>
+		    </executions>
+		</plugin>  		
+  	</plugins>
+  </build>
+</project>

@@ -19,6 +19,7 @@
     <shiro.version>1.2.2</shiro.version>
     <java.version>1.7</java.version>
     <jssc.version>2.8.0</jssc.version>
+    <tyrus.version>1.7</tyrus.version>
   </properties>  
    
   <dependencies>
@@ -29,6 +30,21 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+
+	<dependency>
+    		<groupId>org.glassfish.tyrus</groupId>
+		<artifactId>tyrus-server</artifactId>
+		<version>${tyrus.version}</version>
+		<scope>compile</scope>
+	</dependency>
+
+	<dependency>
+		<groupId>org.glassfish.tyrus</groupId>
+		<artifactId>tyrus-container-grizzly-server</artifactId>
+		<version>${tyrus.version}</version>
+		<scope>compile</scope>
+	</dependency>
+
 
     <dependency>
         <groupId>org.jboss.weld.se</groupId>

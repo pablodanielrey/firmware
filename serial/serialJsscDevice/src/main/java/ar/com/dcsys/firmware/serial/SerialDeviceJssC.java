@@ -2,6 +2,7 @@ package ar.com.dcsys.firmware.serial;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
@@ -11,6 +12,7 @@ import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
+
 
 @Singleton
 public class SerialDeviceJssC implements SerialDevice {
@@ -35,11 +37,15 @@ public class SerialDeviceJssC implements SerialDevice {
 		queue.clear();
 	
 		try {
-		
+			logger.fine("obteniendo puerto seriel");
+			
 			serialPort = params.getSerialPort();
 	    	if (!serialPort.openPort()) {
 	    		return false;
 	    	}
+	    	
+	    	logger.fine("seteando parámetros de configuración");
+	    	
 	    	params.setParams(serialPort);
 	    	
 	    	
