@@ -30,6 +30,7 @@ public class GetEnrollData {
 		
 		fp.setAlgorithm(CamabioUtils.ALGORITHM);
 		fp.setCodification(CamabioUtils.CODIFICATION);
+		fp.setPersonId(edata.getPersonId());
 		fp.setFinger(edata.getFinger());
 		
 		byte[] templ = Arrays.copyOfRange(data, 0, len);

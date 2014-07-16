@@ -20,7 +20,13 @@ import ar.com.dcsys.firmware.cmd.FpCancel;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
 import ar.com.dcsys.firmware.cmd.Identify;
 import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
+import ar.com.dcsys.firmware.cmd.enroll.DefaultEnrollData;
+import ar.com.dcsys.firmware.cmd.enroll.EnrollAndStoreInRam;
+import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
+import ar.com.dcsys.firmware.cmd.enroll.EnrollResult;
 import ar.com.dcsys.firmware.serial.SerialDevice;
+import ar.com.dcsys.security.Finger;
+import ar.com.dcsys.security.Fingerprint;
 
 @ServerEndpoint(value="/cmd", configurator=WebsocketConfigurator.class)
 public class CommandsEndpoint {
@@ -30,12 +36,14 @@ public class CommandsEndpoint {
 	private final SerialDevice sd;
 	private final Identify identify;
 	private final FpCancel cancel;
+	private final EnrollAndStoreInRam enroll;
 	
 	@Inject
-	public CommandsEndpoint(SerialDevice sd, Identify i, FpCancel cancel) {
+	public CommandsEndpoint(SerialDevice sd, Identify i, FpCancel cancel, EnrollAndStoreInRam enroll) {
 		this.sd = sd;
 		this.identify = i;
 		this.cancel = cancel;
+		this.enroll = enroll;
 	}
 	
 	
@@ -61,6 +69,115 @@ public class CommandsEndpoint {
 		
 	}
 	
+	
+	private void enroll(final EnrollData ed, final RemoteEndpoint.Basic remote) throws CmdException {
+		
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					enroll.execute(sd, new EnrollResult() {
+						
+						@Override
+						public void onSuccess(Fingerprint fp) {
+							try {
+								remote.sendText(fp.getAlgorithm());
+								remote.sendText(fp.getCodification());
+								remote.sendText(fp.getPersonId());
+								remote.sendText(new String(fp.getTemplate()));
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onFailure(int errorCode) {
+							try {
+								remote.sendText(String.valueOf(errorCode));
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onCancel() {
+							try {
+								remote.sendText("comando cancelado");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void releaseFinger() {
+							try {
+								remote.sendText("levantar el dedo del lector");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onTimeout() {
+							try {
+								remote.sendText("timeout");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onBadQuality() {
+							try {
+								remote.sendText("mala calidad");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void needThirdSweep() {
+							try {
+								remote.sendText("necesita tercera huella");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void needSecondSweep() {
+							try {
+								remote.sendText("necesita segunda huella");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void needFirstSweep() {
+							try {
+								remote.sendText("necesita primera huella");
+								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}, ed);
+				} catch (CmdException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		App.addCommand(r);
+	}
 	
 	private void cancel(final RemoteEndpoint.Basic remote) throws CmdException {
 		
@@ -168,7 +285,18 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if ("identify".equals(m)) {
+			if (m.startsWith("enroll")) {
+				String id = m.replace("enroll", "").replace(" ", "");
+				
+				logger.fine("enrolando usuario : " + id);
+
+				DefaultEnrollData ed = new DefaultEnrollData();
+				ed.setFinger(Finger.LEFT_INDEX);
+				ed.setPersonId(id);
+				
+				enroll(ed, remote);
+				
+			} else if ("identify".equals(m)) {
 			
 				logger.fine("Mensaje de identificación");
 				identify(remote);
