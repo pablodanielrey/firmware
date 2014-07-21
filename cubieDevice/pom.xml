@@ -54,6 +54,12 @@
         </dependency>
 
         <dependency>
+            <groupId>ar.com.dcsys.person</groupId>
+            <artifactId>personServerSerializers</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>ar.com.dcsys.model</groupId>
             <artifactId>personModel</artifactId>
             <version>1.0-SNAPSHOT</version>

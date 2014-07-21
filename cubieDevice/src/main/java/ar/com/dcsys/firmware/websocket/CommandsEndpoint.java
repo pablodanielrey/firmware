@@ -13,18 +13,25 @@ import javax.websocket.OnOpen;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
+import javax.xml.bind.DatatypeConverter;
 
+import ar.com.dcsys.data.person.Person;
+import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.App;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.FpCancel;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
 import ar.com.dcsys.firmware.cmd.Identify;
 import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
+import ar.com.dcsys.firmware.cmd.TestConnection;
+import ar.com.dcsys.firmware.cmd.TestConnection.TestConnectionResult;
 import ar.com.dcsys.firmware.cmd.enroll.DefaultEnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollAndStoreInRam;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollResult;
 import ar.com.dcsys.firmware.serial.SerialDevice;
+import ar.com.dcsys.model.PersonsManager;
+import ar.com.dcsys.person.server.PersonSerializer;
 import ar.com.dcsys.security.Finger;
 import ar.com.dcsys.security.Fingerprint;
 
@@ -33,17 +40,23 @@ public class CommandsEndpoint {
 
 	private static final Logger logger = Logger.getLogger(CommandsEndpoint.class.getName());
 	
+	private final PersonSerializer personSerializer = new PersonSerializer();
+	private final PersonsManager personsManager;
+	
 	private final SerialDevice sd;
 	private final Identify identify;
 	private final FpCancel cancel;
 	private final EnrollAndStoreInRam enroll;
 	
 	@Inject
-	public CommandsEndpoint(SerialDevice sd, Identify i, FpCancel cancel, EnrollAndStoreInRam enroll) {
+	public CommandsEndpoint(SerialDevice sd, Identify i, FpCancel cancel, EnrollAndStoreInRam enroll, 
+							PersonsManager personsManager) {
 		this.sd = sd;
 		this.identify = i;
 		this.cancel = cancel;
 		this.enroll = enroll;
+		
+		this.personsManager = personsManager;
 	}
 	
 	
@@ -70,6 +83,20 @@ public class CommandsEndpoint {
 	}
 	
 	
+	private void persistPerson(String json, RemoteEndpoint.Basic remote) throws CmdException {
+		Person person = personSerializer.read(json);
+		try {
+			personsManager.persist(person);
+			remote.sendText("OK");
+			
+		} catch (PersonException | IOException e) {
+			e.printStackTrace();
+			throw new CmdException(e);
+			
+		}
+	}
+	
+
 	private void enroll(final EnrollData ed, final RemoteEndpoint.Basic remote) throws CmdException {
 		
 		Runnable r = new Runnable() {
@@ -84,7 +111,10 @@ public class CommandsEndpoint {
 								remote.sendText(fp.getAlgorithm());
 								remote.sendText(fp.getCodification());
 								remote.sendText(fp.getPersonId());
-								remote.sendText(new String(fp.getTemplate()));
+								
+								String template = DatatypeConverter.printBase64Binary(fp.getTemplate());
+								
+								remote.sendText(template);
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -275,8 +305,48 @@ public class CommandsEndpoint {
 		
 	}
 	
-	
-	
+	private void test(final RemoteEndpoint.Basic remote) {
+		
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				TestConnection tc = new TestConnection();
+				try {
+					tc.execute(sd, new TestConnectionResult() {
+						@Override
+						public void onSuccess() {
+							try {
+								remote.sendText("Test de conección exitoso");
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onFailure() {
+							try {
+								remote.sendText("error ejecutando test");
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					});
+				} catch (CmdException e) {
+					e.printStackTrace();
+					try {
+						remote.sendText("Error ejecutando test : " + e.getMessage());
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+			}
+		};
+		App.addCommand(r);
+		
+	}
 	
 	@OnMessage
 	public void onMessage(String m, final Session session) {
@@ -285,8 +355,12 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if (m.startsWith("enroll")) {
-				String id = m.replace("enroll", "").replace(" ", "");
+			if ("test".equals(m)) {
+				
+				test(remote);
+				
+			} else if (m.startsWith("enroll;")) {
+				String id = m.substring(7);
 				
 				logger.fine("enrolando usuario : " + id);
 
@@ -310,6 +384,11 @@ public class CommandsEndpoint {
 				
 				logger.fine("finalizando app");
 				end(remote);
+				
+			} else if (m.startsWith("person;")) {
+				
+				String data = m.substring(7);
+				persistPerson(data, remote);
 				
 			}
 		
