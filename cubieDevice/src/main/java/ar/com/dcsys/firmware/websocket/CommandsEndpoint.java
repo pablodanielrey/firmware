@@ -108,13 +108,16 @@ public class CommandsEndpoint {
 						@Override
 						public void onSuccess(Fingerprint fp) {
 							try {
-								remote.sendText(fp.getAlgorithm());
-								remote.sendText(fp.getCodification());
-								remote.sendText(fp.getPersonId());
+								
+								StringBuilder sb = new StringBuilder();
+								sb.append(fp.getAlgorithm()).append("\n");
+								sb.append(fp.getCodification()).append("\n");
+								sb.append(fp.getPersonId()).append("\n");
 								
 								String template = DatatypeConverter.printBase64Binary(fp.getTemplate());
+								sb.append(template);
 								
-								remote.sendText(template);
+								remote.sendText(sb.toString());
 								
 							} catch (IOException e) {
 								e.printStackTrace();
