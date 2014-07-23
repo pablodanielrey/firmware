@@ -20,10 +20,12 @@ import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.App;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.FpCancel;
-import ar.com.dcsys.firmware.cmd.SensorLedControl;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
+import ar.com.dcsys.firmware.cmd.GetFirmwareVersion;
+import ar.com.dcsys.firmware.cmd.GetFirmwareVersion.GetFirmwareVersionResult;
 import ar.com.dcsys.firmware.cmd.Identify;
 import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
+import ar.com.dcsys.firmware.cmd.SensorLedControl;
 import ar.com.dcsys.firmware.cmd.TestConnection;
 import ar.com.dcsys.firmware.cmd.TestConnection.TestConnectionResult;
 import ar.com.dcsys.firmware.cmd.enroll.DefaultEnrollData;
@@ -98,7 +100,7 @@ public class CommandsEndpoint {
 	}
 	
 	
-	private void controlLedOn(final RemoteEndpoint.Basic remote) throws CmdException {
+	private void controlLed(final boolean v, final RemoteEndpoint.Basic remote) throws CmdException {
 		
 		Runnable r = new Runnable() {
 			
@@ -106,11 +108,11 @@ public class CommandsEndpoint {
 			public void run() {
 				try {
 					SensorLedControl slc = new SensorLedControl();
-					slc.execute(sd, true, new SensorLedControl.SensorLedControlResult() {
+					slc.execute(sd, v, new SensorLedControl.SensorLedControlResult() {
 						@Override
 						public void onSuccess() {
 							try {
-								remote.sendText("Led on");
+								remote.sendText("Led " + String.valueOf(v));
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -387,6 +389,50 @@ public class CommandsEndpoint {
 		
 	}
 	
+	
+	private void getFirmwareVersion(final RemoteEndpoint.Basic remote) throws CmdException {
+		
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				
+				GetFirmwareVersion gfv = new GetFirmwareVersion();
+				try {
+					gfv.execute(sd, new GetFirmwareVersionResult() {
+						@Override
+						public void onSuccess(String version) {
+							try {
+								remote.sendText(version);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						@Override
+						public void onFailure() {
+							try {
+								remote.sendText("error get firmware version");
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
+				} catch (CmdException e) {
+					e.printStackTrace();
+					try {
+						remote.sendText("Error : " + e.getMessage());
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+
+			}
+		};
+		App.addCommand(r);
+		
+	}
+	
+	
 	@OnMessage
 	public void onMessage(String m, final Session session) {
 		logger.fine("Mensaje recibido : " + m);
@@ -394,9 +440,17 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if ("ledOn".equals(m)) {
+			if ("firmware".equals(m)) {
 				
-				controlLedOn(remote);
+				getFirmwareVersion(remote);
+				
+			} else if ("ledOn".equals(m)) {
+				
+				controlLed(true,remote);
+				
+			} else if ("ledOff".equals(m)) {
+					
+				controlLed(false,remote);
 				
 			} else if ("test".equals(m)) {
 				
