@@ -20,6 +20,7 @@ import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.App;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.FpCancel;
+import ar.com.dcsys.firmware.cmd.SensorLedControl;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
 import ar.com.dcsys.firmware.cmd.Identify;
 import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
@@ -96,6 +97,41 @@ public class CommandsEndpoint {
 		}
 	}
 	
+	
+	private void controlLedOn(final RemoteEndpoint.Basic remote) throws CmdException {
+		
+		Runnable r = new Runnable() {
+			
+			@Override
+			public void run() {
+				try {
+					SensorLedControl slc = new SensorLedControl();
+					slc.execute(sd, true, new SensorLedControl.SensorLedControlResult() {
+						@Override
+						public void onSuccess() {
+							try {
+								remote.sendText("Led on");
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						@Override
+						public void onFailure() {
+							try {
+								remote.sendText("Error en comando");
+							} catch (IOException e) {
+								e.printStackTrace();
+							}						
+						}
+					});
+				} catch (CmdException e) {
+					e.printStackTrace();
+				}					
+			}
+		};
+		App.addCommand(r);
+		
+	}
 
 	private void enroll(final EnrollData ed, final RemoteEndpoint.Basic remote) throws CmdException {
 		
@@ -358,7 +394,11 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if ("test".equals(m)) {
+			if ("ledOn".equals(m)) {
+				
+				controlLedOn(remote);
+				
+			} else if ("test".equals(m)) {
 				
 				test(remote);
 				

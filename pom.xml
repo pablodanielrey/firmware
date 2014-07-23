@@ -9,7 +9,7 @@
   <name>Firmware para el reloj de asistencia</name>
 
   <modules>
-	<module>assistanceDevices</module>
+	<module>cubieDevice</module>
 	<module>serial</module>
   </modules>
   

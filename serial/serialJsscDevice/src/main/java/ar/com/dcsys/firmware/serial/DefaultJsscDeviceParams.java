@@ -34,7 +34,9 @@ public class DefaultJsscDeviceParams implements SerialJsscDeviceParams {
 		int sb = Integer.parseInt(stopBit);
 		int p = Integer.parseInt(parity);
 
-		serialPort.setParams(b, db, sb, p, false, false);
+//		assert SerialPort.BAUDRATE_115200 == b;
+//		serialPort.setParams(b, db, sb, p, true, true);
+//		serialPort.purgePort(SerialPort.PURGE_RXCLEAR | SerialPort.PURGE_TXCLEAR);
 	}
 
 }

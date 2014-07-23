@@ -17,8 +17,6 @@
   <modules>
 	<module>serialDevice</module>
 	<module>serialJsscDevice</module>
-	<module>cubieJsscSerialConfig</module>
-	<module>windowsJsscSerialConfig</module>
   </modules>
   
 
