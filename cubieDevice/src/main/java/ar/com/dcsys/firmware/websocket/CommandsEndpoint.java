@@ -16,6 +16,7 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 import javax.xml.bind.DatatypeConverter;
 
+import ar.com.dcsys.auth.server.FingerprintSerializer;
 import ar.com.dcsys.data.fingerprint.FingerprintDAO;
 import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.exceptions.FingerprintException;
@@ -35,6 +36,14 @@ import ar.com.dcsys.firmware.cmd.enroll.DefaultEnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollAndStoreInRam;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollResult;
+import ar.com.dcsys.firmware.cmd.template.GetEmptyId;
+import ar.com.dcsys.firmware.cmd.template.GetEmptyId.GetEmptyIdResult;
+import ar.com.dcsys.firmware.cmd.template.TemplateData;
+import ar.com.dcsys.firmware.cmd.template.WriteTemplate;
+import ar.com.dcsys.firmware.cmd.template.WriteTemplate.WriteTemplateResult;
+import ar.com.dcsys.firmware.database.FingerprintMapping;
+import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
+import ar.com.dcsys.firmware.database.FingerprintMappingException;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.person.server.PersonSerializer;
@@ -46,18 +55,24 @@ public class CommandsEndpoint {
 
 	private static final Logger logger = Logger.getLogger(CommandsEndpoint.class.getName());
 	
+	private final FingerprintSerializer fingerprintSerializer = new FingerprintSerializer();
 	private final PersonSerializer personSerializer = new PersonSerializer();
 	private final PersonsManager personsManager;
 	
 	private final SerialDevice sd;
 	private final Identify identify;
 	private final FpCancel cancel;
-	private final EnrollAndStoreInRam enroll;
+
 	private final SensorLedControl sensorLedControl;
 	private final TestConnection testConnection;
 	private final GetFirmwareVersion getFirmwareVersion;
 	
+	private final EnrollAndStoreInRam enroll;
+	private final GetEmptyId getEmptyId;
+	private final WriteTemplate writeTemplate;
+	
 	private final FingerprintDAO fingerprintDAO;
+	private final FingerprintMappingDAO fingerprintMappingDAO;
 	
 	@Inject
 	public CommandsEndpoint(SerialDevice sd, Identify i, 
@@ -66,19 +81,27 @@ public class CommandsEndpoint {
 											 SensorLedControl sensorLedControl,
 											 TestConnection testConnection,
 											 GetFirmwareVersion getFirmwareVersion,
+											 GetEmptyId getEmptyId,
+											 WriteTemplate writeTemplate,
 											 
 											 PersonsManager personsManager,
-											 FingerprintDAO fingerprintDAO) {
+											 FingerprintDAO fingerprintDAO,
+											 FingerprintMappingDAO fingerprintMappingDAO) {
 		this.sd = sd;
 		this.identify = i;
 		this.cancel = cancel;
+		
 		this.enroll = enroll;
+		this.getEmptyId = getEmptyId;
+		this.writeTemplate = writeTemplate;
+		
 		this.sensorLedControl = sensorLedControl;
 		this.testConnection = testConnection;
 		this.getFirmwareVersion = getFirmwareVersion;
 		
 		this.personsManager = personsManager;
 		this.fingerprintDAO = fingerprintDAO;
+		this.fingerprintMappingDAO = fingerprintMappingDAO;
 	}
 	
 	
@@ -175,46 +198,218 @@ public class CommandsEndpoint {
 		
 	}
 
+
+	/**
+	 * Actualiza una huella dentro de la base.
+	 * @param fp
+	 */
+	private void updateFingerprint(final Fingerprint fp, final RemoteEndpoint.Basic remote) {
+		
+		Runnable r = new Runnable() {
+			public void run() {
+				// persisto los datos.
+				try {
+					final String fpId = fingerprintDAO.persist(fp);
+					
+					try {
+						
+						getEmptyId.execute(sd, new GetEmptyIdResult() {
+							
+							@Override
+							public void onSuccess(int tmplNumber) {
+								
+								try {
+									
+									// genero el mapeo en la base
+									
+									FingerprintMapping fpMapping = new FingerprintMapping();
+									fpMapping.setFingerprintId(fpId);
+									fpMapping.setPersonId(fp.getPersonId());
+									fpMapping.setFpNumber(tmplNumber);
+									
+									fingerprintMappingDAO.persist(fpMapping);
+									
+									
+									
+									// escribo la rom del lector.
+									
+									TemplateData tedata = new TemplateData();
+									tedata.setFingerprint(fp);
+									tedata.setNumber(tmplNumber);
+
+									try {
+										writeTemplate.execute(sd, new WriteTemplateResult() {
+											
+											@Override
+											public void onSuccess(int tnumber) {
+												
+												try {
+													remote.sendText("OK " + String.valueOf(tnumber));
+													
+												} catch (IOException e) {
+													logger.log(Level.SEVERE,e.getMessage(),e);
+												}
+												
+											}
+											
+											public void onCancel() {
+												try {
+													remote.sendText("ERROR cancelado");
+													
+												} catch (IOException e) {
+													logger.log(Level.SEVERE,e.getMessage(),e);
+												}
+											};
+											
+											public void onFailure(int errorCode) {
+												try {
+													remote.sendText("ERROR " + String.valueOf(errorCode));
+													
+												} catch (IOException e) {
+													logger.log(Level.SEVERE,e.getMessage(),e);
+												}
+											};
+											
+											public void onInvalidTemplateNumber(int number) {
+												try {
+													remote.sendText("ERROR número de huella inválido " + String.valueOf(number));
+													
+												} catch (IOException e) {
+													logger.log(Level.SEVERE,e.getMessage(),e);
+												}
+											};
+											
+											public void onInvalidTemplateSize(int size) {
+												try {
+													remote.sendText("ERROR tamaño de huella inválido " + String.valueOf(size));
+													
+												} catch (IOException e) {
+													logger.log(Level.SEVERE,e.getMessage(),e);
+												}
+											};
+											
+										}, tedata);
+										
+									} catch (CmdException cmdE) {
+										
+										logger.log(Level.SEVERE,cmdE.getMessage(),cmdE);
+										try {
+											remote.sendText("ERROR " + cmdE.getMessage());
+											
+										} catch (IOException e1) {
+											e1.printStackTrace();
+											logger.log(Level.SEVERE,e1.getMessage(),e1);
+										}
+										
+									}
+									
+									
+								} catch (FingerprintMappingException e) {
+									try {
+										remote.sendText("ERROR " + e.getMessage());
+										
+									} catch (IOException e1) {
+										e1.printStackTrace();
+										logger.log(Level.SEVERE,e1.getMessage(),e1);
+									}
+									
+								}
+								
+							}
+							
+							@Override
+							public void onFailure(int errorCode) {
+								try {
+									remote.sendText("ERROR " + String.valueOf(errorCode));
+									
+								} catch (IOException e) {
+									logger.log(Level.SEVERE,e.getMessage(),e);
+								}							}
+							
+							@Override
+							public void onEmptyNotExistent() {
+								try {
+									remote.sendText("ERROR no existe lugar libre en la rom del lector");
+									
+								} catch (IOException e) {
+									logger.log(Level.SEVERE,e.getMessage(),e);
+								}							}
+							
+							@Override
+							public void onCancel() {
+								try {
+									remote.sendText("ERROR comando cancelado");
+									
+								} catch (IOException e) {
+									logger.log(Level.SEVERE,e.getMessage(),e);
+								}							}
+						});
+
+						
+					} catch (CmdException cmdE) {
+						try {
+							remote.sendText("ERROR " + cmdE.getMessage());
+							
+						} catch (IOException e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}						
+					}
+					
+				} catch (FingerprintException fe) {
+					try {
+						remote.sendText("ERROR " + fe.getMessage());
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}						
+					
+					
+				}
+			}
+		};
+		App.addCommand(r);
+		
+	}
+
+
+
+	/**
+	 * Captura la huella de un usuario
+	 * @param ed
+	 * @param remote
+	 * @throws CmdException
+	 */
 	private void enroll(final EnrollData ed, final RemoteEndpoint.Basic remote) throws CmdException {
 		
 		Runnable r = new Runnable() {
 			@Override
 			public void run() {
+						
 				try {
 					enroll.execute(sd, new EnrollResult() {
-						
-						@Override
-						public void onSuccess(Fingerprint fp) {
-							try {
-								
-								// persisto los datos.
-								try {
-									fingerprintDAO.persist(fp);
 									
-								} catch (FingerprintException e) {
-									e.printStackTrace();
-									logger.log(Level.SEVERE,e.getMessage(),e);
-									remote.sendText("ERROR");
-								}
-								
+						@Override
+						public void onSuccess(final Fingerprint fp) {
+															
+							// genero la respuesta del comando.
+							
+							try {
 								StringBuilder sb = new StringBuilder();
 								
 								sb.append("OK ");
 								
-								sb.append(fp.getAlgorithm()).append("\n");
-								sb.append(fp.getCodification()).append("\n");
-								sb.append(fp.getPersonId()).append("\n");
-								
-								String template = DatatypeConverter.printBase64Binary(fp.getTemplate());
-								sb.append(template);
+								String fps = fingerprintSerializer.toJson(fp);
+								sb.append(fps);
+//								String template = DatatypeConverter.printBase64Binary(fp.getTemplate());
 								
 								remote.sendText(sb.toString());
 								
 							} catch (IOException e) {
-								e.printStackTrace();
-								logger.log(Level.SEVERE,e.getMessage(),e);
+								logger.log(Level.SEVERE, e.getMessage(),e);
 							}
+															
 						}
+						
 						
 						@Override
 						public void onFailure(int errorCode) {
@@ -296,6 +491,7 @@ public class CommandsEndpoint {
 							}
 						}
 					}, ed);
+					
 				} catch (CmdException e) {
 					e.printStackTrace();
 					logger.log(Level.SEVERE,e.getMessage(),e);
@@ -304,12 +500,16 @@ public class CommandsEndpoint {
 					} catch (IOException e1) {
 						e1.printStackTrace();
 						logger.log(Level.SEVERE,e1.getMessage(),e1);
-					}					
+					}
+					
 				}
 			}
 		};
+		
 		App.addCommand(r);
 	}
+						
+		
 	
 	private void cancel(final RemoteEndpoint.Basic remote) throws CmdException {
 		
@@ -365,6 +565,10 @@ public class CommandsEndpoint {
 						
 						@Override
 						public void onSuccess(int fpNumber) {
+							
+							
+							
+							
 							try {
 								remote.sendText("OK huella encontrada : " + String.valueOf(fpNumber));
 								
