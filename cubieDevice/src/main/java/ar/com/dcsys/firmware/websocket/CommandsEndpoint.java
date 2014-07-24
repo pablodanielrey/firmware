@@ -1,6 +1,7 @@
 package ar.com.dcsys.firmware.websocket;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
@@ -15,7 +16,9 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 import javax.xml.bind.DatatypeConverter;
 
+import ar.com.dcsys.data.fingerprint.FingerprintDAO;
 import ar.com.dcsys.data.person.Person;
+import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.App;
 import ar.com.dcsys.firmware.cmd.CmdException;
@@ -50,16 +53,32 @@ public class CommandsEndpoint {
 	private final Identify identify;
 	private final FpCancel cancel;
 	private final EnrollAndStoreInRam enroll;
+	private final SensorLedControl sensorLedControl;
+	private final TestConnection testConnection;
+	private final GetFirmwareVersion getFirmwareVersion;
+	
+	private final FingerprintDAO fingerprintDAO;
 	
 	@Inject
-	public CommandsEndpoint(SerialDevice sd, Identify i, FpCancel cancel, EnrollAndStoreInRam enroll, 
-							PersonsManager personsManager) {
+	public CommandsEndpoint(SerialDevice sd, Identify i, 
+											 FpCancel cancel, 
+											 EnrollAndStoreInRam enroll, 
+											 SensorLedControl sensorLedControl,
+											 TestConnection testConnection,
+											 GetFirmwareVersion getFirmwareVersion,
+											 
+											 PersonsManager personsManager,
+											 FingerprintDAO fingerprintDAO) {
 		this.sd = sd;
 		this.identify = i;
 		this.cancel = cancel;
 		this.enroll = enroll;
+		this.sensorLedControl = sensorLedControl;
+		this.testConnection = testConnection;
+		this.getFirmwareVersion = getFirmwareVersion;
 		
 		this.personsManager = personsManager;
+		this.fingerprintDAO = fingerprintDAO;
 	}
 	
 	
@@ -74,9 +93,16 @@ public class CommandsEndpoint {
 			@Override
 			public void run() {
 				try {
-					remote.sendText("finalizando App");
+					remote.sendText("OK finalizando App");
 				} catch (IOException e) {
 					e.printStackTrace();
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}
 				}
 				App.setEnd();
 			}
@@ -94,11 +120,11 @@ public class CommandsEndpoint {
 			
 		} catch (PersonException | IOException e) {
 			e.printStackTrace();
-			
 			try {
-				remote.sendText("ERROR");
+				remote.sendText("ERROR " + e.getMessage());
 			} catch (IOException e1) {
 				e1.printStackTrace();
+				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
 			
 			throw new CmdException(e);
@@ -114,27 +140,34 @@ public class CommandsEndpoint {
 			@Override
 			public void run() {
 				try {
-					SensorLedControl slc = new SensorLedControl();
-					slc.execute(sd, v, new SensorLedControl.SensorLedControlResult() {
+					sensorLedControl.execute(sd, v, new SensorLedControl.SensorLedControlResult() {
 						@Override
 						public void onSuccess() {
 							try {
-								remote.sendText("Led " + String.valueOf(v));
+								remote.sendText("OK Led " + String.valueOf(v));
 							} catch (IOException e) {
 								e.printStackTrace();
+								logger.log(Level.SEVERE,e.getMessage(),e);
 							}
 						}
 						@Override
 						public void onFailure() {
 							try {
-								remote.sendText("Error en comando");
+								remote.sendText("ERROR");
 							} catch (IOException e) {
 								e.printStackTrace();
+								logger.log(Level.SEVERE,e.getMessage(),e);
 							}						
 						}
 					});
 				} catch (CmdException e) {
 					e.printStackTrace();
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}					
 				}					
 			}
 		};
@@ -154,7 +187,20 @@ public class CommandsEndpoint {
 						public void onSuccess(Fingerprint fp) {
 							try {
 								
+								// persisto los datos.
+								try {
+									fingerprintDAO.persist(fp);
+									
+								} catch (FingerprintException e) {
+									e.printStackTrace();
+									logger.log(Level.SEVERE,e.getMessage(),e);
+									remote.sendText("ERROR");
+								}
+								
 								StringBuilder sb = new StringBuilder();
+								
+								sb.append("OK ");
+								
 								sb.append(fp.getAlgorithm()).append("\n");
 								sb.append(fp.getCodification()).append("\n");
 								sb.append(fp.getPersonId()).append("\n");
@@ -166,13 +212,14 @@ public class CommandsEndpoint {
 								
 							} catch (IOException e) {
 								e.printStackTrace();
+								logger.log(Level.SEVERE,e.getMessage(),e);
 							}
 						}
 						
 						@Override
 						public void onFailure(int errorCode) {
 							try {
-								remote.sendText(String.valueOf(errorCode));
+								remote.sendText("ERROR " + String.valueOf(errorCode));
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -182,7 +229,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onCancel() {
 							try {
-								remote.sendText("comando cancelado");
+								remote.sendText("ERROR comando cancelado");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -192,7 +239,7 @@ public class CommandsEndpoint {
 						@Override
 						public void releaseFinger() {
 							try {
-								remote.sendText("levantar el dedo del lector");
+								remote.sendText("OK levantar el dedo del lector");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -202,7 +249,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onTimeout() {
 							try {
-								remote.sendText("timeout");
+								remote.sendText("ERROR timeout");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -212,7 +259,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onBadQuality() {
 							try {
-								remote.sendText("mala calidad");
+								remote.sendText("ERROR mala calidad");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -222,7 +269,7 @@ public class CommandsEndpoint {
 						@Override
 						public void needThirdSweep() {
 							try {
-								remote.sendText("necesita tercera huella");
+								remote.sendText("OK necesita tercera huella");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -232,7 +279,7 @@ public class CommandsEndpoint {
 						@Override
 						public void needSecondSweep() {
 							try {
-								remote.sendText("necesita segunda huella");
+								remote.sendText("OK necesita segunda huella");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -242,7 +289,7 @@ public class CommandsEndpoint {
 						@Override
 						public void needFirstSweep() {
 							try {
-								remote.sendText("necesita primera huella");
+								remote.sendText("OK necesita primera huella");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -251,6 +298,13 @@ public class CommandsEndpoint {
 					}, ed);
 				} catch (CmdException e) {
 					e.printStackTrace();
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}					
 				}
 			}
 		};
@@ -268,15 +322,21 @@ public class CommandsEndpoint {
 						public void onSuccess() {
 							logger.fine("Cancelado exitosamente");
 							try {
-								remote.sendText("Cancelado exitosamente");
+								remote.sendText("OK Cancelado exitosamente");
 							} catch (IOException e) {
 								e.printStackTrace();
 							}				
 						}
 					});
 				} catch (CmdException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}					
 				}
 			}
 		};
@@ -296,7 +356,7 @@ public class CommandsEndpoint {
 						@Override
 						public void releaseFinger() {
 							try {
-								remote.sendText("liberar dedo");
+								remote.sendText("OK liberar dedo");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -306,7 +366,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onSuccess(int fpNumber) {
 							try {
-								remote.sendText("huella encontrada : " + String.valueOf(fpNumber));
+								remote.sendText("OK huella encontrada : " + String.valueOf(fpNumber));
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -316,7 +376,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onNotFound() {
 							try {
-								remote.sendText("huella no encontrada");
+								remote.sendText("OK huella no encontrada");
 							
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -326,7 +386,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onFailure(int errorCode) {
 							try {
-								remote.sendText("Error : " + String.valueOf(errorCode));
+								remote.sendText("ERROR " + String.valueOf(errorCode));
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -336,7 +396,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onCancel() {
 							try {
-								remote.sendText("identificación cancelada");
+								remote.sendText("ERROR identificación cancelada");
 								
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -344,8 +404,13 @@ public class CommandsEndpoint {
 						}
 					});
 				} catch (CmdException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}					
 				}
 			}					
 		};
@@ -358,15 +423,13 @@ public class CommandsEndpoint {
 		Runnable r = new Runnable() {
 			@Override
 			public void run() {
-				TestConnection tc = new TestConnection();
 				try {
-					tc.execute(sd, new TestConnectionResult() {
+					testConnection.execute(sd, new TestConnectionResult() {
 						@Override
 						public void onSuccess() {
 							try {
-								remote.sendText("Test de conección exitoso");
+								remote.sendText("OK Test de conección exitoso");
 							} catch (IOException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
@@ -374,20 +437,20 @@ public class CommandsEndpoint {
 						@Override
 						public void onFailure() {
 							try {
-								remote.sendText("error ejecutando test");
+								remote.sendText("ERROR error ejecutando test");
 							} catch (IOException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
 					});
 				} catch (CmdException e) {
 					e.printStackTrace();
+					logger.log(Level.SEVERE,e.getMessage(),e);
 					try {
-						remote.sendText("Error ejecutando test : " + e.getMessage());
+						remote.sendText("ERROR " + e.getMessage());
 					} catch (IOException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
 					}
 				}
 			}
@@ -402,14 +465,12 @@ public class CommandsEndpoint {
 		Runnable r = new Runnable() {
 			@Override
 			public void run() {
-				
-				GetFirmwareVersion gfv = new GetFirmwareVersion();
 				try {
-					gfv.execute(sd, new GetFirmwareVersionResult() {
+					getFirmwareVersion.execute(sd, new GetFirmwareVersionResult() {
 						@Override
 						public void onSuccess(String version) {
 							try {
-								remote.sendText(version);
+								remote.sendText("OK " + version);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -417,7 +478,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onFailure() {
 							try {
-								remote.sendText("error get firmware version");
+								remote.sendText("ERROR");
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -425,11 +486,12 @@ public class CommandsEndpoint {
 					});
 				} catch (CmdException e) {
 					e.printStackTrace();
+					logger.log(Level.SEVERE,e.getMessage(),e);
 					try {
-						remote.sendText("Error : " + e.getMessage());
+						remote.sendText("ERROR " + e.getMessage());
 					} catch (IOException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
 					}
 				}
 
@@ -502,10 +564,12 @@ public class CommandsEndpoint {
 			}
 		
 		} catch (CmdException e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
 			try {
-				remote.sendText(e.getMessage());
+				remote.sendText("ERROR " + e.getMessage());
 			} catch (IOException e1) {
 				e1.printStackTrace();
+				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
 		}
 
