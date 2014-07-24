@@ -94,6 +94,13 @@ public class CommandsEndpoint {
 			
 		} catch (PersonException | IOException e) {
 			e.printStackTrace();
+			
+			try {
+				remote.sendText("ERROR");
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
 			throw new CmdException(e);
 			
 		}
@@ -440,7 +447,12 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if ("firmware".equals(m)) {
+			if (m.startsWith("persistPerson;")) {
+				
+				String json = m.substring(m.indexOf(";") + 1);
+				persistPerson(json, remote);
+				
+			} else if ("firmware".equals(m)) {
 				
 				getFirmwareVersion(remote);
 				
