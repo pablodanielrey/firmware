@@ -713,7 +713,17 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if (m.startsWith("persistPerson;")) {
+			if (m.startsWith("persistFingerprint;")) {
+				
+				// extraigo la huella del comando.
+				String cmd = "persistFingerprint;";
+				String json = m.substring(cmd.length());
+				FingerprintSerializer fps = new FingerprintSerializer();
+				Fingerprint fp = fps.read(json);
+				
+				updateFingerprint(fp, remote);
+				
+			} else if (m.startsWith("persistPerson;")) {
 				
 				String json = m.substring(m.indexOf(";") + 1);
 				persistPerson(json, remote);
