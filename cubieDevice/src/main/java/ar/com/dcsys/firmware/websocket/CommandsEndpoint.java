@@ -38,6 +38,8 @@ import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollResult;
 import ar.com.dcsys.firmware.cmd.template.GetEmptyId;
 import ar.com.dcsys.firmware.cmd.template.GetEmptyId.GetEmptyIdResult;
+import ar.com.dcsys.firmware.cmd.template.ReadRawTemplate;
+import ar.com.dcsys.firmware.cmd.template.ReadRawTemplate.ReadRawTemplateResult;
 import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.cmd.template.WriteTemplate;
 import ar.com.dcsys.firmware.cmd.template.WriteTemplate.WriteTemplateResult;
@@ -70,6 +72,7 @@ public class CommandsEndpoint {
 	private final EnrollAndStoreInRam enroll;
 	private final GetEmptyId getEmptyId;
 	private final WriteTemplate writeTemplate;
+	private final ReadRawTemplate readRawTemplate;
 	
 	private final FingerprintDAO fingerprintDAO;
 	private final FingerprintMappingDAO fingerprintMappingDAO;
@@ -83,6 +86,7 @@ public class CommandsEndpoint {
 											 GetFirmwareVersion getFirmwareVersion,
 											 GetEmptyId getEmptyId,
 											 WriteTemplate writeTemplate,
+											 ReadRawTemplate readRawTemplate,
 											 
 											 PersonsManager personsManager,
 											 FingerprintDAO fingerprintDAO,
@@ -98,6 +102,7 @@ public class CommandsEndpoint {
 		this.sensorLedControl = sensorLedControl;
 		this.testConnection = testConnection;
 		this.getFirmwareVersion = getFirmwareVersion;
+		this.readRawTemplate = readRawTemplate;
 		
 		this.personsManager = personsManager;
 		this.fingerprintDAO = fingerprintDAO;
@@ -753,6 +758,72 @@ public class CommandsEndpoint {
 		
 	}
 	
+	private void readRawTemplate(final int number, final RemoteEndpoint.Basic remote) throws CmdException {
+		 Runnable r = new Runnable() {
+			 @Override
+			public void run() {
+				 try {
+					readRawTemplate.execute(sd, number, new ReadRawTemplateResult() {
+						@Override
+						public void onSuccess(byte[] templ) {
+							
+							String etempl = DatatypeConverter.printBase64Binary(templ);
+							try {
+								remote.sendText("OK " + etempl);
+								
+							} catch (IOException e) {
+								logger.log(Level.SEVERE,e.getMessage(),e);
+							}
+						}
+						
+						@Override
+						public void onInvalidTemplateNumber(int number) {
+							try {
+								remote.sendText("ERROR invalid template number " + String.valueOf(number));
+								
+							} catch (IOException e) {
+								logger.log(Level.SEVERE,e.getMessage(),e);
+							}							
+						}
+						
+						@Override
+						public void onFailure(int errorCode) {
+							try {
+								remote.sendText("ERROR code " + String.valueOf(errorCode));
+								
+							} catch (IOException e) {
+								logger.log(Level.SEVERE,e.getMessage(),e);
+							}							
+						}
+						
+						@Override
+						public void onEmptyTemplate(int number) {
+							try {
+								remote.sendText("ERROR empty template " + String.valueOf(number));
+								
+							} catch (IOException e) {
+								logger.log(Level.SEVERE,e.getMessage(),e);
+							}							
+						}
+						
+						@Override
+						public void onCancel() {
+							try {
+								remote.sendText("ERROR comando cancelado");
+								
+							} catch (IOException e) {
+								logger.log(Level.SEVERE,e.getMessage(),e);
+							}							
+						}
+					});
+				} catch (CmdException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		 };
+		 App.addCommand(r);
+	}
 	
 	@OnMessage
 	public void onMessage(String m, final Session session) {
@@ -761,7 +832,25 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if (m.startsWith("persistFingerprint;")) {
+			if (m.startsWith("readRawTemplate;")) {
+				
+				String cmd = "readRawTemplate;";
+				String number = m.substring(cmd.length());
+				
+				try {
+					int nnumber = Integer.parseInt(number);
+					readRawTemplate(nnumber,remote);
+					
+				} catch (Exception e) {
+					try {
+						remote.sendText("ERROR comando inválido. ej : readRawTemplate;10");
+						
+					} catch (IOException e1) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}
+				}
+				
+			} else if (m.startsWith("persistFingerprint;")) {
 				
 				// extraigo la huella del comando.
 				String cmd = "persistFingerprint;";

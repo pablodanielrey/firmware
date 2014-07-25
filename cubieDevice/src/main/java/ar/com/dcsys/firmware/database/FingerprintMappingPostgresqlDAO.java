@@ -32,7 +32,8 @@ public class FingerprintMappingPostgresqlDAO implements FingerprintMappingDAO {
 						+ "fpNumber integer not null primary key,"
 						+ "person_id varchar not null,"
 						+ "fingerprint_id varchar not null,"
-						+ "created timestamp not null default now())");
+						+ "created timestamp not null default now(),"
+						+ "unique (person_id,fingerprint_id))");
 				try {
 					st.execute();
 					
@@ -180,10 +181,38 @@ public class FingerprintMappingPostgresqlDAO implements FingerprintMappingDAO {
 	}
 
 	@Override
-	public FingerprintMapping fingBy(String personId, String fingerprintId)
-			throws FingerprintMappingException {
-		// TODO Auto-generated method stub
-		return null;
+	public FingerprintMapping fingBy(String personId, String fingerprintId)	throws FingerprintMappingException {
+		try {
+			Connection con = cp.getConnection();
+			try {
+				String query = "select * from fingerprintmappings where person_id = ? and fingerprint_id = ?";
+				PreparedStatement st = con.prepareStatement(query);
+				try {
+					st.setString(1, personId);
+					st.setString(2, fingerprintId);
+					ResultSet rs = st.executeQuery();
+					try {
+						if (rs.next()) {
+							return getFingerprintMapping(rs);
+						} else {
+							return null;
+						}
+						
+					} finally {
+						rs.close();
+					}
+					
+				} finally {
+					st.close();
+				}
+				
+			} finally {
+				con.close();
+			}
+		} catch (SQLException e) {
+			logger.log(Level.SEVERE, e.getMessage(), e);
+			throw new FingerprintMappingException(e.getMessage());
+		}		
 	}
 	
 }
