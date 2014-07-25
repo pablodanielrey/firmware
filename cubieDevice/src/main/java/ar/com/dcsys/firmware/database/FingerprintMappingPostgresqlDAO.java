@@ -179,4 +179,11 @@ public class FingerprintMappingPostgresqlDAO implements FingerprintMappingDAO {
 		}		
 	}
 
+	@Override
+	public FingerprintMapping fingBy(String personId, String fingerprintId)
+			throws FingerprintMappingException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 }

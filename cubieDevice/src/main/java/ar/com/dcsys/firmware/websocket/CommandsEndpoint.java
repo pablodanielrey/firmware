@@ -200,19 +200,141 @@ public class CommandsEndpoint {
 
 
 	/**
+	 * Sobreescribe el template en la ubicacion tmplNumber de la rom del lector.
+	 * @param tmplNumber
+	 * @param remote
+	 */
+	private void writeTemplate(TemplateData td, final RemoteEndpoint.Basic remote) {
+
+		try {
+			writeTemplate.execute(sd, new WriteTemplateResult() {
+				
+				@Override
+				public void onSuccess(int tnumber) {
+					
+					try {
+						remote.sendText("OK " + String.valueOf(tnumber));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}
+					
+				}
+				
+				public void onCancel() {
+					try {
+						remote.sendText("ERROR cancelado");
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}
+				};
+				
+				public void onFailure(int errorCode) {
+					try {
+						remote.sendText("ERROR " + String.valueOf(errorCode));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}
+				};
+				
+				public void onInvalidTemplateNumber(int number) {
+					try {
+						remote.sendText("ERROR número de huella inválido " + String.valueOf(number));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}
+				};
+				
+				public void onInvalidTemplateSize(int size) {
+					try {
+						remote.sendText("ERROR tamaño de huella inválido " + String.valueOf(size));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}
+				};
+				
+			}, td);
+			
+		} catch (CmdException cmdE) {
+			
+			logger.log(Level.SEVERE,cmdE.getMessage(),cmdE);
+			try {
+				remote.sendText("ERROR " + cmdE.getMessage());
+				
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				logger.log(Level.SEVERE,e1.getMessage(),e1);
+			}
+			
+		}		
+	}
+	
+	
+	/**
 	 * Actualiza una huella dentro de la base.
+	 * En el caso de que ya existe el mapeo de la huella dentro del lector y la base usa esa misma posicion en la rom del lector.
 	 * @param fp
 	 */
 	private void updateFingerprint(final Fingerprint fp, final RemoteEndpoint.Basic remote) {
 		
 		Runnable r = new Runnable() {
 			public void run() {
-				// persisto los datos.
-				try {
-					final String fpId = fingerprintDAO.persist(fp);
 					
+				//chequeo si ya existe el mapeo dentro del lector.
+				String personId = fp.getPersonId();
+				String fingerprintId = fp.getId();
+				FingerprintMapping fpm = null;
+				try {
+					fpm = fingerprintMappingDAO.fingBy(personId, fingerprintId);
+					
+				} catch (FingerprintMappingException e2) {
+					try {
+						remote.sendText("ERROR " + e2.getMessage());
+						return;
+						
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+						return;
+					}						
+				}					
+				
+				try {
+					// actualizo la huella en la base.
+					fingerprintDAO.persist(fp);
+					
+				} catch (FingerprintException fe) {
+					try {
+						remote.sendText("ERROR " + fe.getMessage());
+						return;
+								
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+						return;
+					}						
+				}
+				
+				
+				
+				if (fpm != null) {
+					
+					// sobre escribo la rom del lector en la posicion que ya tenía esa huella.
+					
+					TemplateData tedata = new TemplateData();
+					tedata.setFingerprint(fp);
+					tedata.setNumber(fpm.getFpNumber());
+
+					writeTemplate(tedata, remote);						
+					
+				} else {
+				
 					try {
 						
+						final String fpId = fp.getId();
 						getEmptyId.execute(sd, new GetEmptyIdResult() {
 							
 							@Override
@@ -237,72 +359,7 @@ public class CommandsEndpoint {
 									tedata.setFingerprint(fp);
 									tedata.setNumber(tmplNumber);
 
-									try {
-										writeTemplate.execute(sd, new WriteTemplateResult() {
-											
-											@Override
-											public void onSuccess(int tnumber) {
-												
-												try {
-													remote.sendText("OK " + String.valueOf(tnumber));
-													
-												} catch (IOException e) {
-													logger.log(Level.SEVERE,e.getMessage(),e);
-												}
-												
-											}
-											
-											public void onCancel() {
-												try {
-													remote.sendText("ERROR cancelado");
-													
-												} catch (IOException e) {
-													logger.log(Level.SEVERE,e.getMessage(),e);
-												}
-											};
-											
-											public void onFailure(int errorCode) {
-												try {
-													remote.sendText("ERROR " + String.valueOf(errorCode));
-													
-												} catch (IOException e) {
-													logger.log(Level.SEVERE,e.getMessage(),e);
-												}
-											};
-											
-											public void onInvalidTemplateNumber(int number) {
-												try {
-													remote.sendText("ERROR número de huella inválido " + String.valueOf(number));
-													
-												} catch (IOException e) {
-													logger.log(Level.SEVERE,e.getMessage(),e);
-												}
-											};
-											
-											public void onInvalidTemplateSize(int size) {
-												try {
-													remote.sendText("ERROR tamaño de huella inválido " + String.valueOf(size));
-													
-												} catch (IOException e) {
-													logger.log(Level.SEVERE,e.getMessage(),e);
-												}
-											};
-											
-										}, tedata);
-										
-									} catch (CmdException cmdE) {
-										
-										logger.log(Level.SEVERE,cmdE.getMessage(),cmdE);
-										try {
-											remote.sendText("ERROR " + cmdE.getMessage());
-											
-										} catch (IOException e1) {
-											e1.printStackTrace();
-											logger.log(Level.SEVERE,e1.getMessage(),e1);
-										}
-										
-									}
-									
+									writeTemplate(tedata, remote);
 									
 								} catch (FingerprintMappingException e) {
 									try {
@@ -354,17 +411,8 @@ public class CommandsEndpoint {
 							logger.log(Level.SEVERE,e.getMessage(),e);
 						}						
 					}
-					
-				} catch (FingerprintException fe) {
-					try {
-						remote.sendText("ERROR " + fe.getMessage());
-						
-					} catch (IOException e) {
-						logger.log(Level.SEVERE,e.getMessage(),e);
-					}						
-					
-					
 				}
+						
 			}
 		};
 		App.addCommand(r);
