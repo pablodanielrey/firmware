@@ -46,6 +46,7 @@ import ar.com.dcsys.firmware.cmd.template.WriteTemplate.WriteTemplateResult;
 import ar.com.dcsys.firmware.database.FingerprintMapping;
 import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
 import ar.com.dcsys.firmware.database.FingerprintMappingException;
+import ar.com.dcsys.firmware.database.Initialize;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.person.server.PersonSerializer;
@@ -74,6 +75,8 @@ public class CommandsEndpoint {
 	private final WriteTemplate writeTemplate;
 	private final ReadRawTemplate readRawTemplate;
 	
+	private final Initialize initialize;
+	
 	private final FingerprintDAO fingerprintDAO;
 	private final FingerprintMappingDAO fingerprintMappingDAO;
 	
@@ -87,6 +90,8 @@ public class CommandsEndpoint {
 											 GetEmptyId getEmptyId,
 											 WriteTemplate writeTemplate,
 											 ReadRawTemplate readRawTemplate,
+											 
+											 Initialize initialize,
 											 
 											 PersonsManager personsManager,
 											 FingerprintDAO fingerprintDAO,
@@ -103,6 +108,9 @@ public class CommandsEndpoint {
 		this.testConnection = testConnection;
 		this.getFirmwareVersion = getFirmwareVersion;
 		this.readRawTemplate = readRawTemplate;
+		
+		
+		this.initialize = initialize;
 		
 		this.personsManager = personsManager;
 		this.fingerprintDAO = fingerprintDAO;
@@ -596,7 +604,41 @@ public class CommandsEndpoint {
 		App.addCommand(r);
 		
 	}
+	
+	
+	/**
+	 * Se inicializan los datos del dispositivo dentro de la base local.
+	 */
+	private void initializeDevice(final RemoteEndpoint.Basic remote) {
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					String id = initialize.execute();
+					remote.sendText("OK " + id);
+					
+				} catch (CmdException | IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+						
+					} catch (IOException e1) {
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}
+				}
+			}
+		};
+		App.addCommand(r);
+	}
+	
+	
+	
+	private void createAssistanceLog(int fpNumber) {
+		
 
+	}
+	
+	
 	
 	private void identify(final RemoteEndpoint.Basic remote) throws CmdException {
 
@@ -618,8 +660,7 @@ public class CommandsEndpoint {
 						
 						@Override
 						public void onSuccess(int fpNumber) {
-							
-							
+
 							
 							
 							try {
@@ -832,7 +873,11 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if (m.startsWith("readRawTemplate;")) {
+			if ("initialize".equals(m)) {
+				
+				initializeDevice(remote);
+				
+			} else if (m.startsWith("readRawTemplate;")) {
 				
 				String cmd = "readRawTemplate;";
 				String number = m.substring(cmd.length());
