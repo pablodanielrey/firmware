@@ -1,6 +1,9 @@
 package ar.com.dcsys.firmware.websocket;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,8 +20,12 @@ import javax.websocket.server.ServerEndpoint;
 import javax.xml.bind.DatatypeConverter;
 
 import ar.com.dcsys.auth.server.FingerprintSerializer;
+import ar.com.dcsys.data.device.Device;
 import ar.com.dcsys.data.fingerprint.FingerprintDAO;
+import ar.com.dcsys.data.log.AttLog;
 import ar.com.dcsys.data.person.Person;
+import ar.com.dcsys.exceptions.AttLogException;
+import ar.com.dcsys.exceptions.DeviceException;
 import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.App;
@@ -36,6 +43,8 @@ import ar.com.dcsys.firmware.cmd.enroll.DefaultEnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollAndStoreInRam;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollResult;
+import ar.com.dcsys.firmware.cmd.template.ClearAllTemplate;
+import ar.com.dcsys.firmware.cmd.template.ClearAllTemplate.ClearAllTemplateResult;
 import ar.com.dcsys.firmware.cmd.template.GetEmptyId;
 import ar.com.dcsys.firmware.cmd.template.GetEmptyId.GetEmptyIdResult;
 import ar.com.dcsys.firmware.cmd.template.ReadRawTemplate;
@@ -49,6 +58,7 @@ import ar.com.dcsys.firmware.database.FingerprintMappingException;
 import ar.com.dcsys.firmware.database.Initialize;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.model.PersonsManager;
+import ar.com.dcsys.model.log.AttLogsManager;
 import ar.com.dcsys.person.server.PersonSerializer;
 import ar.com.dcsys.security.Finger;
 import ar.com.dcsys.security.Fingerprint;
@@ -61,6 +71,7 @@ public class CommandsEndpoint {
 	private final FingerprintSerializer fingerprintSerializer = new FingerprintSerializer();
 	private final PersonSerializer personSerializer = new PersonSerializer();
 	private final PersonsManager personsManager;
+	private final AttLogsManager attLogsManager;
 	
 	private final SerialDevice sd;
 	private final Identify identify;
@@ -74,6 +85,7 @@ public class CommandsEndpoint {
 	private final GetEmptyId getEmptyId;
 	private final WriteTemplate writeTemplate;
 	private final ReadRawTemplate readRawTemplate;
+	private final ClearAllTemplate clearAllTemplate;
 	
 	private final Initialize initialize;
 	
@@ -90,12 +102,14 @@ public class CommandsEndpoint {
 											 GetEmptyId getEmptyId,
 											 WriteTemplate writeTemplate,
 											 ReadRawTemplate readRawTemplate,
+											 ClearAllTemplate clearAllTemplate,
 											 
 											 Initialize initialize,
 											 
 											 PersonsManager personsManager,
 											 FingerprintDAO fingerprintDAO,
-											 FingerprintMappingDAO fingerprintMappingDAO) {
+											 FingerprintMappingDAO fingerprintMappingDAO,
+											 AttLogsManager attLogsManager) {
 		this.sd = sd;
 		this.identify = i;
 		this.cancel = cancel;
@@ -108,6 +122,7 @@ public class CommandsEndpoint {
 		this.testConnection = testConnection;
 		this.getFirmwareVersion = getFirmwareVersion;
 		this.readRawTemplate = readRawTemplate;
+		this.clearAllTemplate = clearAllTemplate;
 		
 		
 		this.initialize = initialize;
@@ -115,6 +130,7 @@ public class CommandsEndpoint {
 		this.personsManager = personsManager;
 		this.fingerprintDAO = fingerprintDAO;
 		this.fingerprintMappingDAO = fingerprintMappingDAO;
+		this.attLogsManager = attLogsManager;
 	}
 	
 	
@@ -664,9 +680,32 @@ public class CommandsEndpoint {
 
 	
 	
-	private void createAssistanceLog(int fpNumber) {
+	/**
+	 * Crea el registro de assitencia para el reloj actual y para la persona y huella identificada con fpNumber
+	 * @param fpNumber
+	 */
+	private String createAssistanceLog(int fpNumber) throws AttLogException, FingerprintMappingException, DeviceException {
 		
-
+		FingerprintMapping fpm = fingerprintMappingDAO.findBy(fpNumber);
+		if (fpm == null) {
+			throw new FingerprintMappingException("No existe mapping con ese id de huella " + String.valueOf(fpNumber));
+		}
+		
+		Device d = initialize.getCurrentDevice();
+		Person p = new Person();
+		p.setId(fpm.getPersonId());
+		
+		
+		AttLog log = new AttLog();
+		log.setDate(new Date());
+		log.setDevice(d);
+		log.setId(UUID.randomUUID().toString());
+		log.setPerson(p);
+		log.setVerifyMode(1l);
+			
+		attLogsManager.persist(log);
+			
+		return fpm.getPersonId();
 	}
 	
 	
@@ -692,14 +731,21 @@ public class CommandsEndpoint {
 						@Override
 						public void onSuccess(int fpNumber) {
 
-							
-							
 							try {
-								remote.sendText("OK huella encontrada : " + String.valueOf(fpNumber));
+								String person = createAssistanceLog(fpNumber);
+								remote.sendText("OK " + person + " " + String.valueOf(fpNumber));
 								
-							} catch (IOException e) {
-								e.printStackTrace();
+							} catch (AttLogException | FingerprintMappingException | DeviceException | IOException e1) {
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+								
+								try {
+									remote.sendText("ERROR " + e1.getMessage());
+								
+								} catch (IOException e) {
+									logger.log(Level.SEVERE,e.getMessage(),e);
+								}								
 							}
+							
 						}
 						
 						@Override
@@ -897,6 +943,131 @@ public class CommandsEndpoint {
 		 App.addCommand(r);
 	}
 	
+	
+	private void purgeFingerprints(final RemoteEndpoint.Basic remote) {
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					clearAllTemplate.excecute(sd, new ClearAllTemplateResult() {
+						
+						@Override
+						public void onSuccess(int number) {
+							try {
+								List<FingerprintMapping> fps = fingerprintMappingDAO.findAll();
+								for (FingerprintMapping fp : fps) {
+									fingerprintMappingDAO.delete(fp);
+								}
+								remote.sendText("OK " + String.valueOf(number) + " " + String.valueOf(fps.size()));
+
+							} catch (IOException | FingerprintMappingException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+						
+						@Override
+						public void onFailure(int errorCode) {
+							try {
+								remote.sendText("ERROR " + String.valueOf(errorCode));
+								
+							} catch (IOException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+						
+						@Override
+						public void onCancel() {
+							try {
+								remote.sendText("ERROR cancelado");
+								
+							} catch (IOException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+					});
+					
+				} catch (CmdException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+						
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}
+				}
+			}
+		};
+		App.addCommand(r);
+	}
+	
+	
+	private void clearAllTemplate(final RemoteEndpoint.Basic remote) {
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					clearAllTemplate.excecute(sd, new ClearAllTemplateResult() {
+						
+						@Override
+						public void onSuccess(int number) {
+							try {
+								remote.sendText("OK " + String.valueOf(number));
+								
+							} catch (IOException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+						
+						@Override
+						public void onFailure(int errorCode) {
+							try {
+								remote.sendText("ERROR " + String.valueOf(errorCode));
+								
+							} catch (IOException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+						
+						@Override
+						public void onCancel() {
+							try {
+								remote.sendText("ERROR cancelado");
+								
+							} catch (IOException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+					});
+					
+				} catch (CmdException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+						
+					} catch (IOException e1) {
+						e1.printStackTrace();
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}
+				}
+			}
+		};
+		App.addCommand(r);
+		
+	}
+	
 	@OnMessage
 	public void onMessage(String m, final Session session) {
 		logger.fine("Mensaje recibido : " + m);
@@ -915,6 +1086,14 @@ public class CommandsEndpoint {
 			} else if ("disable".equals(m)) {
 				
 				setEnabled(false, remote);
+				
+			} else if ("clearAllTemplate".equals(m)) {
+				
+				clearAllTemplate(remote);
+				
+			} else if ("purgeFingerprints".equals(m)) {
+				
+				purgeFingerprints(remote);
 				
 			} else if (m.startsWith("readRawTemplate;")) {
 				

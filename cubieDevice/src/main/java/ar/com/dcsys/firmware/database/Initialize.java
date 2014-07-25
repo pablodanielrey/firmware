@@ -1,5 +1,6 @@
 package ar.com.dcsys.firmware.database;
 
+import java.util.List;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -18,6 +19,18 @@ public class Initialize {
 	public Initialize(CubieDeviceData cubieDeviceData, DevicesManager devicesManager) {
 		this.cd = cubieDeviceData;
 		this.devicesManager = devicesManager;
+	}
+	
+	public Device getCurrentDevice() throws DeviceException {
+		String id = cd.getId();
+		if ("initialize".equals(id)) {
+			List<String> ids = devicesManager.findAll();
+			if (ids == null || ids.size() <= 0) {
+				throw new DeviceException("no existe ningun dispositivo");
+			}
+			id = ids.get(0);
+		}
+		return devicesManager.findById(id);
 	}
 	
 	public CubieDeviceData getCubieDeviceData() {

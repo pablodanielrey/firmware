@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -144,6 +146,40 @@ public class FingerprintMappingPostgresqlDAO implements FingerprintMappingDAO {
 		
 	}
 	
+	@Override
+	public List<FingerprintMapping> findAll() throws FingerprintMappingException {
+
+		try {
+			Connection con = cp.getConnection();
+			try {
+				String query = "select * from fingerprintmappings";
+				PreparedStatement st = con.prepareStatement(query);
+				try {
+					ResultSet rs = st.executeQuery();
+					try {
+						List<FingerprintMapping> fps = new ArrayList<>();
+						while (rs.next()) {
+							FingerprintMapping fp = getFingerprintMapping(rs);
+							fps.add(fp);
+						}
+						return fps;
+						
+					} finally {
+						rs.close();
+					}
+					
+				} finally {
+					st.close();
+				}
+				
+			} finally {
+				con.close();
+			}
+		} catch (SQLException e) {
+			logger.log(Level.SEVERE, e.getMessage(), e);
+			throw new FingerprintMappingException(e.getMessage());
+		}		
+	}
 
 	@Override
 	public FingerprintMapping findBy(int fpNumber) throws FingerprintMappingException {
@@ -151,7 +187,7 @@ public class FingerprintMappingPostgresqlDAO implements FingerprintMappingDAO {
 		try {
 			Connection con = cp.getConnection();
 			try {
-				String query = "select fpNumber from fingerprintmappings where fpNumber = ?";
+				String query = "select * from fingerprintmappings where fpNumber = ?";
 				PreparedStatement st = con.prepareStatement(query);
 				try {
 					st.setInt(1, fpNumber);
