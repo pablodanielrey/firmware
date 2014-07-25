@@ -631,6 +631,37 @@ public class CommandsEndpoint {
 		App.addCommand(r);
 	}
 	
+	/**
+	 * Setea el estado del dispositivo dentro de la base.
+	 * @param v
+	 * @param remote
+	 */
+	private void setEnabled(final Boolean v, final RemoteEndpoint.Basic remote) {
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					String enabled = initialize.getCubieDeviceData().getEnabled();
+					initialize.getCubieDeviceData().setEnabled(v.toString());
+					String id = initialize.execute();
+					initialize.getCubieDeviceData().setEnabled(enabled);
+					
+					remote.sendText("OK " + id);
+					
+				} catch (CmdException | IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR " + e.getMessage());
+						
+					} catch (IOException e1) {
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+					}
+				}
+			}
+		};
+		App.addCommand(r);
+	}
+
 	
 	
 	private void createAssistanceLog(int fpNumber) {
@@ -876,6 +907,14 @@ public class CommandsEndpoint {
 			if ("initialize".equals(m)) {
 				
 				initializeDevice(remote);
+				
+			} else if ("enable".equals(m)) {
+				
+				setEnabled(true, remote);
+				
+			} else if ("disable".equals(m)) {
+				
+				setEnabled(false, remote);
 				
 			} else if (m.startsWith("readRawTemplate;")) {
 				

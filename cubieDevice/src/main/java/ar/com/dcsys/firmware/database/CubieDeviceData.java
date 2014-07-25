@@ -11,6 +11,7 @@ public class CubieDeviceData {
 	@Inject @Config String netmask;
 	@Inject @Config String name;
 	@Inject @Config String description;
+	@Inject @Config String enabled;
 	
 	public String getId() {
 		return id;
@@ -51,5 +52,14 @@ public class CubieDeviceData {
 	public void setDescription(String description) {
 		this.description = description;
 	}
+
+	public String getEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(String enabled) {
+		this.enabled = enabled;
+	}
+
 	
 }

@@ -20,6 +20,10 @@ public class Initialize {
 		this.devicesManager = devicesManager;
 	}
 	
+	public CubieDeviceData getCubieDeviceData() {
+		return cd;
+	}
+	
 	public String execute() throws CmdException {
 		
 		try {
@@ -35,7 +39,20 @@ public class Initialize {
 				d.setId(id);
 			}
 			
-			d.setEnabled(true);
+			
+			String enabled = cd.getEnabled();
+			if (enabled == null) {
+				d.setEnabled(true);
+				
+			} else {
+				try {
+					d.setEnabled(Boolean.parseBoolean(enabled));
+					
+				} catch (Exception e) {
+					d.setEnabled(true);
+				}
+			}
+
 			d.setName(cd.getName());
 			d.setDescription(cd.getDescription());
 			d.setIp(cd.getIp());
