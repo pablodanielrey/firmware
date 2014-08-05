@@ -132,7 +132,7 @@ public class Leds {
 
 			leds[1].blink(1, 300);
 			
-		} else if (cmd.equals("testleds")) {
+		} else if (cmd.equals("test")) {
 			
 			for (int i = 0; i < leds.length; i++) {
 				leds[i].blink(4, 100);

@@ -471,12 +471,17 @@ public class CommandsEndpoint {
 			public void run() {
 						
 				try {
+					leds.onCommand("enroll");
+					
 					enroll.execute(sd, new EnrollResult() {
 									
 						@Override
 						public void onSuccess(final Fingerprint fp) {
 															
 							// genero la respuesta del comando.
+							
+							leds.onCommand("identify");
+							leds.onCommand("ok");
 							
 							try {
 								StringBuilder sb = new StringBuilder();
@@ -499,6 +504,9 @@ public class CommandsEndpoint {
 						@Override
 						public void onFailure(int errorCode) {
 							try {
+								leds.onCommand("identify");
+								leds.onCommand("error");
+								
 								remote.sendText("ERROR " + String.valueOf(errorCode));
 								
 							} catch (IOException e) {
@@ -509,6 +517,9 @@ public class CommandsEndpoint {
 						@Override
 						public void onCancel() {
 							try {
+								leds.onCommand("identify");
+								leds.onCommand("error");
+								
 								remote.sendText("ERROR comando cancelado");
 								
 							} catch (IOException e) {
@@ -519,6 +530,8 @@ public class CommandsEndpoint {
 						@Override
 						public void releaseFinger() {
 							try {
+								leds.onCommand("ok");
+								
 								remote.sendText("OK levantar el dedo del lector");
 								
 							} catch (IOException e) {
@@ -529,6 +542,9 @@ public class CommandsEndpoint {
 						@Override
 						public void onTimeout() {
 							try {
+								leds.onCommand("identify");
+								leds.onCommand("error");
+								
 								remote.sendText("ERROR timeout");
 								
 							} catch (IOException e) {
@@ -539,6 +555,8 @@ public class CommandsEndpoint {
 						@Override
 						public void onBadQuality() {
 							try {
+								leds.onCommand("error");
+								
 								remote.sendText("ERROR mala calidad");
 								
 							} catch (IOException e) {
@@ -549,6 +567,8 @@ public class CommandsEndpoint {
 						@Override
 						public void needThirdSweep() {
 							try {
+								leds.onCommand("ok");
+								
 								remote.sendText("OK necesita tercera huella");
 								
 							} catch (IOException e) {
@@ -559,6 +579,8 @@ public class CommandsEndpoint {
 						@Override
 						public void needSecondSweep() {
 							try {
+								leds.onCommand("ok");
+								
 								remote.sendText("OK necesita segunda huella");
 								
 							} catch (IOException e) {
@@ -569,6 +591,8 @@ public class CommandsEndpoint {
 						@Override
 						public void needFirstSweep() {
 							try {
+								leds.onCommand("ok");
+								
 								remote.sendText("OK necesita primera huella");
 								
 							} catch (IOException e) {
@@ -605,6 +629,9 @@ public class CommandsEndpoint {
 					cancel.execute(sd, new FpCancelResult() {
 						@Override
 						public void onSuccess() {
+							
+							leds.onCommand("identify");
+							
 							logger.fine("Cancelado exitosamente");
 							try {
 								remote.sendText("OK Cancelado exitosamente");
@@ -670,9 +697,14 @@ public class CommandsEndpoint {
 					String id = initialize.execute();
 					initialize.getCubieDeviceData().setEnabled(enabled);
 					
+					leds.onCommand("ok");
+					
 					remote.sendText("OK " + id);
 					
 				} catch (CmdException | IOException e) {
+					
+					leds.onCommand("error");
+					
 					logger.log(Level.SEVERE,e.getMessage(),e);
 					try {
 						remote.sendText("ERROR " + e.getMessage());
@@ -724,11 +756,15 @@ public class CommandsEndpoint {
 			@Override
 			public void run() {
 				try {
+					leds.onCommand("identify");
+					
 					identify.execute(sd, new IdentifyResult() {
 						
 						@Override
 						public void releaseFinger() {
 							try {
+								leds.onCommand("ok");
+								
 								remote.sendText("OK liberar dedo");
 								
 							} catch (IOException e) {
@@ -738,13 +774,20 @@ public class CommandsEndpoint {
 						
 						@Override
 						public void onSuccess(int fpNumber) {
-
+							
 							try {
 								String person = createAssistanceLog(fpNumber);
+								
+								leds.onCommand("ok");
+								
 								remote.sendText("OK " + person + " " + String.valueOf(fpNumber));
+								
+
 								
 							} catch (AttLogException | FingerprintMappingException | DeviceException | IOException e1) {
 								logger.log(Level.SEVERE,e1.getMessage(),e1);
+
+								leds.onCommand("error");
 								
 								try {
 									remote.sendText("ERROR " + e1.getMessage());
@@ -759,8 +802,9 @@ public class CommandsEndpoint {
 						@Override
 						public void onNotFound() {
 							try {
+								leds.onCommand("error");
 								remote.sendText("OK huella no encontrada");
-							
+															
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -769,8 +813,9 @@ public class CommandsEndpoint {
 						@Override
 						public void onFailure(int errorCode) {
 							try {
+								leds.onCommand("error");
 								remote.sendText("ERROR " + String.valueOf(errorCode));
-								
+															
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -779,6 +824,7 @@ public class CommandsEndpoint {
 						@Override
 						public void onCancel() {
 							try {
+								leds.onCommand("error");
 								remote.sendText("ERROR identificación cancelada");
 								
 							} catch (IOException e) {
@@ -787,6 +833,8 @@ public class CommandsEndpoint {
 						}
 					});
 				} catch (CmdException e) {
+					leds.onCommand("error");
+					
 					e.printStackTrace();
 					try {
 						remote.sendText("ERROR " + e.getMessage());
@@ -1157,6 +1205,7 @@ public class CommandsEndpoint {
 			} else if ("test".equals(m)) {
 				
 				test(remote);
+				leds.onCommand("test");
 				
 			} else if (m.startsWith("enroll;")) {
 				
