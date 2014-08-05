@@ -45,11 +45,19 @@ public class GPIO {
 			try {
 				for (String pin : gpioPins.values()) {
 					export.println(pin);
+					export.flush();
 				}
 			} finally {
 				export.close();
 			}
 
+			// le doy un tiempo para que se estabilice
+			try {
+				Thread.sleep(1000l);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
