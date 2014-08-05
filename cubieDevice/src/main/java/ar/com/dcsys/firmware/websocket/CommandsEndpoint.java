@@ -56,6 +56,7 @@ import ar.com.dcsys.firmware.database.FingerprintMapping;
 import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
 import ar.com.dcsys.firmware.database.FingerprintMappingException;
 import ar.com.dcsys.firmware.database.Initialize;
+import ar.com.dcsys.firmware.leds.Leds;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.model.log.AttLogsManager;
@@ -89,6 +90,8 @@ public class CommandsEndpoint {
 	
 	private final Initialize initialize;
 	
+	private final Leds leds;
+	
 	private final FingerprintDAO fingerprintDAO;
 	private final FingerprintMappingDAO fingerprintMappingDAO;
 	
@@ -109,7 +112,11 @@ public class CommandsEndpoint {
 											 PersonsManager personsManager,
 											 FingerprintDAO fingerprintDAO,
 											 FingerprintMappingDAO fingerprintMappingDAO,
-											 AttLogsManager attLogsManager) {
+											 AttLogsManager attLogsManager,
+											 
+											 Leds leds
+			
+										) {
 		this.sd = sd;
 		this.identify = i;
 		this.cancel = cancel;
@@ -124,8 +131,9 @@ public class CommandsEndpoint {
 		this.readRawTemplate = readRawTemplate;
 		this.clearAllTemplate = clearAllTemplate;
 		
-		
 		this.initialize = initialize;
+		
+		this.leds = leds;
 		
 		this.personsManager = personsManager;
 		this.fingerprintDAO = fingerprintDAO;
@@ -1075,7 +1083,13 @@ public class CommandsEndpoint {
 		RemoteEndpoint.Basic remote = session.getBasicRemote();
 
 		try {
-			if ("initialize".equals(m)) {
+			
+			if (m.startsWith("leds;")) {
+				
+				String subcommand = m.substring(5);
+				leds.onCommand(subcommand);
+				
+			} else if ("initialize".equals(m)) {
 				
 				initializeDevice(remote);
 				
@@ -1145,6 +1159,7 @@ public class CommandsEndpoint {
 				test(remote);
 				
 			} else if (m.startsWith("enroll;")) {
+				
 				String id = m.substring(7);
 				
 				logger.fine("enrolando usuario : " + id);
@@ -1175,7 +1190,18 @@ public class CommandsEndpoint {
 				String data = m.substring(7);
 				persistPerson(data, remote);
 				
+			} else {
+				
+				try {
+					remote.sendText("comando desconocido");
+					
+				} catch (IOException e1) {
+					e1.printStackTrace();
+					logger.log(Level.SEVERE,e1.getMessage(),e1);
+				}
+			
 			}
+		
 		
 		} catch (CmdException e) {
 			logger.log(Level.SEVERE,e.getMessage(),e);
