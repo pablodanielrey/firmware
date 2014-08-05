@@ -1184,6 +1184,7 @@ public class CommandsEndpoint {
 				
 				logger.fine("finalizando app");
 				end(remote);
+				leds.stop();
 				
 			} else if (m.startsWith("person;")) {
 				

@@ -116,22 +116,25 @@ public class Leds {
 	
 	public void onCommand(String cmd) {
 		
-		if (cmd.equalsIgnoreCase("OK")) {
+		if (cmd.equals("identify")) {
 			
-			leds[0].turnOn();
-			try {
-				Thread.sleep(1000l);
-			} catch (InterruptedException e) {
-			}
-			leds[0].turnOff();
+			leds[2].turnOff();
 			
-		} else if (cmd.equalsIgnoreCase("ERROR")) {
+		} else if (cmd.equals("enroll")) {
+			
+			leds[2].turnOn();
+			
+		} else if (cmd.equalsIgnoreCase("ok")) {
+			
+			leds[0].blink(1, 300);
+			
+		} else if (cmd.equalsIgnoreCase("error")) {
 
-			leds[0].blink(2, 500);
+			leds[1].blink(1, 300);
 			
 		} else if (cmd.equals("testleds")) {
 			
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < leds.length; i++) {
 				leds[i].blink(4, 100);
 			}
 			
