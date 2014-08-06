@@ -138,6 +138,21 @@ public class Leds {
 				leds[i].blink(4, 100);
 			}
 			
+		} else if (cmd.startsWith("blink;")) {
+			
+			try {
+				String id = cmd.substring(6);
+				int i = Integer.valueOf(id);
+				
+				if (i >= 0 && i < leds.length) {
+					leds[i].blink(1, 100);
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+				
+			}
+			
 		}
 		
 	}

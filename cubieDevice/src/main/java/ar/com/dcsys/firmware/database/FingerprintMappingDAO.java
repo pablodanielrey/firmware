@@ -10,6 +10,6 @@ public interface FingerprintMappingDAO {
 	public List<FingerprintMapping> findAll() throws FingerprintMappingException;
 	public FingerprintMapping findBy(int fpNumber) throws FingerprintMappingException;
 	public FingerprintMapping fingBy(String personId, String fingerprintId) throws FingerprintMappingException;
-
+	public void deleteAll() throws FingerprintMappingException;
 	
 }

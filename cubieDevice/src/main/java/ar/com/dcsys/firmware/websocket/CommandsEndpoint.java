@@ -3,7 +3,10 @@ package ar.com.dcsys.firmware.websocket;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -312,6 +315,302 @@ public class CommandsEndpoint {
 	
 	
 	/**
+	 * Regenera las huellas de la base dentro del lector.
+	 * deja solo las huellas que existen en la base y crea nuevamente todos los mapeos.
+	 */
+	private void consistency(final RemoteEndpoint.Basic remote) {
+		
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					leds.onCommand("blink;2");
+					
+					// elimino todos los mappings.
+					fingerprintMappingDAO.deleteAll();
+					
+					leds.onCommand("blink;2");
+					
+					// elimino todas las huellas del lector
+					clearAllTemplate.excecute(sd, new ClearAllTemplateResult() {
+						
+						@Override
+						public void onSuccess(int number) {
+							
+							leds.onCommand("blink;2");
+							
+							try {
+								// genero todas las huellas nuevamente.
+								List<String> fids = fingerprintDAO.findAll();
+								
+								final Semaphore sem = new Semaphore(1);
+								final Queue<String> qfids = new ConcurrentLinkedQueue<String>();
+								qfids.addAll(fids);
+								
+								while (!qfids.isEmpty()) {
+						
+									// espero que finalice el procesamiento de la huella anterior
+									try {
+										sem.acquire();
+									} catch (InterruptedException e1) {
+										e1.printStackTrace();
+									}
+
+									leds.onCommand("blink;2");
+									
+									// obtengo la huella
+									final String id = qfids.poll();
+									final Fingerprint fp = fingerprintDAO.findById(id);
+
+									getEmptyId.execute(sd, new GetEmptyIdResult() {
+										@Override
+										public void onSuccess(int tmplNumber) {
+
+											try {
+												TemplateData td = new TemplateData();
+												td.setFingerprint(fp);
+												td.setNumber(tmplNumber);
+												writeTemplate.execute(sd, new WriteTemplateResult() {
+													
+													@Override
+													public void onSuccess(int tnumber) {
+														
+														leds.onCommand("blink;2");
+														
+														
+														FingerprintMapping fpm = new FingerprintMapping();
+														fpm.setFingerprintId(fp.getId());
+														fpm.setPersonId(fp.getPersonId());
+														fpm.setFpNumber(tnumber);
+														try {
+															fingerprintMappingDAO.persist(fpm);
+															
+														} catch (FingerprintMappingException e1) {
+															
+															logger.log(Level.SEVERE,e1.getMessage(),e1);
+															try {
+																remote.sendText("ERROR creating fingerprintmapping for " + String.valueOf(tnumber));
+																
+															} catch (IOException e2) {
+																logger.log(Level.SEVERE,e2.getMessage(),e2);
+
+															} finally {
+																sem.release();
+																
+															}															
+														
+														}
+														
+														try {
+															remote.sendText("OK " + String.valueOf(tnumber));
+															
+														} catch (IOException e) {
+															logger.log(Level.SEVERE,e.getMessage(),e);
+															
+														} finally {
+															sem.release();
+															
+														}
+														
+													}
+													
+													public void onCancel() {
+														leds.onCommand("error");
+														
+														try {
+															remote.sendText("ERROR cancelado");
+															
+														} catch (IOException e) {
+															logger.log(Level.SEVERE,e.getMessage(),e);
+
+														} finally {
+															sem.release();
+															
+														}
+													};
+													
+													public void onFailure(int errorCode) {
+														leds.onCommand("error");
+														
+														try {
+															remote.sendText("ERROR " + String.valueOf(errorCode));
+															
+														} catch (IOException e) {
+															logger.log(Level.SEVERE,e.getMessage(),e);
+														
+														} finally {
+															sem.release();
+															
+														}
+													};
+													
+													public void onInvalidTemplateNumber(int number) {
+														leds.onCommand("error");
+														
+														try {
+															remote.sendText("ERROR número de huella inválido " + String.valueOf(number));
+															
+														} catch (IOException e) {
+															logger.log(Level.SEVERE,e.getMessage(),e);
+														
+														} finally {
+															sem.release();
+															
+														}
+													};
+													
+													public void onInvalidTemplateSize(int size) {
+														
+														leds.onCommand("error");
+														
+														try {
+															remote.sendText("ERROR tamaño de huella inválido " + String.valueOf(size));
+															
+														} catch (IOException e) {
+															logger.log(Level.SEVERE,e.getMessage(),e);
+														
+														} finally {
+															sem.release();
+															
+														}
+													};
+													
+												}, td);
+												
+											} catch (CmdException e) {
+												
+												sem.release();
+												
+											}
+											
+											
+										}
+										
+										@Override
+										public void onFailure(int errorCode) {
+											
+											leds.onCommand("error");
+											
+											logger.log(Level.SEVERE,"getEmptyId error");
+											try {
+												remote.sendText("ERROR " + String.valueOf(errorCode));
+												
+											} catch (IOException e) {
+												logger.log(Level.SEVERE,e.getMessage(),e);
+												
+											} finally {
+												sem.release();
+																								
+											}
+										}
+										
+										@Override
+										public void onEmptyNotExistent() {
+											
+											leds.onCommand("error");
+											
+											logger.log(Level.SEVERE,"no space left");
+											try {
+												remote.sendText("ERROR no space left");
+												
+											} catch (IOException e) {
+												logger.log(Level.SEVERE,e.getMessage(),e);
+											
+											} finally {
+												sem.release();
+												
+											}
+										}
+										
+										@Override
+										public void onCancel() {
+											
+											leds.onCommand("error");
+											
+											logger.log(Level.SEVERE,"canceled");
+											try {
+												remote.sendText("ERROR consistency canceled");
+												
+											} catch (IOException e) {
+												logger.log(Level.SEVERE,e.getMessage(),e);
+											
+											} finally {
+												sem.release();
+												
+											}
+										}
+									});
+										
+								}
+								
+								
+								
+								
+							} catch (CmdException | FingerprintException e1) {
+								
+								leds.onCommand("error");
+								
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+								
+								try {
+									remote.sendText("ERROR creating mappings");
+									
+								} catch (IOException e2) {
+									e1.printStackTrace();
+									logger.log(Level.SEVERE,e2.getMessage(),e2);
+								}								
+								
+							}
+
+						}
+						
+						@Override
+						public void onFailure(int errorCode) {
+							
+							leds.onCommand("error");
+							
+							try {
+								remote.sendText("ERROR clearing templates " + String.valueOf(errorCode));
+								
+							} catch (IOException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+						
+						@Override
+						public void onCancel() {
+							
+							leds.onCommand("error");
+							
+							try {
+								remote.sendText("ERROR cancelado");
+								
+							} catch (IOException e1) {
+								e1.printStackTrace();
+								logger.log(Level.SEVERE,e1.getMessage(),e1);
+							}
+
+						}
+					});
+					
+
+					
+					
+				} catch (CmdException | FingerprintMappingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		};
+		App.addCommand(r);
+		
+	}
+	
+	
+	/**
 	 * Actualiza una huella dentro de la base.
 	 * En el caso de que ya existe el mapeo de la huella dentro del lector y la base usa esa misma posicion en la rom del lector.
 	 * @param fp
@@ -457,6 +756,67 @@ public class CommandsEndpoint {
 	}
 
 
+	private void getEmptyId(final RemoteEndpoint.Basic remote) throws CmdException {
+	
+		leds.onCommand("ok");
+		
+		getEmptyId.execute(sd, new GetEmptyIdResult() {
+			
+			@Override
+			public void onSuccess(int tmplNumber) {
+				leds.onCommand("ok");
+				
+				try {
+					remote.sendText("OK " + String.valueOf(tmplNumber));
+					
+				} catch (IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					
+				}
+			}
+			
+			@Override
+			public void onCancel() {
+				leds.onCommand("error");
+				
+				try {
+					remote.sendText("ERROR cancel");
+					
+				} catch (IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					
+				}
+			}
+			
+			
+			@Override
+			public void onEmptyNotExistent() {
+				leds.onCommand("ok");
+				
+				try {
+					remote.sendText("OK no space left");
+					
+				} catch (IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					
+				}
+			}
+			
+			public void onFailure(int errorCode) {
+				leds.onCommand("error");
+				
+				try {
+					remote.sendText("ERROR " + String.valueOf(errorCode));
+					
+				} catch (IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					
+				}
+			};
+		});
+		
+	}
+	
 
 	/**
 	 * Captura la huella de un usuario
@@ -1011,9 +1371,7 @@ public class CommandsEndpoint {
 						public void onSuccess(int number) {
 							try {
 								List<FingerprintMapping> fps = fingerprintMappingDAO.findAll();
-								for (FingerprintMapping fp : fps) {
-									fingerprintMappingDAO.delete(fp);
-								}
+								fingerprintMappingDAO.deleteAll();
 								remote.sendText("OK " + String.valueOf(number) + " " + String.valueOf(fps.size()));
 
 							} catch (IOException | FingerprintMappingException e1) {
@@ -1062,6 +1420,9 @@ public class CommandsEndpoint {
 		};
 		App.addCommand(r);
 	}
+	
+	
+	
 	
 	
 	private void clearAllTemplate(final RemoteEndpoint.Basic remote) {
@@ -1124,6 +1485,334 @@ public class CommandsEndpoint {
 		
 	}
 	
+	
+	
+	private void checkIntegrity(final RemoteEndpoint.Basic remote) {
+		
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				
+				leds.onCommand("blink;2");
+				
+				try {
+					List<FingerprintMapping> fms = fingerprintMappingDAO.findAll();
+					List<String> fps = fingerprintDAO.findAll();
+
+					try {
+						remote.sendText("OK fingerprints " + String.valueOf(fps.size()) + " mapping " + String.valueOf(fms.size()));
+					} catch (IOException e) {
+					}
+				
+					
+					// chequeo que los mapeos tengan los mismos bytes dentro del lector y en la base.
+					
+					final Semaphore sem = new Semaphore(1);
+					final Queue<FingerprintMapping> qfms = new ConcurrentLinkedQueue<FingerprintMapping>();
+					qfms.addAll(fms);
+					
+					while (!qfms.isEmpty()) {
+						
+						try {
+							sem.acquire();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						
+						leds.onCommand("blink;2");
+
+						final FingerprintMapping fm = qfms.poll();
+						String fpId = fm.getFingerprintId();
+						if (fpId == null) {
+							try {
+								remote.sendText("ERROR mapping with fingerprint.id == null");
+							} catch (IOException e) {
+							} finally {
+								sem.release();
+							}
+							continue;
+						}
+						
+						try {
+							
+							leds.onCommand("blink;2");
+
+							final Fingerprint fp = fingerprintDAO.findById(fpId);
+
+							leds.onCommand("blink;2");
+
+							// obtengo los datos raw del lector y los comparo con los bytes del template guardado en la base.
+							readRawTemplate.execute(sd, fm.getFpNumber(), new ReadRawTemplateResult() {
+								@Override
+								public void onSuccess(byte[] templ) {
+
+									leds.onCommand("ok");
+									
+									try {
+										byte[] tmplData = fp.getTemplate();
+										
+										if (tmplData.length != templ.length) {
+											
+											leds.onCommand("error");
+											
+											try {
+												remote.sendText("ERROR " + fp.getId() + " mapping to " + String.valueOf(fm.getFpNumber()) + " different lengths");
+											} catch (IOException e) {
+											}
+											return;
+										}
+										
+										
+										for (int i = 0; i < tmplData.length; i++) {
+											if (tmplData[i] != templ[i]) {
+												
+												leds.onCommand("error");
+												
+												try {
+													remote.sendText("ERROR " + fp.getId() + " mapping to " + String.valueOf(fm.getFpNumber()) + " byteB != byteL " + String.format("%02X",tmplData[i]) + " != " + String.format("%02X",templ[i]));
+												} catch (IOException e) {
+												}
+												return;
+											}
+										}
+										
+									} finally {
+										sem.release();
+									}
+									
+								}
+								
+								@Override
+								public void onInvalidTemplateNumber(int number) {
+									
+									leds.onCommand("error");
+									
+									try {
+										remote.sendText("ERROR " + fp.getId() + " " + " mapping to " + String.valueOf(number) + " invalid template number");
+									} catch (IOException e) {
+									} finally {
+										sem.release();
+									}
+								}
+								
+								@Override
+								public void onFailure(int errorCode) {
+									
+									leds.onCommand("error");
+									
+									try {
+										remote.sendText("ERROR " + fp.getId() + " " + String.valueOf(errorCode));
+									} catch (IOException e) {
+									} finally {
+										sem.release();
+									}
+								}
+								
+								@Override
+								public void onEmptyTemplate(int number) {
+									
+									leds.onCommand("error");
+									
+									try {
+										remote.sendText("ERROR " + fp.getId() + " " + " mapping to " + String.valueOf(number) + " empty");
+									} catch (IOException e) {
+									} finally {
+										sem.release();
+									}
+								}
+								
+								@Override
+								public void onCancel() {
+									
+									leds.onCommand("error");
+									
+									try {
+										remote.sendText("ERROR canceled");
+									} catch (IOException e) {
+									} finally {
+										sem.release();
+									}
+								}
+							});
+							
+						
+						} catch (FingerprintException | CmdException e1) {
+							try {
+								remote.sendText("ERROR " + fpId);
+							} catch (IOException e) {
+							} finally {
+								sem.release();
+							}
+						}
+						
+					}
+					
+					
+				} catch (FingerprintMappingException | FingerprintException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR");
+					} catch (IOException e1) {
+					}
+				}
+				
+			}
+		};
+		App.addCommand(r);
+		
+	}
+	
+	
+	private void summary(final RemoteEndpoint.Basic remote) {
+		
+		leds.onCommand("blink;2");
+		
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				
+				// obtengo datos de la base.
+				try {
+					leds.onCommand("blink;2");
+
+					List<Person> persons = personsManager.findAll();
+					
+					remote.sendText("OK persons : " + String.valueOf(persons.size()));
+					
+					for (Person p : persons) {
+
+						leds.onCommand("blink;2");
+
+						remote.sendText("OK " + p.getId() + " " + p.getDni());
+					}
+					
+				} catch (PersonException | IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR persons");
+						
+					} catch (IOException e1) {
+						logger.log(Level.WARNING,e1.getMessage(),e1);
+					}
+				
+				}
+				
+				// obtengo datos de las huellas
+				try {
+					leds.onCommand("blink;2");
+
+					List<String> fids = fingerprintDAO.findAll();
+					
+					remote.sendText("OK fingerprints : " + String.valueOf(fids.size()));
+					
+					for (String id : fids) {
+						leds.onCommand("blink;2");
+
+						remote.sendText("OK " + id);
+					}
+					
+				} catch (FingerprintException | IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR fingerprints");
+						
+					} catch (IOException e1) {
+						logger.log(Level.WARNING,e1.getMessage(),e1);
+					}
+				}
+				
+				// obtengo datos de los mapeos
+				try {
+					leds.onCommand("blink;2");
+
+					List<FingerprintMapping> fms = fingerprintMappingDAO.findAll();
+					
+					remote.sendText("OK fingerprint mappings : " + String.valueOf(fms.size()));
+					
+					for (FingerprintMapping fm : fms) {
+						leds.onCommand("blink;2");
+						remote.sendText("OK " + fm.getFingerprintId() + " " + fm.getPersonId() + " " + String.valueOf(fm.getFpNumber()));
+					}
+					
+				} catch (FingerprintMappingException | IOException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR fingerprints mappings");
+						
+					} catch (IOException e1) {
+						logger.log(Level.WARNING,e1.getMessage(),e1);
+					}
+
+				}
+				
+				leds.onCommand("blink;2");
+				try {
+					getEmptyId.execute(sd, new GetEmptyIdResult() {
+						
+						@Override
+						public void onSuccess(int tmplNumber) {
+							leds.onCommand("blink;2");
+							try {
+								remote.sendText("OK " + String.valueOf(tmplNumber));
+								
+							} catch (IOException e) {
+								logger.log(Level.WARNING,e.getMessage(),e);
+							}
+						}
+						
+						@Override
+						public void onFailure(int errorCode) {
+							leds.onCommand("error");
+							try {
+								remote.sendText("ERROR " + String.valueOf(errorCode));
+								
+							} catch (IOException e) {
+								logger.log(Level.WARNING,e.getMessage(),e);
+							}
+						}
+						
+						@Override
+						public void onEmptyNotExistent() {
+							leds.onCommand("ok");
+							try {
+								remote.sendText("OK full");
+								
+							} catch (IOException e) {
+								logger.log(Level.WARNING,e.getMessage(),e);
+							}
+						}
+						
+						@Override
+						public void onCancel() {
+							leds.onCommand("error");
+							try {
+								remote.sendText("ERROR canceled");
+								
+							} catch (IOException e) {
+								logger.log(Level.WARNING,e.getMessage(),e);
+							}
+							
+						}
+					});
+					
+				} catch (CmdException e) {
+					logger.log(Level.SEVERE,e.getMessage(),e);
+					try {
+						remote.sendText("ERROR get empty id");
+						
+					} catch (IOException e1) {
+						logger.log(Level.WARNING,e1.getMessage(),e1);
+					}
+				}			
+				
+			}
+		};
+		App.addCommand(r);
+		
+	}
+	
+	
+	
 	@OnMessage
 	public void onMessage(String m, final Session session) {
 		logger.fine("Mensaje recibido : " + m);
@@ -1132,30 +1821,29 @@ public class CommandsEndpoint {
 
 		try {
 			
+			
+			//// leds /////
+			
 			if (m.startsWith("leds;")) {
 				
 				String subcommand = m.substring(5);
 				leds.onCommand(subcommand);
+			
+
 				
-			} else if ("initialize".equals(m)) {
 				
-				initializeDevice(remote);
 				
-			} else if ("enable".equals(m)) {
+			//// lector ////
 				
-				setEnabled(true, remote);
 				
-			} else if ("disable".equals(m)) {
+			} else if ("getEmptyId".equals(m)) {
 				
-				setEnabled(false, remote);
+				getEmptyId(remote);
 				
 			} else if ("clearAllTemplate".equals(m)) {
 				
-				clearAllTemplate(remote);
+				clearAllTemplate(remote);			
 				
-			} else if ("purgeFingerprints".equals(m)) {
-				
-				purgeFingerprints(remote);
 				
 			} else if (m.startsWith("readRawTemplate;")) {
 				
@@ -1174,21 +1862,6 @@ public class CommandsEndpoint {
 						logger.log(Level.SEVERE,e.getMessage(),e);
 					}
 				}
-				
-			} else if (m.startsWith("persistFingerprint;")) {
-				
-				// extraigo la huella del comando.
-				String cmd = "persistFingerprint;";
-				String json = m.substring(cmd.length());
-				FingerprintSerializer fps = new FingerprintSerializer();
-				Fingerprint fp = fps.read(json);
-				
-				updateFingerprint(fp, remote);
-				
-			} else if (m.startsWith("persistPerson;")) {
-				
-				String json = m.substring(m.indexOf(";") + 1);
-				persistPerson(json, remote);
 				
 			} else if ("firmware".equals(m)) {
 				
@@ -1218,16 +1891,98 @@ public class CommandsEndpoint {
 				ed.setPersonId(id);
 				
 				enroll(ed, remote);
+
+			} else if ("cancel".equals(m)) {
+				
+				logger.fine("Cancelando comando");
+				cancel(remote);
+				
+				
+				
+				
+				
+				
+			//// base ////
+				
+				
+			} else if ("initialize".equals(m)) {
+				
+				initializeDevice(remote);
+				
+			} else if ("enable".equals(m)) {
+				
+				setEnabled(true, remote);
+				
+			} else if ("disable".equals(m)) {
+				
+				setEnabled(false, remote);
+				
+			} else if (m.startsWith("persistPerson;")) {
+				
+				String json = m.substring(m.indexOf(";") + 1);
+				persistPerson(json, remote);
+
+			} else if (m.startsWith("person;")) {
+				
+				String data = m.substring(7);
+				persistPerson(data, remote);
+				
+
+				
+				
+				
+				
+				
+				
+				
+				
+			/// base y lector ////	
+				
+			} else if ("check".equals(m)) {
+				
+				checkIntegrity(remote);
+				
+			} else if ("regenerate".equals(m)) {
+				
+				consistency(remote);
+				
+				
+			} else if ("purgeFingerprints".equals(m)) {
+				
+				purgeFingerprints(remote);				
+
+
+			} else if (m.startsWith("persistFingerprint;")) {
+				
+				// extraigo la huella del comando.
+				String cmd = "persistFingerprint;";
+				String json = m.substring(cmd.length());
+				FingerprintSerializer fps = new FingerprintSerializer();
+				Fingerprint fp = fps.read(json);
+				
+				updateFingerprint(fp, remote);
+				
+
 				
 			} else if ("identify".equals(m)) {
 			
 				logger.fine("Mensaje de identificación");
 				identify(remote);
 				
-			} else if ("cancel".equals(m)) {
+
 				
-				logger.fine("Cancelando comando");
-				cancel(remote);
+				
+			} else if ("summary".equals(m)) {
+				
+				summary(remote);
+			
+				
+				
+			/////// aplicacion ////////////	
+				
+				
+				
+				
 				
 			} else if ("end".equals(m)) {
 				
@@ -1235,10 +1990,7 @@ public class CommandsEndpoint {
 				end(remote);
 				leds.stop();
 				
-			} else if (m.startsWith("person;")) {
-				
-				String data = m.substring(7);
-				persistPerson(data, remote);
+
 				
 			} else {
 				

@@ -102,6 +102,29 @@ public class FingerprintMappingPostgresqlDAO implements FingerprintMappingDAO {
 			throw new FingerprintMappingException(e.getMessage());
 		}		
 	}
+	
+	@Override
+	public void deleteAll() throws FingerprintMappingException {
+		try {
+			Connection con = cp.getConnection();
+			try {
+				String query = "delete from fingerprintmappings";
+				PreparedStatement st = con.prepareStatement(query);
+				try {
+					st.executeUpdate();
+
+				} finally {
+					st.close();
+				}
+				
+			} finally {
+				con.close();
+			}
+		} catch (SQLException e) {
+			logger.log(Level.SEVERE, e.getMessage(), e);
+			throw new FingerprintMappingException(e.getMessage());
+		}				
+	}
 
 	@Override
 	public void delete(FingerprintMapping fp) throws FingerprintMappingException {
