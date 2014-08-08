@@ -108,7 +108,6 @@ public class Identify implements Cmd {
 						@Override
 						public void releaseFinger() {
 							try {
-								leds.onCommand("subok");
 								
 								remote.sendText("OK liberar dedo");
 								
