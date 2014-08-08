@@ -92,10 +92,6 @@ public class Enroll implements Cmd {
 							@Override
 							public void onSuccess(final Fingerprint fp) {
 																
-								// genero la respuesta del comando.
-								
-								
-								
 								try {
 									StringBuilder sb = new StringBuilder();
 									
@@ -120,7 +116,7 @@ public class Enroll implements Cmd {
 							@Override
 							public void onFailure(int errorCode) {
 								try {
-									leds.onCommand("error");
+									leds.onCommand(Leds.ERROR);
 									
 									remote.sendText("ERROR " + String.valueOf(errorCode));
 									
@@ -132,7 +128,7 @@ public class Enroll implements Cmd {
 							@Override
 							public void onCancel() {
 								try {
-									leds.onCommand("error");
+									leds.onCommand(Leds.ERROR);
 									
 									
 									remote.sendText("ERROR comando cancelado");
@@ -145,8 +141,6 @@ public class Enroll implements Cmd {
 							@Override
 							public void releaseFinger() {
 								try {
-									leds.onCommand("subok");
-									
 									remote.sendText("OK levantar el dedo del lector");
 									
 								} catch (IOException e) {
@@ -157,7 +151,7 @@ public class Enroll implements Cmd {
 							@Override
 							public void onTimeout() {
 								try {
-									leds.onCommand("error");
+									leds.onCommand(Leds.ERROR);
 									
 									remote.sendText("ERROR timeout");
 									
@@ -169,7 +163,7 @@ public class Enroll implements Cmd {
 							@Override
 							public void onBadQuality() {
 								try {
-									leds.onCommand("error");
+									leds.onCommand(Leds.ERROR);
 									
 									remote.sendText("ERROR mala calidad");
 									
@@ -181,7 +175,7 @@ public class Enroll implements Cmd {
 							@Override
 							public void needThirdSweep() {
 								try {
-									leds.onCommand("phaseOk;3");
+									leds.onCommand(Leds.PHASE_OK + ";3");
 									
 									remote.sendText("OK necesita tercera huella");
 									
@@ -193,7 +187,7 @@ public class Enroll implements Cmd {
 							@Override
 							public void needSecondSweep() {
 								try {
-									leds.onCommand("phaseOk;2");
+									leds.onCommand(Leds.PHASE_OK + ";2");
 									
 									remote.sendText("OK necesita segunda huella");
 									
@@ -205,7 +199,7 @@ public class Enroll implements Cmd {
 							@Override
 							public void needFirstSweep() {
 								try {
-									leds.onCommand("phaseOk;1");
+									leds.onCommand(Leds.PHASE_OK + ";1");
 									
 									remote.sendText("OK necesita primera huella");
 									

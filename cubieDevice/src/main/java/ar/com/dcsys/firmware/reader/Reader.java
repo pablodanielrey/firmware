@@ -15,9 +15,14 @@ public class Reader {
 
 	
 	@Inject
-	public Reader(GetEmptyId getEmptyId) {
+	public Reader(GetEmptyId getEmptyId, Enroll enroll, GetVersion getVersion, ReadTemplate readTemplate, SetLed setLed, Test test) {
 		
 		commands.add(getEmptyId);
+		commands.add(enroll);
+		commands.add(getVersion);
+		commands.add(readTemplate);
+		commands.add(setLed);
+		commands.add(test);
 		
 	}
 	
