@@ -1,141 +1,77 @@
 package ar.com.dcsys.firmware;
 
+import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import ar.com.dcsys.firmware.cmd.CmdException;
-import ar.com.dcsys.firmware.cmd.Identify;
-import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
-import ar.com.dcsys.firmware.cmd.TestConnection;
-import ar.com.dcsys.firmware.cmd.TestConnection.TestConnectionResult;
-import ar.com.dcsys.firmware.serial.SerialDevice;
-import ar.com.dcsys.firmware.serial.SerialException;
+import ar.com.dcsys.firmware.model.Response;
 
 @Singleton
 public class Firmware {
 	
-	private static Logger logger = Logger.getLogger(Firmware.class.getName());
-	
-	private final SerialDevice sd;
-	private final TestConnection test;
-	private final Identify identify;
+	private final Logger logger;
+	private final LinkedBlockingQueue<Runnable> commands = new LinkedBlockingQueue<Runnable>();
+	private volatile boolean end = false;	
+	private DefaultCommandProvider defaultCommandProvider;
 
+	public interface DefaultCommandProvider {
+		public void defaultCommand();
+	}
+
+	public void setDefaultCommandProvider(DefaultCommandProvider defaultCommandProvider) {
+		this.defaultCommandProvider = defaultCommandProvider;
+	}
+
+	public void setEnd() {
+		end = true;
+		addCommand(new Runnable() {
+			@Override
+			public void run() {
+			}
+		});
+	}
+		
+	public void addCommand(Runnable r) {
+		commands.add(r);
+	}
 	
 	@Inject
-	public Firmware(SerialDevice sd, TestConnection test, Identify identify) {
-		logger.info("Inicializando Firmware");
-		this.sd = sd;
-		this.test = test;
-		this.identify = identify;
+	public Firmware(Logger logger) {
+		this.logger = logger;
 	}
 	
-	public void run() throws CmdException {
+	
+	public void processCommands() {
 		
-		logger.info("Ejecutando Firmware");
-
-    	try {
-    		if (!sd.open()) {
-    			return;
-    		}
-
-    		// le doy un tiempito al serie a que se estabilice.
-    		try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+    	Response response = new Response() {
+    		@Override
+    		public void sendText(String text) throws IOException {
+    			logger.log(Level.INFO,text);
+    		}    		
+    	};		
+		
+    	while (!end) {
     		
     		try {
-    			
-    			test.execute(sd, new TestConnectionResult() {
-					@Override
-					public void onSuccess() {
-						logger.log(Level.INFO, "Test ok");
-						/*
-						try {
-							sd.close();
-						} catch (SerialException e) {
-							e.printStackTrace();
-						}
-						*/
-					}
-					
-					@Override
-					public void onFailure() {
-						logger.log(Level.SEVERE,"Falla testeando la conexión con el lector de huellas");
-					}
-				});
-    			
-    			
-    			identify.execute(sd, new IdentifyResult() {
-					
-					@Override
-					public void releaseFinger() {
-						logger.info("levantar el dedo");
-					}
-					
-					@Override
-					public void onSuccess(int fpNumber) {
-				
-						logger.info("huella ok número : " + String.valueOf(fpNumber));
-					}
-					
-					@Override
-					public void onNotFound() {
-						logger.info("huella no encontrada");
-					}
-					
-					@Override
-					public void onFailure(int errorCode) {
-						logger.info("Error : " + String.valueOf(errorCode));
-					}
-					
-					@Override
-					public void onCancel() {
-						logger.info("Identificación Cancelada");
-					}
-				});
-    			
-    			/*
-	    		Thread tidentifier = new Thread(identifier);
-	    		tidentifier.start();
+    			if (commands.isEmpty()) {
+    				if (defaultCommandProvider != null) {
+    					defaultCommandProvider.defaultCommand();
+    				}
+    			}
+	    		Runnable r = commands.take();
+	    		Thread t = new Thread(r);
+	    		t.start();
 	    		
-	    		Thread tkeyboardReader = new Thread(reader);
-	    		tkeyboardReader.start();
-	    		
-	    		// espero a que el thread del teclado decida finalizar.
-	    		
-	    		try {
-					tkeyboardReader.join();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-	    		
-	    		while (true) {
-		    		try {
-		    			identifier.terminate();
-		    			break;
-		    		} catch (CmdException e) {
-		    			// ocurrio una exception asi que no se ejecuto bien el comando terminate.
-		    		}
-	    		}
-	    		*/
-    			
-    			
-    			
-	    		
-    		} finally {
-    			sd.close();
-    		}
-	    	
-    	} catch (SerialException e) {
-    		System.out.println(e.getMessage());
-    		e.printStackTrace();
-    	}		
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+	}	
 	
-	}
 	
 }

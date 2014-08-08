@@ -2,7 +2,6 @@ package ar.com.dcsys.firmware.leds;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -14,9 +13,27 @@ import javax.inject.Singleton;
 
 @Singleton
 public class Leds {
+	
+	public static final String BLOCKED = "blocked";
+	public static final String READY = "ready";
+	public static final String IDENTIFY = "identify";
+	public static final String ENROLL = "enroll";
+	public static final String OK = "ok";
+	public static final String ERROR = "error";
+	public static final String SUB_OK = "subok";
+	public static final String SUB_ERROR = "suberror";
+	public static final String FATAL_ERROR = "fatalError";
+	public static final String TEST = "test";
+	public static final String PHASE_OK = "phaseOk";
+	public static final String PHASE_ERROR = "phaseError";
+	public static final String ON = "on";
+	public static final String OFF = "off";
+	public static final String BLINK = "blink";
+	
+	
 
 	private final Map<String,String> ledsM = new HashMap<String,String>();
-	private final Led[] leds = new Led[3];
+	private final Led[] leds = new Led[6];
 	
 	private void initMappings() {
 		ledsM.clear();
@@ -24,6 +41,8 @@ public class Leds {
 		ledsM.put("1", "10");
 		ledsM.put("2", "12");
 		ledsM.put("3", "14");
+		ledsM.put("4", "16");
+		ledsM.put("5", "18");
 	}
 	
 	private void createLeds() {
@@ -132,7 +151,7 @@ public class Leds {
 
 		try {
 		
-			if (cmd.equals("identify")) {
+			if (cmd.equals(Leds.IDENTIFY)) {
 				
 				int i = ledsConfig.intValue(ledsConfig.getIdentifyLed());
 				
@@ -142,7 +161,7 @@ public class Leds {
 					leds[i].turnOn();
 				}
 				
-			} else if (cmd.equals("enroll")) {
+			} else if (cmd.equals(Leds.ENROLL)) {
 				
 				int i = ledsConfig.intValue(ledsConfig.getEnrollLed());
 				
@@ -152,7 +171,7 @@ public class Leds {
 					leds[i].turnOn();
 				}
 	
-			} else if (cmd.equals("blocked")) {
+			} else if (cmd.equals(Leds.BLOCKED)) {
 				
 				int i = ledsConfig.intValue(ledsConfig.getBlockedLed());
 				
@@ -162,7 +181,12 @@ public class Leds {
 					leds[i].turnOn();
 				}			
 				
-			} else if (cmd.equalsIgnoreCase("ok")) {
+				
+			} else if (cmd.equals(Leds.READY)) {
+				
+				turnOffAll();
+				
+			} else if (cmd.equalsIgnoreCase(Leds.OK)) {
 				
 				int i = ledsConfig.intValue(ledsConfig.getOkLed());
 				int delay = ledsConfig.intValue(ledsConfig.getOkDelay());
@@ -175,7 +199,7 @@ public class Leds {
 				
 				
 				
-			} else if (cmd.equalsIgnoreCase("error")) {
+			} else if (cmd.equalsIgnoreCase(Leds.ERROR)) {
 	
 				int i = ledsConfig.intValue(ledsConfig.getErrorLed());
 				int delay = ledsConfig.intValue(ledsConfig.getErrorDelay());
@@ -187,13 +211,13 @@ public class Leds {
 				}
 				
 				
-			} else if (cmd.equals("test")) {
+			} else if (cmd.equals(Leds.TEST)) {
 				
 				for (int i = 0; i < leds.length; i++) {
 					leds[i].blink(4, 50);
 				}
 				
-			} else if (cmd.equalsIgnoreCase("subok")) {
+			} else if (cmd.equalsIgnoreCase(Leds.SUB_OK)) {
 				
 				int i = ledsConfig.intValue(ledsConfig.getSubOkLed());
 				int delay = ledsConfig.intValue(ledsConfig.getSubOkDelay());
@@ -203,7 +227,7 @@ public class Leds {
 				}			
 			
 				
-			} else if (cmd.equalsIgnoreCase("suberror")) {
+			} else if (cmd.equalsIgnoreCase(Leds.SUB_ERROR)) {
 				
 				int i = ledsConfig.intValue(ledsConfig.getSubErrorLed());
 				int delay = ledsConfig.intValue(ledsConfig.getSubErrorDelay());
@@ -212,13 +236,12 @@ public class Leds {
 					leds[i].blink(1, delay);
 				}			
 				
-			} else if (cmd.equals("fatalError")) {
+			} else if (cmd.equals(Leds.FATAL_ERROR)) {
 				
 				turnOnAll();
 		
-			} else if (cmd.startsWith("phaseOk;")) {
+			} else if (cmd.startsWith(Leds.PHASE_OK)) {
 				
-				String nemonic = "phaseOk;";
 				String phase = cmd.substring(cmd.indexOf(";") + 1);
 				int iPhase = Integer.parseInt(phase);
 				
@@ -230,9 +253,8 @@ public class Leds {
 				}			
 				
 				
-			} else if (cmd.startsWith("phaseError;")) {
+			} else if (cmd.startsWith(Leds.PHASE_ERROR)) {
 				
-				String nemonic = "phaseError;";
 				String phase = cmd.substring(cmd.indexOf(";") + 1);			
 				
 				int iPhase = Integer.parseInt(phase);
@@ -245,7 +267,7 @@ public class Leds {
 				}
 				
 				
-			} else if (cmd.startsWith("on;")) {
+			} else if (cmd.startsWith(Leds.ON)) {
 				
 				String led = cmd.substring(cmd.indexOf(";") + 1);			
 				
@@ -254,7 +276,7 @@ public class Leds {
 					leds[iled].turnOn();
 				}
 
-			} else if (cmd.startsWith("off;")) {
+			} else if (cmd.startsWith(Leds.OFF)) {
 				
 				String led = cmd.substring(cmd.indexOf(";") + 1);			
 				
@@ -264,7 +286,7 @@ public class Leds {
 				}
 				
 				
-			} else if (cmd.startsWith("blink;")) {
+			} else if (cmd.startsWith(Leds.BLINK)) {
 				
 				// blink;led;times;delay
 			

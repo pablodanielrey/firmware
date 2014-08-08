@@ -1,16 +1,25 @@
 package ar.com.dcsys.firmware;
 
-import java.util.concurrent.LinkedBlockingQueue;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.websocket.DeploymentException;
 
-import org.glassfish.tyrus.server.Server;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 
+import ar.com.dcsys.firmware.Firmware.DefaultCommandProvider;
+import ar.com.dcsys.firmware.leds.Leds;
+import ar.com.dcsys.firmware.model.Identify;
+import ar.com.dcsys.firmware.model.Model;
+import ar.com.dcsys.firmware.model.Response;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
-import ar.com.dcsys.firmware.websocket.CommandsEndpoint;
+import ar.com.dcsys.firmware.websocket.WebsocketServer;
 
 
 
@@ -19,45 +28,33 @@ import ar.com.dcsys.firmware.websocket.CommandsEndpoint;
  *
  */
 
+@Singleton
 public class App {
 	
+	private static final Logger logger = Logger.getLogger(App.class.getName());
+	
 	private static Weld weld = null;
-	
-	public static Weld getWeld() {
-		if (weld == null) {
-			weld = new Weld();
-			container = weld.initialize();
-		}
-		return weld;
-	}
-	
 	private static WeldContainer container = null;
-	
+
 	public static WeldContainer getWeldContainer() {
 		if (container == null) {
-			getWeld();
+			weld = new Weld();
+			container = weld.initialize();
 		}
 		return container;
 	}
 	
-	private static volatile boolean end = false;
 	
-	public static void setEnd() {
-		end = true;
-	}
+	private Firmware firmware;
+	private Model model;
+	private Leds leds;
+	private WebsocketServer websocketServer;
+	private SerialDevice sd;
 	
-	private static final LinkedBlockingQueue<Runnable> commands = new LinkedBlockingQueue<Runnable>();
 	
-	public static void addCommand(Runnable r) {
-		commands.add(r);
-	}
-	
-    public static void main( String[] args ) {
-    	
-    	
-    	// inicializo el puerto serie para comunicarme con el lector.
-    	
-    	SerialDevice sd = getWeldContainer().instance().select(SerialDevice.class).get();
+
+	private void initializeSerialDevice() {
+
 		try {
 			if (!sd.open()) {
 				return;
@@ -73,46 +70,83 @@ public class App {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}    	
+	}
+	
+	private void initializeWebsockets() {
 		
-		
-		// inicializo el server de websockets para obtener comandos desde el servidor remotamente.
-		
-    	
-    	Server server = new Server("localhost",8025, "/websocket", null, CommandsEndpoint.class);
     	try {
-			server.start();
+    		websocketServer.start();
 		} catch (DeploymentException e1) {
 			e1.printStackTrace();
+			System.exit(1);
 		}
     	
-    	while (!end) {
-    		
-    		try {
-	    		Runnable r = commands.take();
-	    		Thread t = new Thread(r);
-	    		t.start();
-	    		
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+	}
+
+	@PostConstruct
+	private void initialize() {
+		
+		leds.onCommand(Leds.BLOCKED);
+		
+		firmware.setDefaultCommandProvider(new DefaultCommandProvider() {
+			@Override
+			public void defaultCommand() {
+				/*
+				model.onCommand(Identify.CMD, new Response() {
+					@Override
+					public void sendText(String text) throws IOException {
+						logger.log(Level.INFO, text);
+					}
+				});
+				*/
 			}
-    	}
+		});
+		initializeWebsockets();
+		initializeSerialDevice();
+		
+		leds.onCommand(Leds.READY);
+	}
+
+	private void shutdown() {
+		try {
+			sd.close();
+		} catch (SerialException e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
+		}		
+		websocketServer.stop();
+	}
+	
+	
+	@Inject
+	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd) {
+		this.firmware = firmware;
+		this.model = model;
+		this.leds = leds;
+		this.websocketServer = websocketServer;
+		this.sd = sd;
+	}
+	
+	
+	private void processCommands() {
+		firmware.processCommands();
+	}
+
+	
+    public static void main( String[] args ) {
     	
-    	server.stop();
-    	getWeld().shutdown();
-    	
-  /*  	
+    	// inicializo weld
+    	getWeldContainer();
     	try {
-	    	Firmware firmware = container.instance().select(Firmware.class).get();
-	    	firmware.run();
-    	
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    		
+	    	// obtengo una instancia de la app para correr el firmware.
+	    	App app = App.container.instance().select(App.class).get();
+	    	try {
+	    		app.processCommands();
+	    	} finally {
+	    		app.shutdown();
+	    	}
     	} finally {
-    		server.stop();
-    		getWeld().shutdown();
+    		App.weld.shutdown();
     	}
-    */
+    	
     }
 }
