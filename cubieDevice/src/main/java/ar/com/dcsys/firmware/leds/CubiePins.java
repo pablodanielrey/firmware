@@ -27,10 +27,15 @@ public class CubiePins {
 		pinsU15.clear();
 	
 		pinsU15.put("8", "pg3");
+		pinsU15.put("9", "pg2");
 		pinsU15.put("10", "pg1");
+		pinsU15.put("11", "pg4");
 		pinsU15.put("12", "pg5");
+		pinsU15.put("13", "pg6");
 		pinsU15.put("14", "pg7");
+		pinsU15.put("15", "pg8");
 		pinsU15.put("16", "pg9");
+		pinsU15.put("17", "pg10");
 		pinsU15.put("18", "pg11");
 		pinsU15.put("19", "gnd");
 		pinsU15.put("20", "gnd");

@@ -1,36 +1,28 @@
 package ar.com.dcsys.firmware;
 
-import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import ar.com.dcsys.firmware.model.Response;
 
 @Singleton
 public class Firmware {
 	
 	private final Logger logger;
 	private final LinkedBlockingQueue<Runnable> commands = new LinkedBlockingQueue<Runnable>();
+	private final ExecutorService executor = Executors.newCachedThreadPool();
+
 	private volatile boolean end = false;	
-	private DefaultCommandProvider defaultCommandProvider;
-
-	public interface DefaultCommandProvider {
-		public void defaultCommand();
-	}
-
-	public void setDefaultCommandProvider(DefaultCommandProvider defaultCommandProvider) {
-		this.defaultCommandProvider = defaultCommandProvider;
-	}
+	
 
 	public void setEnd() {
-		end = true;
 		addCommand(new Runnable() {
 			@Override
 			public void run() {
+				end = true;
 			}
 		});
 	}
@@ -47,25 +39,26 @@ public class Firmware {
 	
 	public void processCommands() {
 		
-    	Response response = new Response() {
-    		@Override
-    		public void sendText(String text) throws IOException {
-    			logger.log(Level.INFO,text);
-    		}    		
-    	};		
-		
     	while (!end) {
     		
     		try {
-    			if (commands.isEmpty()) {
-    				if (defaultCommandProvider != null) {
-    					defaultCommandProvider.defaultCommand();
-    				}
-    			}
-	    		Runnable r = commands.take();
-	    		Thread t = new Thread(r);
-	    		t.start();
-	    		
+    
+	 /*   			
+	    			// ejecuto el comando usando un Callable asi puedo esperar al fin del thread.
+		    		final Runnable r = commands.take();
+		    		Callable<Void> c = new Callable<Void>() {
+						@Override
+						public Void call() throws Exception {
+							r.run();
+							return null;
+						}
+		    		};
+		    		Future<Void> f = executor.submit(c);
+		    		f.get();
+	*/
+	    			Runnable r = commands.take();
+	    			executor.execute(r);
+	    			
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

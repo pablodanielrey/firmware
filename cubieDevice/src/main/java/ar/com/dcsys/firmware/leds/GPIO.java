@@ -25,9 +25,14 @@ public class GPIO {
 		
 		gpioPins.put("pg3","1");
 		gpioPins.put("pg1","7");
+		gpioPins.put("pg2","8");
+		gpioPins.put("pg4","6");
 		gpioPins.put("pg5","5");
+		gpioPins.put("pg6","4");
 		gpioPins.put("pg7","19");
+		gpioPins.put("pg8","18");
 		gpioPins.put("pg9","17");
+		gpioPins.put("pg10","16");
 		gpioPins.put("pg11","15");
 		
 		initialize();

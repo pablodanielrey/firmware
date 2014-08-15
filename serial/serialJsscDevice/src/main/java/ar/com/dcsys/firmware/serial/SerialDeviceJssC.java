@@ -126,4 +126,20 @@ public class SerialDeviceJssC implements SerialDevice {
 		return rd;
 	}
 	
+	@Override
+	public void clearBuffer() throws SerialException {
+		try {
+			int i = serialPort.getInputBufferBytesCount();
+			if (i > 0) {
+				serialPort.readBytes();
+			}
+			serialPort.purgePort(SerialPort.PURGE_RXCLEAR | SerialPort.PURGE_TXCLEAR);
+
+			queue.clear();
+			
+		} catch (Exception e) {
+			
+		}
+	}
+	
 }

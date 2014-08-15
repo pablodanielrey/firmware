@@ -19,8 +19,7 @@ package ar.com.dcsys.firmware.cmd;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.inject.Inject;
-
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
@@ -38,7 +37,7 @@ public class Identify {
 	}
 	
 	private final Logger logger = Logger.getLogger(Identify.class.getName());
-
+	
 	
 	private void checkPreconditions(CamabioResponse rsp) throws CmdException {
 		if (rsp.prefix != CamabioUtils.RSP) {
@@ -52,15 +51,19 @@ public class Identify {
 
 	
 	public void execute(SerialDevice serialPort, IdentifyResult result) throws CmdException {
+		
+		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
+			
 			byte[] cmd = CamabioUtils.identify();
 			serialPort.writeBytes(cmd);
 			
 			boolean canceled = false;
 			
 			while (true) {
+
 				byte[] data = SerialUtils.readPackage(serialPort);
-				CamabioResponse rsp = CamabioUtils.getResponse(data);
+				CamabioResponse  rsp = CamabioUtils.getResponse(data);
 				checkPreconditions(rsp);
 		
 				// evaluo la respuesta del FP_CANCEL.
@@ -138,8 +141,15 @@ public class Identify {
 			
 			
 		} catch (SerialException | ProcessingException e) {
+			
+			MutualExclusion.recoverFromError(serialPort);
+			
 			logger.log(Level.SEVERE,e.getMessage(),e);
 			throw new CmdException(e);
+		
+		} finally {
+			MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].release();
+			
 		}
 	}
 }

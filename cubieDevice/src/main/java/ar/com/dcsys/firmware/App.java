@@ -1,6 +1,5 @@
 package ar.com.dcsys.firmware;
 
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -12,11 +11,8 @@ import javax.websocket.DeploymentException;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 
-import ar.com.dcsys.firmware.Firmware.DefaultCommandProvider;
 import ar.com.dcsys.firmware.leds.Leds;
-import ar.com.dcsys.firmware.model.Identify;
 import ar.com.dcsys.firmware.model.Model;
-import ar.com.dcsys.firmware.model.Response;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 import ar.com.dcsys.firmware.websocket.WebsocketServer;
@@ -45,11 +41,12 @@ public class App {
 	}
 	
 	
-	private Firmware firmware;
-	private Model model;
-	private Leds leds;
-	private WebsocketServer websocketServer;
-	private SerialDevice sd;
+	private final DefaultCommandGenerator defaultCommandGenerator;
+	private final Firmware firmware;
+	private final Model model;
+	private final Leds leds;
+	private final WebsocketServer websocketServer;
+	private final SerialDevice sd;
 	
 	
 
@@ -85,22 +82,8 @@ public class App {
 
 	@PostConstruct
 	private void initialize() {
-		
 		leds.onCommand(Leds.BLOCKED);
-		
-		firmware.setDefaultCommandProvider(new DefaultCommandProvider() {
-			@Override
-			public void defaultCommand() {
-				/*
-				model.onCommand(Identify.CMD, new Response() {
-					@Override
-					public void sendText(String text) throws IOException {
-						logger.log(Level.INFO, text);
-					}
-				});
-				*/
-			}
-		});
+	
 		initializeWebsockets();
 		initializeSerialDevice();
 		
@@ -118,12 +101,13 @@ public class App {
 	
 	
 	@Inject
-	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd) {
+	public App(DefaultCommandGenerator dcg, Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd) {
 		this.firmware = firmware;
 		this.model = model;
 		this.leds = leds;
 		this.websocketServer = websocketServer;
 		this.sd = sd;
+		this.defaultCommandGenerator = dcg;
 	}
 	
 	

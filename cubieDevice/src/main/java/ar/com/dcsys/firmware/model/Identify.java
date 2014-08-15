@@ -13,7 +13,7 @@ import ar.com.dcsys.data.log.AttLog;
 import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.exceptions.AttLogException;
 import ar.com.dcsys.exceptions.DeviceException;
-import ar.com.dcsys.firmware.Firmware;
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
 import ar.com.dcsys.firmware.database.FingerprintMapping;
@@ -31,8 +31,7 @@ public class Identify implements Cmd {
 	
 	private final ar.com.dcsys.firmware.cmd.Identify identify;
 	private final Initialize initialize;
-	
-	private final Firmware app;
+
 	private final Leds leds;
 	private final SerialDevice sd;
 	
@@ -40,13 +39,14 @@ public class Identify implements Cmd {
 	private final FingerprintMappingDAO fingerprintMappingDAO;
 	
 	@Inject
-	public Identify(Firmware app, SerialDevice sd, Leds leds, ar.com.dcsys.firmware.cmd.Identify identify, Initialize initialize, 
-												FingerprintMappingDAO fingerprintMappingDAO,
-												AttLogsManager attLogsManager) {
+	public Identify(SerialDevice sd, Leds leds, 
+										ar.com.dcsys.firmware.cmd.Identify identify, 
+										Initialize initialize, 
+										FingerprintMappingDAO fingerprintMappingDAO,
+										AttLogsManager attLogsManager) {
 		this.identify = identify;
 		this.initialize = initialize;
 		
-		this.app = app;
 		this.leds = leds;
 		this.sd = sd;
 		
@@ -97,100 +97,101 @@ public class Identify implements Cmd {
 	
 	@Override
 	public void execute(String cmd, final Response remote) {
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
-				try {
-					leds.onCommand(Leds.IDENTIFY);
-					
-					identify.execute(sd, new IdentifyResult() {
-						
-						@Override
-						public void releaseFinger() {
-							try {
-								
-								remote.sendText("OK liberar dedo");
-								
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-						
-						@Override
-						public void onSuccess(int fpNumber) {
-							
-							try {
-								String person = createAssistanceLog(fpNumber);
-								
-								leds.onCommand(Leds.OK);
-								
-								remote.sendText("OK " + person + " " + String.valueOf(fpNumber));
 
-								
-							} catch (AttLogException | FingerprintMappingException | DeviceException | IOException e1) {
-								logger.log(Level.SEVERE,e1.getMessage(),e1);
-
-								leds.onCommand(Leds.ERROR);
-								
-								try {
-									remote.sendText("ERROR " + e1.getMessage());
-								
-								} catch (IOException e) {
-									logger.log(Level.SEVERE,e.getMessage(),e);
-								}								
-							}
-							
-						}
-						
-						@Override
-						public void onNotFound() {
-							try {
-								leds.onCommand(Leds.ERROR);
-								remote.sendText("OK huella no encontrada");
-															
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-						
-						@Override
-						public void onFailure(int errorCode) {
-							try {
-								leds.onCommand(Leds.ERROR);
-								remote.sendText("ERROR " + String.valueOf(errorCode));
-															
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-						
-						@Override
-						public void onCancel() {
-							try {
-								leds.onCommand(Leds.ERROR);
-								remote.sendText("ERROR identificación cancelada");
-								
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					});
-				} catch (CmdException e) {
-					leds.onCommand(Leds.ERROR);
-					
-					e.printStackTrace();
+		try {
+			leds.onCommand(Leds.IDENTIFY);
+			
+			identify.execute(sd, new IdentifyResult() {
+				
+				@Override
+				public void releaseFinger() {
 					try {
-						remote.sendText("ERROR " + e.getMessage());
-					} catch (IOException e1) {
-						e1.printStackTrace();
-						logger.log(Level.SEVERE,e1.getMessage(),e1);
-					}					
+						
+						remote.sendText("OK liberar dedo");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
-			}					
-		};
-		app.addCommand(r);
-		
-	}
-	
+				
+				@Override
+				public void onSuccess(int fpNumber) {
+					
+					try {
+						String person = createAssistanceLog(fpNumber);
+						
+						leds.onCommand(Leds.OK);
+						
+						remote.sendText("OK " + person + " " + String.valueOf(fpNumber));
+
+						
+					} catch (AttLogException | FingerprintMappingException | DeviceException | IOException e1) {
+						logger.log(Level.SEVERE,e1.getMessage(),e1);
+
+						leds.onCommand(Leds.ERROR);
+						
+						try {
+							remote.sendText("ERROR " + e1.getMessage());
+						
+						} catch (IOException e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}					
+					}
+					
+				}
+				
+				@Override
+				public void onNotFound() {
+					try {
+						leds.onCommand(Leds.ERROR);
+						remote.sendText("OK huella no encontrada");
+													
+					} catch (IOException e) {
+						e.printStackTrace();
+										
+					}
+				}
+				
+				@Override
+				public void onFailure(int errorCode) {
+					try {
+						leds.onCommand(Leds.ERROR);
+						remote.sendText("ERROR " + String.valueOf(errorCode));
+													
+					} catch (IOException e) {
+						e.printStackTrace();
+						
+					}
+				}
+				
+				@Override
+				public void onCancel() {
+					try {
+						leds.onCommand(Leds.ERROR);
+						remote.sendText("ERROR identificación cancelada");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+						
+					}
+				}
+			});
+		} catch (CmdException e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
+			leds.onCommand(Leds.ERROR);
+			
+			try {
+				remote.sendText("ERROR " + e.getMessage());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				logger.log(Level.SEVERE,e1.getMessage(),e1);
+			}
+
+		} finally {
+			
+			MutualExclusion.using[MutualExclusion.DEFAULT_GENERATOR].release();
+			
+		}
+	}					
 	
 }

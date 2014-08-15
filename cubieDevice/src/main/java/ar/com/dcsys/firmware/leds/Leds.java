@@ -33,16 +33,21 @@ public class Leds {
 	
 
 	private final Map<String,String> ledsM = new HashMap<String,String>();
-	private final Led[] leds = new Led[6];
+	private final Led[] leds = new Led[11];
 	
 	private void initMappings() {
 		ledsM.clear();
 		ledsM.put("0", "8");
-		ledsM.put("1", "10");
-		ledsM.put("2", "12");
-		ledsM.put("3", "14");
-		ledsM.put("4", "16");
-		ledsM.put("5", "18");
+		ledsM.put("1", "9");
+		ledsM.put("2", "10");
+		ledsM.put("3", "11");
+		ledsM.put("4", "12");
+		ledsM.put("5", "13");
+		ledsM.put("6", "14");
+		ledsM.put("7", "15");
+		ledsM.put("8", "16");
+		ledsM.put("9", "17");
+		ledsM.put("10", "18");
 	}
 	
 	private void createLeds() {
