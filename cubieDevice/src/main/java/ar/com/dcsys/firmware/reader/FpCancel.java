@@ -8,27 +8,26 @@ import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.Firmware;
 import ar.com.dcsys.firmware.cmd.CmdException;
-import ar.com.dcsys.firmware.cmd.template.ClearAllTemplate;
-import ar.com.dcsys.firmware.cmd.template.ClearAllTemplate.ClearAllTemplateResult;
+import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
 import ar.com.dcsys.firmware.leds.Leds;
 import ar.com.dcsys.firmware.model.Cmd;
 import ar.com.dcsys.firmware.model.Response;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 
-public class ClearTemplates implements Cmd {
+public class FpCancel implements Cmd {
 
 	public static final Logger logger = Logger.getLogger(Reader.class.getName());
-	public static final String CMD = "clearTemplates";
+	public static final String CMD = "cancel";
 	
-	private final ClearAllTemplate clearAllTemplate;
+	private final ar.com.dcsys.firmware.cmd.FpCancel fpCancel;
 	private final SerialDevice sd;
 	private final Leds leds;
 	private final Firmware app;
 	
 	@Inject
-	public ClearTemplates(Firmware app, Leds leds, SerialDevice sd, ClearAllTemplate clearAllTemplate) {
+	public FpCancel(Firmware app, Leds leds, SerialDevice sd, ar.com.dcsys.firmware.cmd.FpCancel fpCancel) {
 
-		this.clearAllTemplate = clearAllTemplate;
+		this.fpCancel = fpCancel;
 		this.sd = sd;
 		this.leds = leds;
 		this.app = app;
@@ -49,42 +48,17 @@ public class ClearTemplates implements Cmd {
 	public void execute(String cmd, final Response remote) {
 
 		try {
-			clearAllTemplate.excecute(sd, new ClearAllTemplateResult() {
+			fpCancel.execute(sd, new FpCancelResult() {
 				
 				@Override
-				public void onSuccess(int number) {
+				public void onSuccess() {
 					try {
-						remote.sendText("OK " + String.valueOf(number));
+						remote.sendText("OK cancel ok");
 						
 					} catch (IOException e1) {
 						e1.printStackTrace();
 						logger.log(Level.SEVERE,e1.getMessage(),e1);
 					}
-
-				}
-				
-				@Override
-				public void onFailure(int errorCode) {
-					try {
-						remote.sendText("ERROR " + String.valueOf(errorCode));
-						
-					} catch (IOException e1) {
-						e1.printStackTrace();
-						logger.log(Level.SEVERE,e1.getMessage(),e1);
-					}
-
-				}
-				
-				@Override
-				public void onCancel() {
-					try {
-						remote.sendText("ERROR cancelado");
-						
-					} catch (IOException e1) {
-						e1.printStackTrace();
-						logger.log(Level.SEVERE,e1.getMessage(),e1);
-					}
-
 				}
 			});
 			

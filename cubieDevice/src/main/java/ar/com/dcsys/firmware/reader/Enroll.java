@@ -67,173 +67,153 @@ public class Enroll implements Cmd {
 				return;
 			}
 			
+			leds.onCommand(Leds.ENROLL);
 			
-			Runnable r = new Runnable() {
+			EnrollData ed = new EnrollData() {
 				@Override
-				public void run() {
-							
-					try {
-						leds.onCommand(Leds.ENROLL);
-						
-						EnrollData ed = new EnrollData() {
-							@Override
-							public String getPersonId() {
-								return personId;
-							}
-							
-							@Override
-							public Finger getFinger() {
-								return Finger.LEFT_INDEX;
-							}
-						};
-						
-						enroll.execute(sd, new EnrollResult() {
-										
-							@Override
-							public void onSuccess(final Fingerprint fp) {
-																
-								try {
-									StringBuilder sb = new StringBuilder();
-									
-									sb.append("OK ");
-									
-									String fps = fingerprintSerializer.toJson(fp);
-									sb.append(fps);
-	//								String template = DatatypeConverter.printBase64Binary(fp.getTemplate());
-									
-									remote.sendText(sb.toString());
-								
-									leds.onCommand("ok");
-									
-								} catch (IOException e) {
-									logger.log(Level.SEVERE, e.getMessage(),e);
-									leds.onCommand("error");
-								}
-																
-							}
-							
-							
-							@Override
-							public void onFailure(int errorCode) {
-								try {
-									leds.onCommand(Leds.ERROR);
-									
-									remote.sendText("ERROR " + String.valueOf(errorCode));
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							@Override
-							public void onCancel() {
-								try {
-									leds.onCommand(Leds.ERROR);
-									
-									
-									remote.sendText("ERROR comando cancelado");
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							@Override
-							public void releaseFinger() {
-								try {
-									remote.sendText("OK levantar el dedo del lector");
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							@Override
-							public void onTimeout() {
-								try {
-									leds.onCommand(Leds.ERROR);
-									
-									remote.sendText("ERROR timeout");
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							@Override
-							public void onBadQuality() {
-								try {
-									leds.onCommand(Leds.ERROR);
-									
-									remote.sendText("ERROR mala calidad");
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							@Override
-							public void needThirdSweep() {
-								try {
-									leds.onCommand(Leds.PHASE_OK + ";3");
-									
-									remote.sendText("OK necesita tercera huella");
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							@Override
-							public void needSecondSweep() {
-								try {
-									leds.onCommand(Leds.PHASE_OK + ";2");
-									
-									remote.sendText("OK necesita segunda huella");
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							@Override
-							public void needFirstSweep() {
-								try {
-									leds.onCommand(Leds.PHASE_OK + ";1");
-									
-									remote.sendText("OK necesita primera huella");
-									
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-						}, ed);
-						
-					} catch (CmdException e) {
-						e.printStackTrace();
-						logger.log(Level.SEVERE,e.getMessage(),e);
-						try {
-							remote.sendText("ERROR " + e.getMessage());
-						} catch (IOException e1) {
-							e1.printStackTrace();
-							logger.log(Level.SEVERE,e1.getMessage(),e1);
-						}
-						
-					}
+				public String getPersonId() {
+					return personId;
+				}
+				
+				@Override
+				public Finger getFinger() {
+					return Finger.LEFT_INDEX;
 				}
 			};
-			app.addCommand(r);
 			
+			enroll.execute(sd, new EnrollResult() {
+							
+				@Override
+				public void onSuccess(final Fingerprint fp) {
+													
+					try {
+						StringBuilder sb = new StringBuilder();
+						
+						sb.append("OK ");
+						
+						String fps = fingerprintSerializer.toJson(fp);
+						sb.append(fps);
+//								String template = DatatypeConverter.printBase64Binary(fp.getTemplate());
+						
+						remote.sendText(sb.toString());
+					
+						leds.onCommand("ok");
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE, e.getMessage(),e);
+						leds.onCommand("error");
+					}
+													
+				}
+				
+				
+				@Override
+				public void onFailure(int errorCode) {
+					try {
+						leds.onCommand(Leds.ERROR);
+						
+						remote.sendText("ERROR " + String.valueOf(errorCode));
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void onCancel() {
+					try {
+						leds.onCommand(Leds.ERROR);
+						
+						
+						remote.sendText("ERROR comando cancelado");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void releaseFinger() {
+					try {
+						remote.sendText("OK levantar el dedo del lector");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void onTimeout() {
+					try {
+						leds.onCommand(Leds.ERROR);
+						
+						remote.sendText("ERROR timeout");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void onBadQuality() {
+					try {
+						leds.onCommand(Leds.ERROR);
+						
+						remote.sendText("ERROR mala calidad");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void needThirdSweep() {
+					try {
+						leds.onCommand(Leds.PHASE_OK + ";3");
+						
+						remote.sendText("OK necesita tercera huella");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void needSecondSweep() {
+					try {
+						leds.onCommand(Leds.PHASE_OK + ";2");
+						
+						remote.sendText("OK necesita segunda huella");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override
+				public void needFirstSweep() {
+					try {
+						leds.onCommand(Leds.PHASE_OK + ";1");
+						
+						remote.sendText("OK necesita primera huella");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}, ed);
 			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, e.getMessage(),e);
+		} catch (IOException | CmdException e) {
+			e.printStackTrace();
+			logger.log(Level.SEVERE,e.getMessage(),e);
 			try {
 				remote.sendText("ERROR " + e.getMessage());
 			} catch (IOException e1) {
+				e1.printStackTrace();
 				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
+			
 		}
-		
 	}
 	
 	

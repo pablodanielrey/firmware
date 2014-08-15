@@ -53,79 +53,67 @@ public class ReadTemplate implements Cmd {
 			String pnumber = cmd.substring(CMD.length() + 1);
 			final int number = Integer.parseInt(pnumber);
 			
-			 Runnable r = new Runnable() {
+			readRawTemplate.execute(sd, number, new ReadRawTemplateResult() {
 				@Override
-				public void run() {
-					 try {
-						readRawTemplate.execute(sd, number, new ReadRawTemplateResult() {
-							@Override
-							public void onSuccess(byte[] templ) {
-								
-								String etempl = DatatypeConverter.printBase64Binary(templ);
-								try {
-									remote.sendText("OK " + etempl);
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-							}
-						}
-						
-						@Override
-						public void onInvalidTemplateNumber(int number) {
-							try {
-								remote.sendText("ERROR invalid template number " + String.valueOf(number));
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-							}							
-						}
-						
-						@Override
-						public void onFailure(int errorCode) {
-							try {
-								remote.sendText("ERROR code " + String.valueOf(errorCode));
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-							}							
-						}
-						
-						@Override
-						public void onEmptyTemplate(int number) {
-							try {
-								remote.sendText("ERROR empty template " + String.valueOf(number));
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-							}							
-						}
-						
-						@Override
-						public void onCancel() {
-							try {
-								remote.sendText("ERROR comando cancelado");
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-							}							
-						}
-					});
-				} catch (CmdException e) {
-					// TODO Auto-generated catch block
-						e.printStackTrace();
+				public void onSuccess(byte[] templ) {
+					
+					String etempl = DatatypeConverter.printBase64Binary(templ);
+					try {
+						remote.sendText("OK " + etempl);
+					
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
 					}
 				}
-			 };
-			 app.addCommand(r);
-		 
-		} catch (Exception e) {
+			
+				@Override
+				public void onInvalidTemplateNumber(int number) {
+					try {
+						remote.sendText("ERROR invalid template number " + String.valueOf(number));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}							
+				}
+				
+				@Override
+				public void onFailure(int errorCode) {
+					try {
+						remote.sendText("ERROR code " + String.valueOf(errorCode));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}							
+				}
+				
+				@Override
+				public void onEmptyTemplate(int number) {
+					try {
+						remote.sendText("ERROR empty template " + String.valueOf(number));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}							
+				}
+				
+				@Override
+				public void onCancel() {
+					try {
+						remote.sendText("ERROR comando cancelado");
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+					}							
+				}
+			});
+		} catch (CmdException e) {
 			logger.log(Level.SEVERE, e.getMessage(),e);
 			try {
 				remote.sendText("ERROR " + e.getMessage());
 			} catch (IOException e1) {
 				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
-		}		 
+		}
 		 
 	}
 	

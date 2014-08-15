@@ -55,54 +55,37 @@ public class SetLed implements Cmd {
 			}
 			final boolean finalValue = value;
 			
-			
-			Runnable r = new Runnable() {
-				
-				@Override
-				public void run() {
-					try {
-						sensorLedControl.execute(sd, finalValue, new SensorLedControl.SensorLedControlResult() {
-							@Override
-							public void onSuccess() {
-								try {
-									remote.sendText("OK Led " + svalue);
-								} catch (IOException e) {
-									e.printStackTrace();
-									logger.log(Level.SEVERE,e.getMessage(),e);
-								}
-							}
-							@Override
-							public void onFailure() {
-								try {
-									remote.sendText("ERROR");
-								} catch (IOException e) {
-									e.printStackTrace();
-									logger.log(Level.SEVERE,e.getMessage(),e);
-								}						
-							}
-						});
-					} catch (CmdException e) {
-						e.printStackTrace();
+
+			sensorLedControl.execute(sd, finalValue, new SensorLedControl.SensorLedControlResult() {
+					@Override
+					public void onSuccess() {
 						try {
-							remote.sendText("ERROR " + e.getMessage());
-						} catch (IOException e1) {
-							e1.printStackTrace();
-							logger.log(Level.SEVERE,e1.getMessage(),e1);
-						}					
-					}					
-				}
-			};
-			app.addCommand(r);
-		 
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, e.getMessage(),e);
-			try {
-				remote.sendText("ERROR " + e.getMessage());
-			} catch (IOException e1) {
-				logger.log(Level.SEVERE,e1.getMessage(),e1);
-			}
-		}		 
-		 
-	}
+							remote.sendText("OK Led " + svalue);
+						} catch (IOException e) {
+							e.printStackTrace();
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
+					}
+					@Override
+					public void onFailure() {
+						try {
+							remote.sendText("ERROR");
+						} catch (IOException e) {
+							e.printStackTrace();
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}						
+					}
+				});
+			
+			} catch (CmdException e) {
+				e.printStackTrace();
+				try {
+					remote.sendText("ERROR " + e.getMessage());
+				} catch (IOException e1) {
+					e1.printStackTrace();
+					logger.log(Level.SEVERE,e1.getMessage(),e1);
+				}					
+			}					
+		}
 	
 }

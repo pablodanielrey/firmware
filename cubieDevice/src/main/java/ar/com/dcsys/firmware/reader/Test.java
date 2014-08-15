@@ -48,42 +48,36 @@ public class Test implements Cmd {
 	@Override
 	public void execute(String cmd, final Response remote) {
 		
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
-				try {
-					testConnection.execute(sd, new TestConnectionResult() {
-						@Override
-						public void onSuccess() {
-							try {
-								remote.sendText("OK Test de conección exitoso");
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-						
-						@Override
-						public void onFailure() {
-							try {
-								remote.sendText("ERROR error ejecutando test");
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					});
-				} catch (CmdException e) {
-					e.printStackTrace();
-					logger.log(Level.SEVERE,e.getMessage(),e);
+		try {
+			testConnection.execute(sd, new TestConnectionResult() {
+				@Override
+				public void onSuccess() {
 					try {
-						remote.sendText("ERROR " + e.getMessage());
-					} catch (IOException e1) {
-						e1.printStackTrace();
-						logger.log(Level.SEVERE,e1.getMessage(),e1);
+						remote.sendText("OK Test de conección exitoso");
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
 				}
+				
+				@Override
+				public void onFailure() {
+					try {
+						remote.sendText("ERROR error ejecutando test");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		} catch (CmdException e) {
+			e.printStackTrace();
+			logger.log(Level.SEVERE,e.getMessage(),e);
+			try {
+				remote.sendText("ERROR " + e.getMessage());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
-		};
-		app.addCommand(r);
+		}
 		
 	}	
 	

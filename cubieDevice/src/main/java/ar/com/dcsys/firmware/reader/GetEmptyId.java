@@ -46,74 +46,67 @@ public class GetEmptyId implements Cmd {
 
 	@Override
 	public void execute(String cmd, final Response remote) {
-		
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
+
+		try {
+			getEmptyId.execute(sd, new GetEmptyIdResult() {
 				
-				try {
-					getEmptyId.execute(sd, new GetEmptyIdResult() {
+				@Override
+				public void onSuccess(int tmplNumber) {
+					leds.onCommand("ok");
+					
+					try {
+						remote.sendText("OK " + String.valueOf(tmplNumber));
 						
-						@Override
-						public void onSuccess(int tmplNumber) {
-							leds.onCommand("ok");
-							
-							try {
-								remote.sendText("OK " + String.valueOf(tmplNumber));
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-								
-							}
-						}
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
 						
-						@Override
-						public void onCancel() {
-							leds.onCommand("error");
-							
-							try {
-								remote.sendText("ERROR cancel");
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-								
-							}
-						}
-						
-						
-						@Override
-						public void onEmptyNotExistent() {
-							leds.onCommand("ok");
-							
-							try {
-								remote.sendText("OK no space left");
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-								
-							}
-						}
-						
-						public void onFailure(int errorCode) {
-							leds.onCommand("error");
-							
-							try {
-								remote.sendText("ERROR " + String.valueOf(errorCode));
-								
-							} catch (IOException e) {
-								logger.log(Level.SEVERE,e.getMessage(),e);
-								
-							}
-						};
-					});
-				} catch (CmdException e) {
-					e.printStackTrace();
-					leds.onCommand("error");
+					}
 				}
-			}
-		};
-		app.addCommand(r);		
-		
+				
+				@Override
+				public void onCancel() {
+					leds.onCommand("error");
+					
+					try {
+						remote.sendText("ERROR cancel");
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+						
+					}
+				}
+				
+				
+				@Override
+				public void onEmptyNotExistent() {
+					leds.onCommand("ok");
+					
+					try {
+						remote.sendText("OK no space left");
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+						
+					}
+				}
+				
+				public void onFailure(int errorCode) {
+					leds.onCommand("error");
+					
+					try {
+						remote.sendText("ERROR " + String.valueOf(errorCode));
+						
+					} catch (IOException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+						
+					}
+				};
+			});
+		} catch (CmdException e) {
+			e.printStackTrace();
+			leds.onCommand("error");
+		}
+
 	}	
 	
 }
