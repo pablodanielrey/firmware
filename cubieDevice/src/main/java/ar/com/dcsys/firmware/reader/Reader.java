@@ -48,17 +48,30 @@ public class Reader {
 			return;
 		}
 		
+
+		if (command.equalsIgnoreCase(fpCancel.getCommand())) {
+			Runnable r = new Runnable() {
+				@Override
+				public void run() {
+					fpCancel.execute("", response);
+				}
+			};
+			firmware.addCommand(r);
+			
+		} else {
 		
-		for (final Cmd c : commands) {
-			if (c.identify(command)) {
-				Runnable r = new Runnable() {
-					@Override
-					public void run() {
-						c.execute(command, response);
-					}
-				};
-				firmware.addCommand(r);
-				break;
+			for (final Cmd c : commands) {
+				if (c.identify(command)) {
+					Runnable r = new Runnable() {
+						@Override
+						public void run() {
+							fpCancel.execute("", response);
+							c.execute(command, response);
+						}
+					};
+					firmware.addCommand(r);
+					break;
+				}
 			}
 		}
 		
