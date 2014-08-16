@@ -6,20 +6,24 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import ar.com.dcsys.firmware.Firmware;
+import ar.com.dcsys.firmware.MutualExclusion;
+
 public class Model {
 
 	private final List<Cmd> commands = new ArrayList<Cmd>();
 
+	private final Firmware firmware;
 	
 	@Inject
-	public Model(Identify identify) {
+	public Model(Firmware firmware, Identify identify) {
+		this.firmware = firmware;
 		
 		commands.add(identify);
-		
 	}
 	
 	
-	public void onCommand(String command, Response response) {
+	public void onCommand(final String command, final Response response) {
 		
 		if (command.equalsIgnoreCase("help")) {
 			StringBuilder sb = new StringBuilder();
@@ -35,9 +39,16 @@ public class Model {
 		}
 		
 		
-		for (Cmd c : commands) {
+		for (final Cmd c : commands) {
 			if (c.identify(command)) {
-				c.execute(command, response);
+				Runnable r = new Runnable() {
+					@Override
+					public void run() {
+						c.execute(command, response);
+						//MutualExclusion.using[MutualExclusion.CMD].release();
+					}
+				};
+				firmware.addCommand(r);
 				break;
 			}
 		}

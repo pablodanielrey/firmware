@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.Utils;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
@@ -51,7 +52,9 @@ public class GetEnrollData {
 	
 	
 	public void execute(SerialDevice sd, EnrollResult result, EnrollData edata) throws CmdException {
+		
 		try {
+			
 			byte[] cmd = CamabioUtils.getEnrollData();
 			sd.writeBytes(cmd);
 
@@ -117,6 +120,7 @@ public class GetEnrollData {
 			
 		} catch (SerialException | ProcessingException e) {
 			throw new CmdException(e);
+
 		}
 	}
 	

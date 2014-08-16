@@ -1,8 +1,10 @@
 package ar.com.dcsys.firmware;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
@@ -27,8 +29,8 @@ public class Firmware {
 		});
 	}
 		
-	public void addCommand(Runnable r) {
-		commands.add(r);
+	public void addCommand(Runnable ... r) {
+		commands.addAll(Arrays.asList(r));
 	}
 	
 	@Inject
@@ -56,11 +58,13 @@ public class Firmware {
 		    		Future<Void> f = executor.submit(c);
 		    		f.get();
 	*/
+    				//MutualExclusion.using[MutualExclusion.CMD].acquireUninterruptibly();
 	    			Runnable r = commands.take();
-	    			executor.execute(r);
+	    			r.run();
+	    			//executor.execute(r);
 	    			
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
+				logger.log(Level.INFO,e.getMessage(),e);
 				e.printStackTrace();
 			}
     	}

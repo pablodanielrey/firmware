@@ -8,6 +8,7 @@ import javax.inject.Inject;
 
 import ar.com.dcsys.auth.server.FingerprintSerializer;
 import ar.com.dcsys.firmware.Firmware;
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollAndStoreInRam;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollData;

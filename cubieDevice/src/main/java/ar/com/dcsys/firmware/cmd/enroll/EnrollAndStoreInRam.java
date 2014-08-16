@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
@@ -35,7 +36,10 @@ public class EnrollAndStoreInRam {
 	}	
 	
 	public void execute(SerialDevice serialPort, EnrollResult result, EnrollData edata) throws CmdException {
+		
+		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
+			
 			byte[] cmd = CamabioUtils.enrollAndStoreInRam();
 			serialPort.writeBytes(cmd);
 			
@@ -161,6 +165,10 @@ public class EnrollAndStoreInRam {
 			
 		} catch (SerialException | ProcessingException e) {
 			throw new CmdException(e);
+			
+		} finally {
+			MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].release();
+			
 		}
 	}
 }

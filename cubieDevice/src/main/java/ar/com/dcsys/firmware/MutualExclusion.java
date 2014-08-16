@@ -10,8 +10,9 @@ public class MutualExclusion {
 	
 	public static int DEFAULT_GENERATOR = 0;
 	public static int SERIAL_DEVICE = 1;
+	public static int CMD = 2;
 	
-	public static Semaphore[] using = {new Semaphore(1), new Semaphore(1)};
+	public static Semaphore[] using = {new Semaphore(1), new Semaphore(1), new Semaphore(1)};
 	
 	
 	
