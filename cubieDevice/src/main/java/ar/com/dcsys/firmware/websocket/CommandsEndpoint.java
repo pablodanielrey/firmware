@@ -40,7 +40,7 @@ import ar.com.dcsys.firmware.cmd.template.ReadRawTemplate;
 import ar.com.dcsys.firmware.cmd.template.ReadRawTemplate.ReadRawTemplateResult;
 import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.cmd.template.WriteTemplate;
-import ar.com.dcsys.firmware.cmd.template.WriteTemplate.WriteTemplateResult;
+import ar.com.dcsys.firmware.cmd.template.WriteTemplateResult;
 import ar.com.dcsys.firmware.database.FingerprintMapping;
 import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
 import ar.com.dcsys.firmware.database.FingerprintMappingException;

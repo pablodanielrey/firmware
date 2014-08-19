@@ -36,17 +36,24 @@ public class DefaultCommandGenerator implements Runnable {
 		t.start();
 	}
 	
+	
 	@Override
 	public void run() {
 		while (true) {
 			MutualExclusion.using[MutualExclusion.DEFAULT_GENERATOR].acquireUninterruptibly();
-			Runnable r = new Runnable() {
-				@Override
-				public void run() {
-					identify.execute("", remote);
-				}
-			};
-			firmware.addCommand(r);
+			MutualExclusion.using[MutualExclusion.DISABLE_GENERATOR].acquireUninterruptibly();
+			try {
+				Runnable r = new Runnable() {
+					@Override
+					public void run() {
+						identify.execute("", remote);
+					}
+				};
+				firmware.addCommand(r);
+				
+			} finally {
+				MutualExclusion.using[MutualExclusion.DISABLE_GENERATOR].release();
+			}
 		}
 	}
 	

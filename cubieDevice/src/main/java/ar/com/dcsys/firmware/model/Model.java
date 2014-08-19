@@ -8,18 +8,24 @@ import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.Firmware;
 import ar.com.dcsys.firmware.MutualExclusion;
+import ar.com.dcsys.firmware.reader.Reader;
 
 public class Model {
 
 	private final List<Cmd> commands = new ArrayList<Cmd>();
 
 	private final Firmware firmware;
+	private final Reader reader;
 	
 	@Inject
-	public Model(Firmware firmware, Identify identify) {
+	public Model(Firmware firmware, Reader reader, Identify identify, PersistPerson persistPerson,
+																	  PersistFingerprint persistFingerprint) {
 		this.firmware = firmware;
+		this.reader = reader;
 		
-		commands.add(identify);
+		commands.add(persistPerson);
+		commands.add(persistFingerprint);
+		//commands.add(identify);
 	}
 	
 	
@@ -41,6 +47,7 @@ public class Model {
 		
 		for (final Cmd c : commands) {
 			if (c.identify(command)) {
+
 				Runnable r = new Runnable() {
 					@Override
 					public void run() {
@@ -49,6 +56,10 @@ public class Model {
 					}
 				};
 				firmware.addCommand(r);
+				
+				MutualExclusion.using[MutualExclusion.DISABLE_GENERATOR].acquireUninterruptibly();
+				reader.cancel(response);
+				
 				break;
 			}
 		}

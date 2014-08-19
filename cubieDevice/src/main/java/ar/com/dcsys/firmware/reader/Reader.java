@@ -7,7 +7,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.Firmware;
-import ar.com.dcsys.firmware.MutualExclusion;
+import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.model.Cmd;
 import ar.com.dcsys.firmware.model.Response;
 
@@ -34,6 +34,16 @@ public class Reader {
 		
 	}
 	
+	
+	public void writeTemplateData(TemplateData td, Response response) {
+		
+	}
+	
+	
+	public void cancel(Response response) {
+		fpCancel.execute("", response);
+	}
+	
 	public void onCommand(final String command, final Response response) {
 		
 		if (command.equalsIgnoreCase("help")) {
@@ -52,7 +62,7 @@ public class Reader {
 
 		if (command.equalsIgnoreCase(fpCancel.getCommand())) {
 			
-			fpCancel.execute("", response);
+			cancel(response);
 			
 			/*
 			Runnable r = new Runnable() {
@@ -80,7 +90,7 @@ public class Reader {
 					};
 					firmware.addCommand(r2);
 					
-					fpCancel.execute("", response);
+					cancel(response);
 					
 					/*
 					Runnable r = new Runnable() {
