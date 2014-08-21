@@ -1,7 +1,9 @@
 package ar.com.dcsys.firmware.websocket;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
@@ -25,6 +27,7 @@ import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.Firmware;
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.FpCancel;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
@@ -1271,9 +1274,9 @@ public class CommandsEndpoint {
 	}
 	
 	
-	
 	@OnMessage
 	public void onMessage(String m, final Session session) {
+		
 		logger.fine("Mensaje recibido : " + m);
 		
 		Response remote = new Response() {
@@ -1282,6 +1285,22 @@ public class CommandsEndpoint {
 				session.getBasicRemote().sendText(text);
 			}
 		};
+		
+		Response exclusionRemote = new Response() {
+			@Override
+			public void sendText(String text) throws IOException {
+
+				try {
+					session.getBasicRemote().sendText(text);
+					
+				} finally {
+					if (text.startsWith("OK") || text.startsWith("ERROR")) {
+						MutualExclusion.using[MutualExclusion.EXECUTING_COMMAND].release();
+					}			
+				}
+			}
+		};
+
 
 		try {
 			
@@ -1317,7 +1336,7 @@ public class CommandsEndpoint {
 			} else if (m.startsWith("reader;")) {
 				
 				String subcommand = m.substring(7);
-				reader.onCommand(subcommand, remote);
+				reader.onCommand(subcommand,remote);
 				
 
 			} else if ("cancel".equals(m)) {
@@ -1331,7 +1350,7 @@ public class CommandsEndpoint {
 				
 				
 			//// base ////
-				
+				/*
 				
 			} else if ("initialize".equals(m)) {
 				
@@ -1382,7 +1401,7 @@ public class CommandsEndpoint {
 				
 			/////// aplicacion ////////////	
 
-				
+				*/
 			} else {
 				
 				try {

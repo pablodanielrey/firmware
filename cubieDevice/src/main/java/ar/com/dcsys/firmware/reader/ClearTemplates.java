@@ -54,6 +54,7 @@ public class ClearTemplates implements Cmd {
 				@Override
 				public void onSuccess(int number) {
 					try {
+						leds.onCommand(Leds.OK);
 						remote.sendText("OK " + String.valueOf(number));
 						
 					} catch (IOException e1) {
@@ -66,6 +67,7 @@ public class ClearTemplates implements Cmd {
 				@Override
 				public void onFailure(int errorCode) {
 					try {
+						leds.onCommand(Leds.ERROR);
 						remote.sendText("ERROR " + String.valueOf(errorCode));
 						
 					} catch (IOException e1) {
@@ -78,6 +80,7 @@ public class ClearTemplates implements Cmd {
 				@Override
 				public void onCancel() {
 					try {
+						leds.onCommand(Leds.READY);
 						remote.sendText("ERROR cancelado");
 						
 					} catch (IOException e1) {

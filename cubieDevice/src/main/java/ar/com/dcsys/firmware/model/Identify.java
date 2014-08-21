@@ -107,7 +107,7 @@ public class Identify implements Cmd {
 				public void releaseFinger() {
 					try {
 						
-						remote.sendText("OK liberar dedo");
+						remote.sendText("ok liberar dedo");
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -167,7 +167,7 @@ public class Identify implements Cmd {
 				@Override
 				public void onCancel() {
 					try {
-						leds.onCommand(Leds.ERROR);
+						leds.onCommand(Leds.READY);
 						remote.sendText("ERROR identificación cancelada");
 						
 					} catch (IOException e) {

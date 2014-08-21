@@ -8,6 +8,8 @@ public interface SerialDevice {
 	public void writeBytes(byte[] data) throws SerialException;
 	public byte[] readBytes(int count) throws SerialException;
 	
+	public boolean isReading();
+	
 	public void clearBuffer() throws SerialException;
 	
 }

@@ -7,22 +7,31 @@ import java.util.List;
 import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.Firmware;
-import ar.com.dcsys.firmware.cmd.template.TemplateData;
 import ar.com.dcsys.firmware.model.Cmd;
 import ar.com.dcsys.firmware.model.Response;
+import ar.com.dcsys.firmware.serial.SerialDevice;
 
 public class Reader {
 
+	private final SerialDevice sd;
 	private final Firmware firmware;
 	private final FpCancel fpCancel;
 	private final List<Cmd> commands = new ArrayList<Cmd>();
 
 	
 	@Inject
-	public Reader(Firmware firmware, FpCancel fpCancel, GetEmptyId getEmptyId, Enroll enroll, GetVersion getVersion, ReadTemplate readTemplate, SetLed setLed, Test test) {
+	public Reader(Firmware firmware, FpCancel fpCancel, 
+									 GetEmptyId getEmptyId, 
+									 Enroll enroll, 
+									 GetVersion getVersion, 
+									 ReadTemplate readTemplate, 
+									 SetLed setLed, 
+									 Test test,
+									 PurgeTemplates purgeTemplates, SerialDevice sd) {
 		
 		this.firmware = firmware;
 		this.fpCancel = fpCancel;
+		this.sd = sd;
 		
 		commands.add(getEmptyId);
 		commands.add(enroll);
@@ -31,17 +40,15 @@ public class Reader {
 		commands.add(setLed);
 		commands.add(test);
 		commands.add(fpCancel);
-		
-	}
-	
-	
-	public void writeTemplateData(TemplateData td, Response response) {
+		commands.add(purgeTemplates);
 		
 	}
 	
 	
 	public void cancel(Response response) {
-		fpCancel.execute("", response);
+		if (sd.isReading()) {
+			fpCancel.execute("", response);
+		}
 	}
 	
 	public void onCommand(final String command, final Response response) {
@@ -80,7 +87,6 @@ public class Reader {
 			for (final Cmd c : commands) {
 				if (c.identify(command)) {
 					
-					
 					Runnable r2 = new Runnable() {
 						@Override
 						public void run() {
@@ -89,9 +95,8 @@ public class Reader {
 						}
 					};
 					firmware.addCommand(r2);
-					
 					cancel(response);
-					
+						
 					/*
 					Runnable r = new Runnable() {
 						@Override

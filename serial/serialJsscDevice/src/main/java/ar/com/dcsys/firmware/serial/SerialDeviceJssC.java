@@ -109,8 +109,17 @@ public class SerialDeviceJssC implements SerialDevice {
 		}
 	}
 	
+	
+	private boolean reading = false;
+	
+	@Override
+	public boolean isReading() {
+		return reading;
+	}
+	
 	@Override
 	public byte[] readBytes(int count) {
+		reading = true;
 		while (queue.size() < count) {
 			try {
 				sem.acquire();
@@ -123,6 +132,7 @@ public class SerialDeviceJssC implements SerialDevice {
 		for (int i = 0; i < count; i++) {
 			rd[i] = queue.remove();
 		}
+		reading = false;
 		return rd;
 	}
 	

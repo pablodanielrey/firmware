@@ -17,10 +17,21 @@ public class DefaultCommandGenerator implements Runnable {
 	public static Logger logger = Logger.getLogger(DefaultCommandGenerator.class.getName());
 	private final Identify identify;
 	private final Firmware firmware;
+	
+	private volatile boolean needToSleep = false;
+	
 	private final Response remote = new Response() {
 		@Override
 		public void sendText(String text) throws IOException {
+			if (text.startsWith("ERROR") && text.contains("no templates")) {
+				needToSleep = true;
+			}
 			logger.log(Level.INFO, text);
+			
+			if (text.startsWith("OK") || text.startsWith("ERROR")) {
+				MutualExclusion.using[MutualExclusion.EXECUTING_COMMAND].release();
+			}
+			
 		}
 	};
 	
@@ -40,8 +51,19 @@ public class DefaultCommandGenerator implements Runnable {
 	@Override
 	public void run() {
 		while (true) {
-			MutualExclusion.using[MutualExclusion.DEFAULT_GENERATOR].acquireUninterruptibly();
-			MutualExclusion.using[MutualExclusion.DISABLE_GENERATOR].acquireUninterruptibly();
+			
+			while (needToSleep) {
+				try {
+					Thread.sleep(5000l);
+					needToSleep = false;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			MutualExclusion.using[MutualExclusion.NEED_DEFAULT_COMMAND].acquireUninterruptibly();
+			MutualExclusion.using[MutualExclusion.EXECUTING_COMMAND].acquireUninterruptibly();
+			
 			try {
 				Runnable r = new Runnable() {
 					@Override
@@ -50,9 +72,9 @@ public class DefaultCommandGenerator implements Runnable {
 					}
 				};
 				firmware.addCommand(r);
-				
+			
 			} finally {
-				MutualExclusion.using[MutualExclusion.DISABLE_GENERATOR].release();
+				MutualExclusion.using[MutualExclusion.EXECUTING_COMMAND].release();
 			}
 		}
 	}

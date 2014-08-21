@@ -41,7 +41,7 @@ public class App {
 	}
 	
 	
-	private final DefaultCommandGenerator defaultCommandGenerator;
+	//private final DefaultCommandGenerator defaultCommandGenerator;
 	private final Firmware firmware;
 	private final Model model;
 	private final Leds leds;
@@ -101,13 +101,12 @@ public class App {
 	
 	
 	@Inject
-	public App(DefaultCommandGenerator dcg, Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd) {
+	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd) {
 		this.firmware = firmware;
 		this.model = model;
 		this.leds = leds;
 		this.websocketServer = websocketServer;
 		this.sd = sd;
-		this.defaultCommandGenerator = dcg;
 	}
 	
 	

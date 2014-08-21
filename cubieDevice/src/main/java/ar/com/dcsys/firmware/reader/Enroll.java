@@ -83,6 +83,8 @@ public class Enroll implements Cmd {
 			};
 			
 			enroll.execute(sd, new EnrollResult() {
+				
+				private int phase = 1;
 							
 				@Override
 				public void onSuccess(final Fingerprint fp) {
@@ -98,7 +100,7 @@ public class Enroll implements Cmd {
 						
 						remote.sendText(sb.toString());
 					
-						leds.onCommand("ok");
+						leds.onCommand(Leds.OK);
 						
 					} catch (IOException e) {
 						logger.log(Level.SEVERE, e.getMessage(),e);
@@ -123,8 +125,7 @@ public class Enroll implements Cmd {
 				@Override
 				public void onCancel() {
 					try {
-						leds.onCommand(Leds.ERROR);
-						
+						leds.onCommand(Leds.READY);
 						
 						remote.sendText("ERROR comando cancelado");
 						
@@ -136,7 +137,7 @@ public class Enroll implements Cmd {
 				@Override
 				public void releaseFinger() {
 					try {
-						remote.sendText("OK levantar el dedo del lector");
+						remote.sendText("ok levantar el dedo del lector");
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -146,9 +147,9 @@ public class Enroll implements Cmd {
 				@Override
 				public void onTimeout() {
 					try {
-						leds.onCommand(Leds.ERROR);
-						
-						remote.sendText("ERROR timeout");
+						leds.onCommand(Leds.PHASE_ERROR + ";" + String.valueOf(phase));
+					
+						remote.sendText("error timeout");
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -158,9 +159,9 @@ public class Enroll implements Cmd {
 				@Override
 				public void onBadQuality() {
 					try {
-						leds.onCommand(Leds.ERROR);
-						
-						remote.sendText("ERROR mala calidad");
+						leds.onCommand(Leds.PHASE_ERROR + ";" + String.valueOf(phase));
+					
+						remote.sendText("error mala calidad");
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -170,9 +171,10 @@ public class Enroll implements Cmd {
 				@Override
 				public void needThirdSweep() {
 					try {
+						phase = 3;
 						leds.onCommand(Leds.PHASE_OK + ";3");
 						
-						remote.sendText("OK necesita tercera huella");
+						remote.sendText("ok necesita tercera huella");
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -182,9 +184,10 @@ public class Enroll implements Cmd {
 				@Override
 				public void needSecondSweep() {
 					try {
+						phase = 2;
 						leds.onCommand(Leds.PHASE_OK + ";2");
 						
-						remote.sendText("OK necesita segunda huella");
+						remote.sendText("ok necesita segunda huella");
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -194,9 +197,10 @@ public class Enroll implements Cmd {
 				@Override
 				public void needFirstSweep() {
 					try {
+						phase = 1;
 						leds.onCommand(Leds.PHASE_OK + ";1");
 						
-						remote.sendText("OK necesita primera huella");
+						remote.sendText("ok necesita primera huella");
 						
 					} catch (IOException e) {
 						e.printStackTrace();

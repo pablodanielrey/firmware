@@ -1,5 +1,6 @@
 package ar.com.dcsys.firmware;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,6 +11,9 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import ar.com.dcsys.firmware.model.Identify;
+import ar.com.dcsys.firmware.model.Response;
+
 @Singleton
 public class Firmware {
 	
@@ -17,6 +21,7 @@ public class Firmware {
 	private final LinkedBlockingQueue<Runnable> commands = new LinkedBlockingQueue<Runnable>();
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 
+	private final Identify identify;
 	private volatile boolean end = false;	
 	
 
@@ -34,9 +39,23 @@ public class Firmware {
 	}
 	
 	@Inject
-	public Firmware(Logger logger) {
+	public Firmware(Logger logger, Identify identify) {
 		this.logger = logger;
+		this.identify = identify;
 	}
+	
+	
+	private final Response remote = new Response() {
+		@Override
+		public void sendText(String text) throws IOException {
+			logger.log(Level.INFO, text);
+			
+			if (text.startsWith("OK") || text.startsWith("ERROR")) {
+				MutualExclusion.using[MutualExclusion.EXECUTING_COMMAND].release();
+			}
+			
+		}
+	};
 	
 	
 	public void processCommands() {
@@ -44,24 +63,17 @@ public class Firmware {
     	while (!end) {
     		
     		try {
-    
-	 /*   			
-	    			// ejecuto el comando usando un Callable asi puedo esperar al fin del thread.
-		    		final Runnable r = commands.take();
-		    		Callable<Void> c = new Callable<Void>() {
+				if (commands.isEmpty()) {
+					commands.add(new Runnable() {
 						@Override
-						public Void call() throws Exception {
-							r.run();
-							return null;
+						public void run() {
+							identify.execute("", remote);
 						}
-		    		};
-		    		Future<Void> f = executor.submit(c);
-		    		f.get();
-	*/
-    				//MutualExclusion.using[MutualExclusion.CMD].acquireUninterruptibly();
-	    			Runnable r = commands.take();
-	    			r.run();
-	    			//executor.execute(r);
+					});
+				}
+    
+    			Runnable r = commands.take();
+    			r.run();
 	    			
 			} catch (Exception e) {
 				logger.log(Level.INFO,e.getMessage(),e);

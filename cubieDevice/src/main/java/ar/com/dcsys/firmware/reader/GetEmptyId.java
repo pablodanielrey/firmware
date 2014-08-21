@@ -71,7 +71,7 @@ public class GetEmptyId implements Cmd {
 				
 				@Override
 				public void onCancel() {
-					leds.onCommand(Leds.SUB_ERROR);
+					leds.onCommand(Leds.READY);
 					
 					try {
 						remote.sendText("ERROR cancel");
