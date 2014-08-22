@@ -47,6 +47,7 @@ public class App {
 	private final Leds leds;
 	private final WebsocketServer websocketServer;
 	private final SerialDevice sd;
+	private final Announcer announcer;
 	
 	
 
@@ -101,12 +102,13 @@ public class App {
 	
 	
 	@Inject
-	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd) {
+	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd, Announcer announcer) {
 		this.firmware = firmware;
 		this.model = model;
 		this.leds = leds;
 		this.websocketServer = websocketServer;
 		this.sd = sd;
+		this.announcer = announcer;
 	}
 	
 	
