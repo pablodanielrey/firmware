@@ -120,6 +120,9 @@ public class Identify implements Cmd {
 					try {
 						String person = createAssistanceLog(fpNumber);
 						
+						// disparo el thread de sincronizacion de los logs.
+						MutualExclusion.using[MutualExclusion.NEED_ATTLOGS_SYNC].release();
+						
 						leds.onCommand(Leds.OK);
 						
 						remote.sendText("OK " + person + " " + String.valueOf(fpNumber));

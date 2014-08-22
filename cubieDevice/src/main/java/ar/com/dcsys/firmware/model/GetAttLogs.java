@@ -22,8 +22,6 @@ public class GetAttLogs implements Cmd {
 	public static final String CMD = "getAttLogs";
 	
 	private final Leds leds;
-	private final PersonsManager personsManager;
-	private final PersonSerializer personSerializer;
 	private final AttLogsManager attLogsManager;
 	private final AttLogSerializer attLogSerializer;
 	
@@ -31,13 +29,9 @@ public class GetAttLogs implements Cmd {
 	@Inject
 	public GetAttLogs(Leds leds, 
 						AttLogsManager attLogsManager,
-						AttLogSerializer attLogSerializer,
-						PersonsManager personsManager,
-						PersonSerializer personSerializer) {
+						AttLogSerializer attLogSerializer) {
 
 		this.leds = leds;
-		this.personsManager = personsManager;
-		this.personSerializer = personSerializer;
 		this.attLogsManager = attLogsManager;
 		this.attLogSerializer = attLogSerializer;
 	}

@@ -13,6 +13,7 @@ import org.jboss.weld.environment.se.WeldContainer;
 
 import ar.com.dcsys.firmware.leds.Leds;
 import ar.com.dcsys.firmware.model.Model;
+import ar.com.dcsys.firmware.model.logs.LogsSynchronizer;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 import ar.com.dcsys.firmware.websocket.WebsocketServer;
@@ -48,6 +49,7 @@ public class App {
 	private final WebsocketServer websocketServer;
 	private final SerialDevice sd;
 	private final Announcer announcer;
+	private final LogsSynchronizer logsSynchronizer;
 	
 	
 
@@ -102,13 +104,14 @@ public class App {
 	
 	
 	@Inject
-	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd, Announcer announcer) {
+	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd, Announcer announcer, LogsSynchronizer logsSynchronizer) {
 		this.firmware = firmware;
 		this.model = model;
 		this.leds = leds;
 		this.websocketServer = websocketServer;
 		this.sd = sd;
 		this.announcer = announcer;
+		this.logsSynchronizer = logsSynchronizer;
 	}
 	
 	
