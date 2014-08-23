@@ -16,6 +16,5 @@ public class LogsSynchronizerData {
 		this.sleep = sleep;
 	}
 
-
 	
 }

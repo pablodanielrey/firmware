@@ -2,7 +2,11 @@ package ar.com.dcsys.firmware.model.logs;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -19,6 +23,7 @@ import javax.websocket.Session;
 
 import ar.com.dcsys.assistance.server.AttLogSerializer;
 import ar.com.dcsys.data.log.AttLog;
+import ar.com.dcsys.exceptions.AttLogException;
 import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.database.ServerData;
 import ar.com.dcsys.model.device.GenericWebsocketClient;
@@ -50,7 +55,7 @@ public class LogsSynchronizer implements Runnable {
 			sleep = Long.parseLong(logsSynchronizerData.getSleep());
 			
 		} catch (Exception e) {
-			sleep = 3800000l;
+			sleep = 24l * 1000l * 60l * 60l; 		// 24 horas.
 		}
 	}
 
@@ -69,15 +74,20 @@ public class LogsSynchronizer implements Runnable {
 	public void run() {
 
 		final Semaphore sem = new Semaphore(0);
+		final List<String> logs = new ArrayList<String>();
+		final Map<String,List<String>> logsToSync = new HashMap<String,List<String>>();
+		final List<Session> sessions = new ArrayList<Session>();
 		
 		GenericWebsocketClient gwc = new GenericWebsocketClient(new WebsocketClient() {
 			@Override
 			public void onOpen(final Session session, EndpointConfig config) {
-				
 				try {
-					List<String> logsToSync = attLogsManager.findAll();
-					for (String id : logsToSync) {
+					sessions.add(session);
+					String sid = session.getId();
+					List<String> sl = Collections.synchronizedList(new ArrayList<String>(logs));
+					logsToSync.put(sid,sl);
 					
+					for (String id : sl) {
 						AttLog log = attLogsManager.findById(id);
 						String json = attLogSerializer.toJson(log);
 						String cmdJson = "attLog;" + json;
@@ -88,18 +98,8 @@ public class LogsSynchronizer implements Runnable {
 
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, e.getMessage(),e);
-				}
-				
-				
-				try {
-					session.close();
-					
-				} catch (IOException e1) {
-					logger.log(Level.SEVERE, e1.getMessage(),e1);
 					sem.release();
-					
 				}
-					
 			}
 			@Override
 			public void onClose(Session s, CloseReason reason) {
@@ -109,6 +109,29 @@ public class LogsSynchronizer implements Runnable {
 			@Override
 			public void onMessage(String m, Session session) {
 				logger.info("onMessage " + m);
+				
+				String sid = session.getId();
+				List<String> sl = logsToSync.get(sid);
+				
+				String cmd = "OK;delete;";
+				if (m.startsWith(cmd)) {
+					
+					String id = m.substring(cmd.length());
+					try {
+						attLogsManager.remove(id);
+						if (sl != null) {
+							sl.remove(id);
+						}
+
+						if (sl == null || sl.size() <= 0) {
+							sem.release();
+						}
+						
+					} catch (AttLogException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
+						sem.release();
+					}
+				}
 			}
 		});
 		
@@ -116,24 +139,31 @@ public class LogsSynchronizer implements Runnable {
 		
 		while (true) {
 			
+			// busco a ver si existen logs a ser sincronizados.
+			logs.clear();
 			try {
-				logger.info("connecting to : " + uri.toString());
-				ContainerProvider.getWebSocketContainer().connectToServer(gwc, uri);
+				List<String> ls = attLogsManager.findAll();
 				
-				try {
-					int permits = sem.drainPermits();
-					if (permits == 0) {
-						sem.acquire();
-					}
+				if (ls != null && ls.size() > 0) {
 					
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					logs.addAll(ls);	
+					sem.drainPermits();
+					
+					logger.info("connecting to : " + uri.toString());
+					ContainerProvider.getWebSocketContainer().connectToServer(gwc, uri);
+					
+					try {
+						sem.acquire();
+						
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}					
+					
 				}
-
-			
-			} catch (DeploymentException e) {
+				
+				
+			} catch (DeploymentException | AttLogException e) {
 				logger.log(Level.SEVERE,e.getMessage(),e);
-
 
 			} catch (IOException e) {
 				logger.log(Level.SEVERE,e.getMessage(),e);
@@ -141,6 +171,21 @@ public class LogsSynchronizer implements Runnable {
 			} catch (Exception e) {
 				logger.log(Level.SEVERE,e.getMessage(),e);
 			}
+
+			
+			
+			// limpio todas las sesiones que hayan quedado habiertas.
+			for (Session s : sessions) {
+				try {
+					if (s.isOpen()) {
+						s.close();
+					}
+				} catch (IOException e) {
+				}
+			}
+			sessions.clear();
+			logsToSync.clear();
+			logs.clear();
 			
 			try {
 				// espero a que alguien marque o hasta que se cumpla el sleep.
