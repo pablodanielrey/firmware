@@ -50,6 +50,7 @@ public class Model {
 			return;
 		}
 		
+		firmware.resetTimer();
 		
 		for (final Cmd c : commands) {
 			if (c.identify(command)) {
