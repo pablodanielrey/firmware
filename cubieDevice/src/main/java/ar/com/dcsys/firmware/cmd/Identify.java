@@ -103,8 +103,7 @@ public class Identify {
 			
 						int code = CamabioUtils.getDataIn4ByteInt(rsp.data);
 						
-						/////////// errores no fatales /////////////
-						
+						///// errores fatales ///////
 						
 						if (code == CamabioUtils.ERR_BAD_CUALITY) {
 							try {
@@ -112,11 +111,9 @@ public class Identify {
 							} catch (Exception e) {
 								logger.log(Level.SEVERE,e.getMessage(),e);
 							}
-							continue;
-						}
-						
-						///// errores fatales ///////
-						
+							return;
+						}						
+												
 						if (code == CamabioUtils.ERR_TIME_OUT || 
 							code == CamabioUtils.ERR_ALL_TMPL_EMPTY) {
 							try {
