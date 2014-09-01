@@ -34,7 +34,7 @@ public class InOutPostgresqlDAO implements InOutDAO {
 						+ "person_id varchar not null,"
 						+ "status varchar not null,"
 						+ "created timestamp not null default now(),"
-						+ "unique (person_id)");
+						+ "unique (person_id))");
 				try {
 					st.execute();
 					
@@ -51,9 +51,10 @@ public class InOutPostgresqlDAO implements InOutDAO {
 	
 	
 	private InOut getInOut(ResultSet rs) throws SQLException {
-		String personId = rs.getString("personId");
+		String id = rs.getString("id");
+		String personId = rs.getString("person_id");
 		Status status = Status.valueOf(rs.getString("status"));
-		return new InOut(personId, status);
+		return new InOut(id, personId, status);
 	}
 	
 	@Override
@@ -93,7 +94,7 @@ public class InOutPostgresqlDAO implements InOutDAO {
 		try {
 			Connection con = cp.getConnection();
 			try {
-				String query = "select * from inout where personId = ?";
+				String query = "select * from inout where person_id = ?";
 				PreparedStatement st = con.prepareStatement(query);
 				try {
 					st.setString(1,personId);
