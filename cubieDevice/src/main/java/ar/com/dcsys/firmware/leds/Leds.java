@@ -29,7 +29,8 @@ public class Leds {
 	public static final String ON = "on";
 	public static final String OFF = "off";
 	public static final String BLINK = "blink";
-	
+	public static final String IN = "in";
+	public static final String OUT = "out";
 	
 
 	private final Map<String,String> ledsM = new HashMap<String,String>();
@@ -190,6 +191,25 @@ public class Leds {
 			} else if (cmd.equals(Leds.READY)) {
 				
 				turnOffAll();
+				
+			} else if (cmd.equalsIgnoreCase(Leds.IN)) {
+				
+				int i = ledsConfig.intValue(ledsConfig.getInLed());
+				int times = ledsConfig.intValue(ledsConfig.getInTimes());
+				
+				if (i >= 0 && i < leds.length) {
+					leds[i].blink(times, 100);
+				}
+
+			} else if (cmd.equalsIgnoreCase(Leds.OUT)) {
+				
+				int i = ledsConfig.intValue(ledsConfig.getOutLed());
+				int times = ledsConfig.intValue(ledsConfig.getOutTimes());
+				
+				if (i >= 0 && i < leds.length) {
+					leds[i].blink(times, 100);
+				}
+				
 				
 			} else if (cmd.equalsIgnoreCase(Leds.OK)) {
 				

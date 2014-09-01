@@ -24,6 +24,7 @@ import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
 import ar.com.dcsys.firmware.database.FingerprintMappingException;
 import ar.com.dcsys.firmware.database.Initialize;
 import ar.com.dcsys.firmware.leds.Leds;
+import ar.com.dcsys.firmware.model.inout.InOutModel;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.model.log.AttLogsManager;
 
@@ -37,13 +38,14 @@ public class Identify implements Cmd {
 	private final Initialize initialize;
 
 	private final Leds leds;
+	private final InOutModel inOutModel;
 	private final SerialDevice sd;
 	
 	private final AttLogsManager attLogsManager;
 	private final FingerprintMappingDAO fingerprintMappingDAO;
 	
 	@Inject
-	public Identify(SerialDevice sd, Leds leds, 
+	public Identify(SerialDevice sd, Leds leds, InOutModel inOutModel,
 										ar.com.dcsys.firmware.cmd.Identify identify,
 										FpCancel fpCancel,
 										Initialize initialize, 
@@ -53,6 +55,7 @@ public class Identify implements Cmd {
 		this.fpCancel = fpCancel;
 		this.initialize = initialize;
 		this.leds = leds;
+		this.inOutModel = inOutModel;
 		this.sd = sd;
 		
 		this.attLogsManager = attLogsManager;
@@ -96,6 +99,8 @@ public class Identify implements Cmd {
 			
 		attLogsManager.persist(log);
 			
+		inOutModel.onLog(log.getPerson().getId());
+		
 		return fpm.getPersonId();
 	}	
 	

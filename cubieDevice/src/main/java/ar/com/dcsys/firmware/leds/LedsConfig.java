@@ -28,6 +28,12 @@ public class LedsConfig {
 	@Inject @Config String phaseErrorLed;
 	@Inject @Config String phaseErrorDelay;
 	
+	@Inject @Config String inLed;
+	@Inject @Config String inTimes;
+	
+	@Inject @Config String outLed;
+	@Inject @Config String outTimes;
+	
 	
 	public Integer intValue(String v) {
 		return Integer.parseInt(v);
@@ -35,6 +41,72 @@ public class LedsConfig {
 	
 	
 	
+	
+	
+	public String getInLed() {
+		return inLed;
+	}
+
+
+
+
+
+	public void setInLed(String inLed) {
+		this.inLed = inLed;
+	}
+
+
+
+
+
+	public String getInTimes() {
+		return inTimes;
+	}
+
+
+
+
+
+	public void setInTimes(String inTimes) {
+		this.inTimes = inTimes;
+	}
+
+
+
+
+
+	public String getOutLed() {
+		return outLed;
+	}
+
+
+
+
+
+	public void setOutLed(String outLed) {
+		this.outLed = outLed;
+	}
+
+
+
+
+
+	public String getOutTimes() {
+		return outTimes;
+	}
+
+
+
+
+
+	public void setOutTimes(String outTimes) {
+		this.outTimes = outTimes;
+	}
+
+
+
+
+
 	public String getIdentifyLed() {
 		return identifyLed;
 	}
