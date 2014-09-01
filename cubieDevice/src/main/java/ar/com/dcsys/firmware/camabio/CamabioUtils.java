@@ -462,6 +462,9 @@ public class CamabioUtils {
 	 * @return
 	 */
 	public static int getId(byte[] data) {
+		if (data.length < 2) {
+			return 0;
+		}
 		int id = (data[0] & 0xff) + ((data[1] & 0xff) << 8);
 		return id;
 	}
@@ -582,23 +585,31 @@ public class CamabioUtils {
 
 	
 	public static CamabioResponse getResponse(byte[] data) throws ProcessingException {
-		CamabioResponse rsp = new CamabioResponse();
-		rsp.prefix = getId(data);
-		rsp.rcm = getCmd(data);
-		rsp.len = getLength(data);
-		rsp.ret = getRet(data);
-		rsp.data = getData(data);
+		try {
+			CamabioResponse rsp = new CamabioResponse();
+			rsp.prefix = getId(data);
+			rsp.rcm = getCmd(data);
+			rsp.len = getLength(data);
+			rsp.ret = getRet(data);
+			rsp.data = getData(data);
+			
+			byte[] sum = chksum(data);
+			rsp.chksum = ((sum[1] & 0xff) << 8) + (sum[0] & 0xff);
 		
-		byte[] sum = chksum(data);
-		rsp.chksum = ((sum[1] & 0xff) << 8) + (sum[0] & 0xff);
-		
-		// verifico el chksum
-		int len = data.length;
-		if (sum[0] != data[len-2] || sum[1] != data[len-1]) {
-			throw new ProcessingException(String.format("chksum = %h ==> %h,%h != %h,%h",rsp.chksum, sum[0], sum[1], data[len-2], data[len-1]));
-		}
-		
-		return rsp;
+			// verifico el chksum
+			int len = data.length;
+			if (sum[0] != data[len-2] || sum[1] != data[len-1]) {
+				throw new ProcessingException(String.format("chksum = %h ==> %h,%h != %h,%h",rsp.chksum, sum[0], sum[1], data[len-2], data[len-1]));
+			}
+			
+			return rsp;
+
+		} catch (ProcessingException e) {
+			throw e;
+			
+		} catch (Exception e) {
+			throw new ProcessingException("data.length == " + data.length);
+		}		
 		
 	}
 	

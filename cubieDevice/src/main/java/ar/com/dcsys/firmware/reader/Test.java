@@ -46,7 +46,20 @@ public class Test implements Cmd {
 	}
 
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
+	
+	@Override
+	public void cancel() {
+		
+	}		
+	
+	private String cmd;
+	private Response remote;	
+	
+	@Override
+	public void execute() {
 		
 		try {
 			testConnection.execute(sd, new TestConnectionResult() {

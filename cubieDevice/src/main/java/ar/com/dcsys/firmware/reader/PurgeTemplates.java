@@ -50,9 +50,21 @@ public class PurgeTemplates implements Cmd {
 		clearAllTemplates.excecute(sd, result);
 	}
 	
+	@Override
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
 	
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void cancel() {
+		
+	}		
+	
+	private String cmd;
+	private Response remote;	
+	
+	@Override
+	public void execute() {
 
 		try {
 			ClearAllTemplateResult result = new ClearAllTemplateResult() {

@@ -3,8 +3,6 @@ package ar.com.dcsys.firmware.cmd.template;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.inject.Inject;
-
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
@@ -33,6 +31,7 @@ public class WriteTemplate {
 		final byte[] template = edata.getFingerprint().getTemplate();
 		final int templateSize = template.length;
 		
+//		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
 			byte[] cmd = CamabioUtils.writeTemplate(templateSize);
 			sd.writeBytes(cmd);
@@ -110,7 +109,11 @@ public class WriteTemplate {
 			} 
 			
 		} catch (SerialException | ProcessingException e) {
+			sd.cancel();
 			throw new CmdException(e);
+			
+//		} finally {
+//			MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].release();
 		}
 	}
 	

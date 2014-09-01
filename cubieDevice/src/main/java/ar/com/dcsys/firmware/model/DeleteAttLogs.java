@@ -1,20 +1,13 @@
 package ar.com.dcsys.firmware.model;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
-import ar.com.dcsys.assistance.server.AttLogSerializer;
-import ar.com.dcsys.data.log.AttLog;
-import ar.com.dcsys.data.person.Person;
-import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.leds.Leds;
-import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.model.log.AttLogsManager;
-import ar.com.dcsys.person.server.PersonSerializer;
 
 public class DeleteAttLogs implements Cmd {
 
@@ -22,24 +15,15 @@ public class DeleteAttLogs implements Cmd {
 	public static final String CMD = "deleteAttLogs";
 	
 	private final Leds leds;
-	private final PersonsManager personsManager;
-	private final PersonSerializer personSerializer;
 	private final AttLogsManager attLogsManager;
-	private final AttLogSerializer attLogSerializer;
 	
 	
 	@Inject
 	public DeleteAttLogs(Leds leds, 
-						AttLogsManager attLogsManager,
-						AttLogSerializer attLogSerializer,
-						PersonsManager personsManager,
-						PersonSerializer personSerializer) {
+						AttLogsManager attLogsManager) {
 
 		this.leds = leds;
-		this.personsManager = personsManager;
-		this.personSerializer = personSerializer;
 		this.attLogsManager = attLogsManager;
-		this.attLogSerializer = attLogSerializer;
 	}
 	
 	
@@ -51,12 +35,31 @@ public class DeleteAttLogs implements Cmd {
 	
 	@Override
 	public boolean identify(String cmd) {
-		return cmd.startsWith(CMD);
+		if (cmd.startsWith(CMD)) {
+			this.cmd = cmd;
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
+	
+	@Override
+	public void cancel() {
+		cancel = true;
+	}		
+	
+	private String cmd;
+	private Response remote;
+	private boolean cancel = false;
+	
+	@Override
+	public void execute() {
 
 		try {
 			leds.onCommand(Leds.BLOCKED);
@@ -67,14 +70,19 @@ public class DeleteAttLogs implements Cmd {
 				throw new Exception("ids == null");
 			}
 			
+			int count = 0;
 			for (String id : ids) {
 				attLogsManager.remove(id);
 				remote.sendText("ok " + id);
 				leds.onCommand(Leds.SUB_OK);
+				count++;
+				if (cancel) {
+					break;
+				}
 			}
 
 			leds.onCommand(Leds.OK);
-			remote.sendText("OK " + ids.length);
+			remote.sendText("OK " + count);
 			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE,e.getMessage(),e);
@@ -86,8 +94,14 @@ public class DeleteAttLogs implements Cmd {
 				e1.printStackTrace();
 				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
+		} finally {
+			cancel = false;
 		}
 		
-	}					
+	}
+
+
+
+				
 	
 }

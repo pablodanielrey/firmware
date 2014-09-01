@@ -9,12 +9,8 @@ import javax.inject.Inject;
 
 import ar.com.dcsys.assistance.server.AttLogSerializer;
 import ar.com.dcsys.data.log.AttLog;
-import ar.com.dcsys.data.person.Person;
-import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.leds.Leds;
-import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.model.log.AttLogsManager;
-import ar.com.dcsys.person.server.PersonSerializer;
 
 public class GetAttLogs implements Cmd {
 
@@ -47,10 +43,25 @@ public class GetAttLogs implements Cmd {
 	public boolean identify(String cmd) {
 		return cmd.startsWith(CMD);
 	}
+
 	
 	
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
+	
+	@Override
+	public void cancel() {
+		cancel = true;
+	}		
+	
+	private Response remote;
+	private boolean cancel = false;
+		
+	
+	@Override
+	public void execute() {
 
 		try {
 			leds.onCommand(Leds.BLOCKED);
@@ -58,15 +69,20 @@ public class GetAttLogs implements Cmd {
 			List<String> ids = attLogsManager.findAll();
 			remote.sendText("ok size = " + String.valueOf(ids.size()));
 			
+			int count = 0;
 			for (String id : ids) {
 				AttLog log = attLogsManager.findById(id);
 				String json = attLogSerializer.toJson(log);
 				remote.sendText("ok " + json);
-				
+				count++;
 				leds.onCommand(Leds.SUB_OK);
+				
+				if (cancel) {
+					break;
+				}
 			}
 
-			remote.sendText("OK " + ids.size());
+			remote.sendText("OK " + count);
 			leds.onCommand(Leds.OK);
 			
 		} catch (Exception e) {
@@ -79,6 +95,8 @@ public class GetAttLogs implements Cmd {
 				e1.printStackTrace();
 				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
+		} finally {
+			cancel = false;
 		}
 		
 	}					

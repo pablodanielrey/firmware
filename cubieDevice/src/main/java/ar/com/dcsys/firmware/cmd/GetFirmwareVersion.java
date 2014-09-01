@@ -3,6 +3,7 @@ package ar.com.dcsys.firmware.cmd;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
@@ -30,6 +31,7 @@ public class GetFirmwareVersion {
 	
 	public void execute(SerialDevice serialPort, GetFirmwareVersionResult result) throws CmdException {
 		
+		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
 			byte[] cmd = CamabioUtils.getFirmwareVersion();
 			int rcm = CamabioUtils.getCmd(cmd);
@@ -52,6 +54,9 @@ public class GetFirmwareVersion {
 		} catch (SerialException | ProcessingException e) {
 			logger.log(Level.SEVERE,e.getMessage(),e);
 			throw new CmdException(e);
+			
+		} finally {
+			MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].release();
 		}
 		
 	}

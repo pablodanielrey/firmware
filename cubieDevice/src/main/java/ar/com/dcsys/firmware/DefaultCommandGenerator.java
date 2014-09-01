@@ -41,6 +41,13 @@ public class DefaultCommandGenerator implements Runnable {
 		this.firmware = firmware;
 	}
 
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/*
 	@PostConstruct
 	public void init() {
 		Thread t = new Thread(this);
@@ -78,5 +85,5 @@ public class DefaultCommandGenerator implements Runnable {
 			}
 		}
 	}
-	
+	*/
 }

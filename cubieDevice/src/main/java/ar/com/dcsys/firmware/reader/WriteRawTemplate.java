@@ -40,19 +40,38 @@ public class WriteRawTemplate implements Cmd {
 		return CMD;
 	}
 
-	@Override
-	public boolean identify(String cmd) {
-		return (CMD.equals(cmd));
-	}
-
-	
 	public void execute(TemplateData td, WriteTemplateResult result) throws CmdException {
 		writeTemplate.execute(sd, result, td);
 	}
 	
 	
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public boolean identify(String cmd) {
+		if (cmd.startsWith(CMD)) {
+			this.cmd = cmd;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	
+	@Override
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
+	
+	@Override
+	public void cancel() {
+		
+	}		
+	
+	private String cmd;
+	private Response remote;	
+	
+	
+	@Override
+	public void execute() {
 
 		// por ahora nada. no lo voy a ejecutar desde el websocket.
 		try {

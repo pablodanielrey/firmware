@@ -3,6 +3,7 @@ package ar.com.dcsys.firmware.model;
 import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,7 +16,9 @@ import ar.com.dcsys.exceptions.AttLogException;
 import ar.com.dcsys.exceptions.DeviceException;
 import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.cmd.CmdException;
-import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
+import ar.com.dcsys.firmware.cmd.FpCancel;
+import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
+import ar.com.dcsys.firmware.cmd.IdentifyFree.IdentifyResult;
 import ar.com.dcsys.firmware.database.FingerprintMapping;
 import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
 import ar.com.dcsys.firmware.database.FingerprintMappingException;
@@ -29,7 +32,8 @@ public class Identify implements Cmd {
 	private static final Logger logger = Logger.getLogger(Model.class.getName());
 	public static final String CMD = "identify";
 	
-	private final ar.com.dcsys.firmware.cmd.Identify identify;
+	private final FpCancel fpCancel;
+	private final ar.com.dcsys.firmware.cmd.IdentifyFree identify;
 	private final Initialize initialize;
 
 	private final Leds leds;
@@ -40,13 +44,14 @@ public class Identify implements Cmd {
 	
 	@Inject
 	public Identify(SerialDevice sd, Leds leds, 
-										ar.com.dcsys.firmware.cmd.Identify identify, 
+										ar.com.dcsys.firmware.cmd.IdentifyFree identify,
+										FpCancel fpCancel,
 										Initialize initialize, 
 										FingerprintMappingDAO fingerprintMappingDAO,
 										AttLogsManager attLogsManager) {
 		this.identify = identify;
+		this.fpCancel = fpCancel;
 		this.initialize = initialize;
-		
 		this.leds = leds;
 		this.sd = sd;
 		
@@ -96,8 +101,29 @@ public class Identify implements Cmd {
 	
 	
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
+	
+	@Override
+	public void cancel() throws CmdException {
+		if (running.availablePermits() == 0) {
+			fpCancel.execute(sd, new FpCancelResult() {
+				@Override
+				public void onSuccess() {
+					logger.log(Level.FINE, "identify canceled");
+				}
+			});
+		}
+	}		
+	
+	private final Semaphore running = new Semaphore(1);
+	private Response remote;
+	
+	@Override
+	public void execute() {
 
+		running.acquireUninterruptibly();
 		try {
 			leds.onCommand(Leds.IDENTIFY);
 			
@@ -156,6 +182,18 @@ public class Identify implements Cmd {
 				}
 				
 				@Override
+				public void onBadQuality() {
+					try {
+						leds.onCommand(Leds.ERROR);
+						remote.sendText("OK mala calidad de la huella");
+													
+					} catch (IOException e) {
+						e.printStackTrace();
+										
+					}
+				}
+				
+				@Override
 				public void onFailure(int errorCode) {
 					try {
 						leds.onCommand(Leds.ERROR);
@@ -179,6 +217,7 @@ public class Identify implements Cmd {
 					}
 				}
 			});
+			
 		} catch (CmdException e) {
 			logger.log(Level.SEVERE,e.getMessage(),e);
 			leds.onCommand(Leds.ERROR);
@@ -191,9 +230,7 @@ public class Identify implements Cmd {
 			}
 
 		} finally {
-			
-			MutualExclusion.using[MutualExclusion.DEFAULT_GENERATOR].release();
-			
+			running.release();
 		}
 	}					
 	

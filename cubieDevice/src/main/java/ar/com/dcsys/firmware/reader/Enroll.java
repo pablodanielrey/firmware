@@ -1,6 +1,7 @@
 package ar.com.dcsys.firmware.reader;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,14 +52,45 @@ public class Enroll implements Cmd {
 		return CMD;
 	}
 	
-	@Override
-	public boolean identify(String cmd) {
-		return cmd.startsWith(CMD);
-	}
-	
 
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public boolean identify(String cmd) {
+		if (cmd.startsWith(CMD)) {
+			ExecutionContext ex = new ExecutionContext();
+			ex.cmd = cmd;
+			contexts.add(ex);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	
+	@Override
+	public void setResponse(Response remote) {
+		contexts.getLast().remote = remote;
+	}
+	
+	@Override
+	public void cancel() {
+		
+	}		
+	
+
+	private class ExecutionContext {
+		String cmd;
+		Response remote;
+	}
+
+	private final LinkedList<ExecutionContext> contexts = new LinkedList<Enroll.ExecutionContext>();
+	
+	
+	@Override
+	public void execute() {
+
+		ExecutionContext ctx = contexts.removeFirst();
+		String cmd = ctx.cmd;
+		final Response remote = ctx.remote;
 		
 		try {
 		
@@ -104,11 +136,23 @@ public class Enroll implements Cmd {
 						
 					} catch (IOException e) {
 						logger.log(Level.SEVERE, e.getMessage(),e);
-						leds.onCommand("error");
+						leds.onCommand(Leds.ERROR);
 					}
 													
 				}
 				
+				
+				@Override
+				public void onDuplicated() {
+					try {
+						leds.onCommand(Leds.ERROR);
+						
+						remote.sendText("ERROR huella duplicada");
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 				
 				@Override
 				public void onFailure(int errorCode) {

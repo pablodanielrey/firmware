@@ -3,18 +3,19 @@ package ar.com.dcsys.firmware;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import ar.com.dcsys.firmware.model.Cmd;
 import ar.com.dcsys.firmware.model.Identify;
 import ar.com.dcsys.firmware.model.Response;
 
@@ -22,22 +23,11 @@ import ar.com.dcsys.firmware.model.Response;
 public class Firmware {
 	
 	private final Logger logger;
-	private final LinkedBlockingQueue<Runnable> commands = new LinkedBlockingQueue<Runnable>();
+	private final LinkedBlockingQueue<Cmd> commands = new LinkedBlockingQueue<Cmd>();
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 
 	private final Identify identify;
 	private volatile boolean end = false;	
-	
-
-	public void setEnd() {
-		addCommand(new Runnable() {
-			@Override
-			public void run() {
-				end = true;
-			}
-		});
-	}
-	
 	
 	
 	/**
@@ -69,12 +59,14 @@ public class Firmware {
 				// genero el comando en el caso de que no exista comando en espera.
 				
 				if (commands.isEmpty()) {
+					/*
 					commands.add(new Runnable() {
 						@Override
 						public void run() {
 							identify.execute("", remote);
 						}
 					});
+					*/
 				}
 				
 			} finally {
@@ -83,6 +75,7 @@ public class Firmware {
 		}
 	};
 	
+	private final Semaphore commandsAvailable = new Semaphore(0);
 	private final Semaphore runningCommand = new Semaphore(1);
 	private final Semaphore lastResetAccess = new Semaphore(1);
 	private Date lastReset = new Date();
@@ -100,8 +93,9 @@ public class Firmware {
 		}
 	}
 	
-	public void addCommand(Runnable ... r) {
+	public void addCommand(Cmd ... r) {
 		commands.addAll(Arrays.asList(r));
+		commandsAvailable.release(r.length);
 	}
 	
 	@Inject
@@ -115,30 +109,38 @@ public class Firmware {
 		@Override
 		public void sendText(String text) throws IOException {
 			logger.log(Level.INFO, text);
-			
-			if (text.startsWith("OK") || text.startsWith("ERROR")) {
-				MutualExclusion.using[MutualExclusion.EXECUTING_COMMAND].release();
-			}
-			
 		}
 	};
+	
+	
+	private Cmd runningCmd;
+	
+	public Cmd getRunningCommand() {
+		return runningCmd;
+	}
+	
 	
 	
 	public void processCommands() {
 		
 		// genero comandos espaciados por 5 segundos cada uno.
-		Timer t = new Timer();
-		t.schedule(generator, 10000l, 5000l);
+//		Timer t = new Timer();
+//		t.schedule(generator, 10000l, 5000l);
 		
     	while (!end) {
     		
     		try {
-
-    			Runnable r = commands.take();
-    			
+    			commandsAvailable.tryAcquire(5000l, TimeUnit.MILLISECONDS);
     			runningCommand.acquireUninterruptibly();
     			try {
-    				r.run();
+    				runningCmd = commands.poll();
+    			
+	    			if (runningCmd != null) {
+		    			logger.info("iniciando comando : " + runningCmd.getCommand());
+		   				runningCmd.execute();
+		    			logger.info("comando finalizado : " + runningCmd.getCommand());
+	    			}
+	    			
     			} finally {
     				runningCommand.release();
     			}

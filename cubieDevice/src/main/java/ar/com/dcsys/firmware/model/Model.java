@@ -3,35 +3,34 @@ package ar.com.dcsys.firmware.model;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.Firmware;
-import ar.com.dcsys.firmware.MutualExclusion;
-import ar.com.dcsys.firmware.leds.Leds;
-import ar.com.dcsys.firmware.reader.Reader;
+import ar.com.dcsys.firmware.cmd.CmdException;
 
 public class Model {
 
+	private final Logger logger = Logger.getLogger(Model.class.getName());
 	private final List<Cmd> commands = new ArrayList<Cmd>();
 
 	private final Firmware firmware;
-	private final Reader reader;
 	
 	@Inject
-	public Model(Firmware firmware, Reader reader, Identify identify, 
-												   PersistPerson persistPerson,
-								  				   PersistFingerprint persistFingerprint,
-								  				   GetAttLogs getAttLogs,
-								  				   DeleteAttLogs deleteAttLogs) {
+	public Model(Firmware firmware, Identify identify, 
+								   PersistPerson persistPerson,
+				  				   PersistFingerprint persistFingerprint,
+				  				   GetAttLogs getAttLogs,
+				  				   DeleteAttLogs deleteAttLogs) {
 		this.firmware = firmware;
-		this.reader = reader;
-		
+	
 		commands.add(persistPerson);
 		commands.add(persistFingerprint);
 		commands.add(getAttLogs);
 		commands.add(deleteAttLogs);
-		//commands.add(identify);
+		commands.add(identify);
 	}
 	
 	
@@ -55,15 +54,17 @@ public class Model {
 		for (final Cmd c : commands) {
 			if (c.identify(command)) {
 
-				Runnable r = new Runnable() {
-					@Override
-					public void run() {
-						c.execute(command, response);
-						//MutualExclusion.using[MutualExclusion.CMD].release();
+				c.setResponse(response);
+				firmware.addCommand(c);
+				
+				Cmd cmd = firmware.getRunningCommand();
+				if (cmd != null) {
+					try {
+						cmd.cancel();
+					} catch (CmdException e) {
+						logger.log(Level.SEVERE,e.getMessage(),e);
 					}
-				};
-				firmware.addCommand(r);
-				reader.cancel(response);
+				}
 				
 				break;
 			}

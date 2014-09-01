@@ -49,9 +49,21 @@ public class GetEmptyId implements Cmd {
 		getEmptyId.execute(sd, result);
 	}
 	
+	@Override
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
 	
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void cancel() {
+		
+	}		
+	
+	private String cmd;
+	private Response remote;	
+	
+	@Override
+	public void execute() {
 
 		try {
 			GetEmptyIdResult geir = new GetEmptyIdResult() {

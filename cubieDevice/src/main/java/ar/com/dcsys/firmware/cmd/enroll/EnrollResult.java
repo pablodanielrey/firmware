@@ -11,7 +11,11 @@ public interface EnrollResult extends TemplateResult {
 	
 	public void releaseFinger();
 	
+	public void onDuplicated();
+	
 	public void onTimeout();
 	public void onBadQuality();
+	
+	
 
 }

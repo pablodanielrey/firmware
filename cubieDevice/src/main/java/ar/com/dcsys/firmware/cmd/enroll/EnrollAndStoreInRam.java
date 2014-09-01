@@ -39,6 +39,7 @@ public class EnrollAndStoreInRam {
 		
 		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
+			serialPort.clearBuffer();
 			
 			byte[] cmd = CamabioUtils.enrollAndStoreInRam();
 			serialPort.writeBytes(cmd);
@@ -112,14 +113,6 @@ public class EnrollAndStoreInRam {
 
 					/////////// errores no fatales /////////////
 					
-					if (code == CamabioUtils.ERR_TIME_OUT) {
-						try {
-							result.onTimeout();
-						} catch (Exception e) {
-							logger.log(Level.SEVERE,e.getMessage(),e);
-						}
-						continue;
-					}
 					
 					if (code == CamabioUtils.ERR_BAD_CUALITY) {
 						try {
@@ -132,6 +125,15 @@ public class EnrollAndStoreInRam {
 					
 					/////////////// errores fatales ////////////////
 					
+					if (code == CamabioUtils.ERR_TIME_OUT) {
+						try {
+							result.onTimeout();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
+						return;
+					}
+					
 					if (code == CamabioUtils.ERR_GENERALIZE) {
 						try {
 							result.onFailure(code);
@@ -140,6 +142,15 @@ public class EnrollAndStoreInRam {
 						}
 						return;
 					}
+					
+					if (code == CamabioUtils.ERR_DUPLICATION_ID) {
+						try {
+							result.onDuplicated();
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
+						}
+						return;
+					}					
 					
 					//////////////// cancel //////////////////
 					
@@ -164,6 +175,9 @@ public class EnrollAndStoreInRam {
 			
 			
 		} catch (SerialException | ProcessingException e) {
+			
+			serialPort.cancel();
+			
 			throw new CmdException(e);
 			
 		} finally {

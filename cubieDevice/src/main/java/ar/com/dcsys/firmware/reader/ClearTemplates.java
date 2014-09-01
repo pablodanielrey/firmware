@@ -45,8 +45,22 @@ public class ClearTemplates implements Cmd {
 		return (CMD.equals(cmd));
 	}
 
+	
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
+	
+	@Override
+	public void cancel() {
+		
+	}		
+	
+	private String cmd;
+	private Response remote;	
+	
+	@Override
+	public void execute() {
 
 		try {
 			clearAllTemplate.excecute(sd, new ClearAllTemplateResult() {

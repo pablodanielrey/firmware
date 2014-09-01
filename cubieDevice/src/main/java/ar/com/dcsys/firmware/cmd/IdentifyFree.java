@@ -19,14 +19,17 @@ package ar.com.dcsys.firmware.cmd;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.inject.Inject;
+
 import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
+import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
-public class Identify {
+public class IdentifyFree {
 	
 	public interface IdentifyResult {
 		public void releaseFinger();
@@ -37,7 +40,7 @@ public class Identify {
 		public void onFailure(int errorCode);
 	}
 	
-	private final Logger logger = Logger.getLogger(Identify.class.getName());
+	private final Logger logger = Logger.getLogger(IdentifyFree.class.getName());
 	
 	
 	private void checkPreconditions(CamabioResponse rsp) throws CmdException {
@@ -45,19 +48,21 @@ public class Identify {
 			throw new CmdException("Prefijo inválido : " + rsp.prefix);
 		}
 		
-		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_IDENTIFY) {
-			throw new CmdException("RCM != Identify");
+		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_IDENTIFY_FREE) {
+			throw new CmdException("RCM != " + this.getClass().getName());
 		}
 	}	
 
 	
-	public void execute(SerialDevice serialPort, IdentifyResult result) throws CmdException {
+	public void execute(SerialDevice serialPort, final IdentifyResult result) throws CmdException {
 		
 		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
+
+			// limpio la basura que haya en el lector.
 			serialPort.clearBuffer();
 			
-			byte[] cmd = CamabioUtils.identify();
+			byte[] cmd = CamabioUtils.identifyFree();
 			serialPort.writeBytes(cmd);
 			try {
 			
@@ -97,11 +102,22 @@ public class Identify {
 						} catch (Exception e) {
 							logger.log(Level.SEVERE,e.getMessage(),e);
 						}
-						return;
+						continue;
 						
 					} else if (rsp.ret == CamabioUtils.ERR_FAIL) {
 			
 						int code = CamabioUtils.getDataIn4ByteInt(rsp.data);
+						
+						/////////// errores fatales ///////////////
+						
+						if (code == CamabioUtils.ERR_ALL_TMPL_EMPTY) {
+							try {
+								result.onFailure(code);
+							} catch (Exception e) {
+								logger.log(Level.SEVERE,e.getMessage(),e);
+							}
+							return;
+						}
 						
 						/////////// errores no fatales /////////////
 						
@@ -115,16 +131,13 @@ public class Identify {
 							continue;
 						}
 						
-						///// errores fatales ///////
-						
-						if (code == CamabioUtils.ERR_TIME_OUT || 
-							code == CamabioUtils.ERR_ALL_TMPL_EMPTY) {
+						if (code == CamabioUtils.ERR_TIME_OUT) {
 							try {
 								result.onFailure(code);
 							} catch (Exception e) {
 								logger.log(Level.SEVERE,e.getMessage(),e);
 							}
-							return;
+							continue;
 						}
 						
 						if (code == CamabioUtils.ERR_IDENTIFY) {
@@ -133,7 +146,7 @@ public class Identify {
 							} catch (Exception e) {
 								logger.log(Level.SEVERE,e.getMessage(),e);
 							}
-							return;
+							continue;
 						}
 						
 						if (code == CamabioUtils.ERR_FP_CANCEL) {
@@ -154,14 +167,14 @@ public class Identify {
 						throw new CmdException("Datos inesperados - rcm " + rsp.rcm + " ret " + rsp.ret + " code " + code);
 					}
 				}
-			
+				
 			} catch (Exception e1) {
 				
 				cmd = CamabioUtils.fpCancel();
 				serialPort.writeBytes(cmd);
 				throw e1;
 				
-			}			
+			}
 			
 		} catch (SerialException | ProcessingException e) {
 			

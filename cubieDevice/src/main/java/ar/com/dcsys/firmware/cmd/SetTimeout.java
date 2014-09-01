@@ -1,4 +1,4 @@
-package ar.com.dcsys.firmware.cmd.template;
+package ar.com.dcsys.firmware.cmd;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -7,39 +7,35 @@ import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
-import ar.com.dcsys.firmware.cmd.CmdException;
-import ar.com.dcsys.firmware.cmd.ProcessingException;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 
-public class GetEmptyId {
+public class SetTimeout {
 	
-	public interface GetEmptyIdResult {
-		public void onSuccess(int tmplNumber);
-		public void onCancel();
+	public interface SetTimeoutResult {
+		public void onSuccess();
 		public void onFailure(int errorCode);
-		public void onEmptyNotExistent();
+		public void onInvalidTimeout();
 	}
 	
-	
-	private static final Logger logger = Logger.getLogger(GetEmptyId.class.getName());
+	private static final Logger logger = Logger.getLogger(SetTimeout.class.getName());
 	
 	private void checkPreconditions(CamabioResponse rsp) throws CmdException {
 		if (rsp.prefix != CamabioUtils.RSP) {
 			throw new CmdException("Prefijo inválido : " + rsp.prefix);
 		}
 		
-		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_GET_EMTPY_ID) {
+		if (rsp.rcm != CamabioUtils.CMD_FP_CANCEL && rsp.rcm != CamabioUtils.CMD_SET_FINGER_TIME_OUT) {
 			throw new CmdException("RCM != GetEmptyId");
 		}
 	}
 	
 	
-	public void execute(SerialDevice sd, GetEmptyIdResult result) throws CmdException {
+	public void execute(SerialDevice sd, int seconds, SetTimeoutResult result) throws CmdException {
 		
 		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
-			byte[] cmd = CamabioUtils.getEmptyId();
+			byte[] cmd = CamabioUtils.setFingerTimeOut(seconds);
 			sd.writeBytes(cmd);
 
 			while (true) {
@@ -52,7 +48,7 @@ public class GetEmptyId {
 					
 					int tmplNumber = CamabioUtils.getDataIn2ByteInt(rsp.data);
 					try {
-						result.onSuccess(tmplNumber);
+						result.onSuccess();
 					} catch (Exception e) {
 						logger.log(Level.SEVERE,e.getMessage(),e);
 					}
@@ -61,9 +57,9 @@ public class GetEmptyId {
 				} else if (rsp.ret == CamabioUtils.ERR_FAIL) {
 					
 					int code = CamabioUtils.getDataIn2ByteInt(rsp.data);
-					if (code == CamabioUtils.ERR_EMPTY_ID_NOEXIST) {
+					if (code == CamabioUtils.ERR_INVALID_TIME_OUT) {
 						try {
-							result.onEmptyNotExistent();
+							result.onInvalidTimeout();
 						} catch (Exception e) {
 							logger.log(Level.SEVERE,e.getMessage(),e);
 						}

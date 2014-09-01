@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import jssc.SerialPort;
 import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.Utils;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
@@ -119,6 +120,7 @@ public class GetEnrollData {
 			} 
 			
 		} catch (SerialException | ProcessingException e) {
+			sd.cancel();
 			throw new CmdException(e);
 
 		}

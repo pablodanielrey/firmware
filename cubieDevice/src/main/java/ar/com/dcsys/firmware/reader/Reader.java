@@ -3,16 +3,21 @@ package ar.com.dcsys.firmware.reader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.Firmware;
+import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.model.Cmd;
 import ar.com.dcsys.firmware.model.Response;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 
 public class Reader {
 
+	private static final Logger logger = Logger.getLogger(Reader.class.getName());
+	
 	private final SerialDevice sd;
 	private final Firmware firmware;
 	private final FpCancel fpCancel;
@@ -46,9 +51,8 @@ public class Reader {
 	
 	
 	public void cancel(Response response) {
-		if (sd.isReading()) {
-			fpCancel.execute("", response);
-		}
+		fpCancel.setResponse(response);
+		fpCancel.execute();
 	}
 	
 	public void onCommand(final String command, final Response response) {
@@ -83,40 +87,24 @@ public class Reader {
 			*/
 			
 		} else {
-			
+
 			firmware.resetTimer();
 		
 			for (final Cmd c : commands) {
 				if (c.identify(command)) {
 					
-					Runnable r2 = new Runnable() {
-						@Override
-						public void run() {
-							c.execute(command, response);
-							//MutualExclusion.using[MutualExclusion.CMD].release();
+					c.setResponse(response);
+					firmware.addCommand(c);
+					
+					Cmd cmd = firmware.getRunningCommand();
+					if (cmd != null) {
+						try {
+							cmd.cancel();
+						} catch (CmdException e) {
+							logger.log(Level.SEVERE,e.getMessage(),e);
 						}
-					};
-					firmware.addCommand(r2);
-					cancel(response);
-						
-					/*
-					Runnable r = new Runnable() {
-						@Override
-						public void run() {
-							fpCancel.execute("", response);
-						}
-					};
-					Runnable r2 = new Runnable() {
-						@Override
-						public void run() {
-							c.execute(command, response);
-							//MutualExclusion.using[MutualExclusion.CMD].release();
-						}
-					};
-					firmware.addCommand(r,r2);
-					MutualExclusion.using[MutualExclusion.CMD].release();
-					 
-					 */
+					}
+					
 					break;
 				}
 			}

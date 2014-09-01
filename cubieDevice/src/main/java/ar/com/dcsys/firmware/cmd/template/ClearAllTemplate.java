@@ -5,6 +5,7 @@ package ar.com.dcsys.firmware.cmd.template;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.camabio.CamabioResponse;
 import ar.com.dcsys.firmware.camabio.CamabioUtils;
 import ar.com.dcsys.firmware.camabio.SerialUtils;
@@ -37,6 +38,7 @@ public class ClearAllTemplate {
 	
 	public void excecute(SerialDevice sd, ClearAllTemplateResult result) throws CmdException {
 		
+		MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].acquireUninterruptibly();
 		try {
 			byte[] cmd = CamabioUtils.clearAllTemplate();
 			sd.writeBytes(cmd);
@@ -47,16 +49,6 @@ public class ClearAllTemplate {
 				CamabioResponse rsp = CamabioUtils.getResponse(data);
 				checkPreconditions(rsp);
 
-				// evaluo la respuesta del FP_CANCEL.
-				if (rsp.rcm == CamabioUtils.CMD_FP_CANCEL && rsp.ret == CamabioUtils.ERR_SUCCESS) {
-					try {
-						result.onCancel();
-					} catch (Exception e) {
-						logger.log(Level.SEVERE,e.getMessage(),e);
-					}
-					return;
-				}						
-				
 				if (rsp.ret == CamabioUtils.ERR_SUCCESS && rsp.prefix == CamabioUtils.RSP) {
 					
 					int number = CamabioUtils.getDataIn2ByteInt(rsp.data);
@@ -89,8 +81,12 @@ public class ClearAllTemplate {
 			} 
 			
 		} catch (SerialException | ProcessingException e) {
+			sd.cancel();
 			throw new CmdException(e);
-		}		
+			
+		} finally {
+			MutualExclusion.using[MutualExclusion.SERIAL_DEVICE].release();
+		}
 		
 	}
 

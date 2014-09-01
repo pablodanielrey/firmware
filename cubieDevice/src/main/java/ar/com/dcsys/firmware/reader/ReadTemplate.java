@@ -43,11 +43,30 @@ public class ReadTemplate implements Cmd {
 
 	@Override
 	public boolean identify(String cmd) {
-		return (cmd.startsWith(CMD));
+		if (cmd.startsWith(CMD)) {
+			this.cmd = cmd;
+			return true;
+		} else {
+			return false;
+		}
 	}
+	
+	
+	@Override
+	public void setResponse(Response remote) {
+		this.remote = remote;
+	}
+	
+	@Override
+	public void cancel() {
+		
+	}		
+	
+	private String cmd;
+	private Response remote;
 
 	@Override
-	public void execute(String cmd, final Response remote) {
+	public void execute() {
 		
 		try {
 			String pnumber = cmd.substring(CMD.length() + 1);
@@ -96,6 +115,7 @@ public class ReadTemplate implements Cmd {
 					}							
 				}
 				
+				/*
 				@Override
 				public void onCancel() {
 					try {
@@ -105,6 +125,7 @@ public class ReadTemplate implements Cmd {
 						logger.log(Level.SEVERE,e.getMessage(),e);
 					}							
 				}
+				*/
 			});
 		} catch (CmdException e) {
 			logger.log(Level.SEVERE, e.getMessage(),e);

@@ -2,6 +2,7 @@ package ar.com.dcsys.firmware.serial;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,25 +22,60 @@ public class SerialDeviceJssC implements SerialDevice {
 	
 	private  SerialPort serialPort;
 	private final ConcurrentLinkedQueue<Byte> queue;
-	private final Semaphore sem;
+	private final Semaphore okToRead;
+	private final Semaphore reading;
 	private final SerialJsscDeviceParams params;
+	
+	private final SerialPortEventListener serialPortReader = new SerialPortEventListener() {
+		@Override
+		public void serialEvent(SerialPortEvent event) {
+			if (event.isRXCHAR()) {
+				int bytes = event.getEventValue();
+				
+				if (bytes > 0) {
+					
+					try {
+						byte[] data = serialPort.readBytes(bytes);
+						logger.finest("bytes leidos : " + Utils.getHex(data));
+						
+						for (byte b : data) {
+							queue.add(b);
+						}
+					} catch (SerialPortException e) {
+						e.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			okToRead.release();
+			
+			logger.finest("Tamaño de la cola de bytes leídos : " + queue.size());
+		}		
+	};
+	
 	
 	
 	@Inject
 	public SerialDeviceJssC(SerialJsscDeviceParams params) {
 		this.params = params;
-		sem = new Semaphore(0);
+		okToRead = new Semaphore(0);
+		reading = new Semaphore(1);
 		queue = new ConcurrentLinkedQueue<>();
 	}
 	
 	@Override
-	public boolean open() throws SerialException {
+	public synchronized boolean open() throws SerialException {
 		queue.clear();
 	
 		try {
 			logger.fine("obteniendo puerto seriel");
 			
 			serialPort = params.getSerialPort();
+			if (serialPort.isOpened()) {
+				return true;
+			}
+			
 	    	if (!serialPort.openPort()) {
 	    		return false;
 	    	}
@@ -50,35 +86,9 @@ public class SerialDeviceJssC implements SerialDevice {
 	    	
 	    	
 	    	int mask = SerialPort.MASK_RXCHAR;
+	    	
 	    	serialPort.setEventsMask(mask);
-	    	serialPort.addEventListener(new SerialPortEventListener() {
-				@Override
-				public void serialEvent(SerialPortEvent event) {
-					if (event.isRXCHAR()) {
-						int bytes = event.getEventValue();
-						
-						if (bytes > 0) {
-							
-							try {
-								byte[] data = serialPort.readBytes(bytes);
-
-								logger.finest("bytes leidos : " + Utils.getHex(data));
-								
-								for (byte b : data) {
-									queue.add(b);
-								}
-							} catch (SerialPortException e) {
-								e.printStackTrace();
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}
-					}
-					sem.release();
-					
-					logger.finest("Tamaño de la cola de bytes leídos : " + queue.size());
-				}
-			});    	
+	    	serialPort.addEventListener(serialPortReader);    	
 	    	
 	    	return true;
     	
@@ -110,30 +120,62 @@ public class SerialDeviceJssC implements SerialDevice {
 	}
 	
 	
-	private boolean reading = false;
+	private boolean canceled = false;
+	
+	@Override
+	public void cancel() {
+		if (reading.tryAcquire()) {
+			// no hay nadie leyendo asi que no se cancela nada.
+			reading.release();
+			return;
+		}
+		canceled = true;
+	}
 	
 	@Override
 	public boolean isReading() {
-		return reading;
+		int permits = reading.availablePermits();
+		return (permits == 0);
 	}
 	
 	@Override
 	public byte[] readBytes(int count) {
-		reading = true;
-		while (queue.size() < count) {
-			try {
-				sem.acquire();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		reading.acquireUninterruptibly();
+		try {
+			while (queue.size() < count) {
+				try {
+					while (!okToRead.tryAcquire(1000l, TimeUnit.MILLISECONDS)) {
+
+						if (canceled) {
+							canceled = false;
+							int size = queue.size();
+							if (size <= 0) {
+								return new byte[0];
+							} else {
+								byte[] data = new byte[queue.size()];
+								for (int i = 0; i < size; i++) {
+									data[i] = queue.remove();
+								}
+								return data;
+							}
+							
+						}
+					}
+					
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
+			
+			byte[] rd = new byte[count];
+			for (int i = 0; i < count; i++) {
+				rd[i] = queue.remove();
+			}
+			return rd;
+			
+		} finally {
+			reading.release();
 		}
-		
-		byte[] rd = new byte[count];
-		for (int i = 0; i < count; i++) {
-			rd[i] = queue.remove();
-		}
-		reading = false;
-		return rd;
 	}
 	
 	@Override
@@ -145,10 +187,11 @@ public class SerialDeviceJssC implements SerialDevice {
 			}
 			serialPort.purgePort(SerialPort.PURGE_RXCLEAR | SerialPort.PURGE_TXCLEAR);
 
-			queue.clear();
-			
 		} catch (Exception e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
 			
+		} finally {
+			queue.clear();
 		}
 	}
 	
