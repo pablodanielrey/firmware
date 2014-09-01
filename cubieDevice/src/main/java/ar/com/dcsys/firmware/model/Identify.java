@@ -18,7 +18,7 @@ import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.FpCancel;
 import ar.com.dcsys.firmware.cmd.FpCancel.FpCancelResult;
-import ar.com.dcsys.firmware.cmd.IdentifyFree.IdentifyResult;
+import ar.com.dcsys.firmware.cmd.Identify.IdentifyResult;
 import ar.com.dcsys.firmware.database.FingerprintMapping;
 import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
 import ar.com.dcsys.firmware.database.FingerprintMappingException;
@@ -33,7 +33,7 @@ public class Identify implements Cmd {
 	public static final String CMD = "identify";
 	
 	private final FpCancel fpCancel;
-	private final ar.com.dcsys.firmware.cmd.IdentifyFree identify;
+	private final ar.com.dcsys.firmware.cmd.Identify identify;
 	private final Initialize initialize;
 
 	private final Leds leds;
@@ -44,7 +44,7 @@ public class Identify implements Cmd {
 	
 	@Inject
 	public Identify(SerialDevice sd, Leds leds, 
-										ar.com.dcsys.firmware.cmd.IdentifyFree identify,
+										ar.com.dcsys.firmware.cmd.Identify identify,
 										FpCancel fpCancel,
 										Initialize initialize, 
 										FingerprintMappingDAO fingerprintMappingDAO,

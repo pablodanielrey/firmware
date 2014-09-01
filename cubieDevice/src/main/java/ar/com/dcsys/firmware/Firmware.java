@@ -121,6 +121,33 @@ public class Firmware {
 	
 	
 	
+	private final Runnable gen = new Runnable() {
+		
+		private final int end = 2;
+		
+		@Override
+		public void run() {
+			
+			
+			int count = 1;
+			while (runningCmd == null && count < end) {
+				try {
+					Thread.sleep(1000l);
+					count++;
+				} catch (InterruptedException e) {
+				}
+				
+			}
+			
+			if (runningCmd == null) {
+				identify.setResponse(remote);
+				addCommand(identify);
+			}
+			
+		}
+	};
+	
+	
 	public void processCommands() {
 		
 		// genero comandos espaciados por 5 segundos cada uno.
@@ -130,7 +157,7 @@ public class Firmware {
     	while (!end) {
     		
     		try {
-    			commandsAvailable.tryAcquire(5000l, TimeUnit.MILLISECONDS);
+    			commandsAvailable.tryAcquire(1000l, TimeUnit.MILLISECONDS);
     			runningCommand.acquireUninterruptibly();
     			try {
     				runningCmd = commands.poll();
@@ -139,9 +166,12 @@ public class Firmware {
 		    			logger.info("iniciando comando : " + runningCmd.getCommand());
 		   				runningCmd.execute();
 		    			logger.info("comando finalizado : " + runningCmd.getCommand());
+	    			} else {
+	    				executor.execute(gen);
 	    			}
 	    			
     			} finally {
+    				runningCmd = null;
     				runningCommand.release();
     			}
 	    			
