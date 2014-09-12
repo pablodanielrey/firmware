@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import ar.com.dcsys.firmware.logging.SqlHandler;
 import ar.com.dcsys.firmware.model.Cmd;
 import ar.com.dcsys.firmware.model.Identify;
 import ar.com.dcsys.firmware.model.Response;
@@ -57,8 +58,9 @@ public class Firmware {
 	}
 	
 	@Inject
-	public Firmware(Identify identify) {
+	public Firmware(Identify identify, SqlHandler sqlLogging) {
 		this.identify = identify;
+		logger.addHandler(sqlLogging);
 	}
 	
 	
