@@ -14,6 +14,7 @@ import org.jboss.weld.environment.se.WeldContainer;
 import ar.com.dcsys.firmware.leds.Leds;
 import ar.com.dcsys.firmware.model.Model;
 import ar.com.dcsys.firmware.model.logs.LogsSynchronizer;
+import ar.com.dcsys.firmware.reader.Test;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.firmware.serial.SerialException;
 import ar.com.dcsys.firmware.websocket.WebsocketServer;
@@ -50,17 +51,21 @@ public class App {
 	private final SerialDevice sd;
 	private final Announcer announcer;
 	private final LogsSynchronizer logsSynchronizer;
+	private final Test test;
 	
 	
 
 	private void initializeSerialDevice() {
 
+		logger.log(Level.FINE, "inicializando el dispositivo serie");
+		
 		try {
 			if (!sd.open()) {
 				return;
 			}
 		} catch (SerialException e2) {
-			e2.printStackTrace();
+			logger.log(Level.SEVERE,e2.getMessage(),e2);
+			logger.log(Level.SEVERE,"Saliendo del sistema");
 			System.exit(1);
 		}
 
@@ -70,6 +75,43 @@ public class App {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}    	
+		
+		
+		/*
+		 * Codigo para testear el lector antes de tener todo inicializado. 
+		 * no esta funcionando. el lector nunca responde nada.
+		 * falta probar.
+		 * 
+		 *  
+		 *  
+		final Semaphore barrier = new Semaphore(0); 
+		
+		logger.log(Level.FINE,"ejecutando comando de test en el lector");
+		
+		test.setResponse(new Response() {
+			@Override
+			public void sendText(String text) throws IOException {
+				logger.log(Level.FINE, "Respuesta del comando de test : " + text);
+				if (text.startsWith("OK")) {
+					barrier.release();
+				} else {
+					logger.log(Level.FINE,"Saliendo del sistema, respuesta de test no comienza con OK");
+					System.exit(1);
+				}
+			}
+		});
+		test.execute();
+		logger.log(Level.FINE,"esperando respuesta del lector");
+		try {
+			barrier.tryAcquire(10l, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			logger.log(Level.SEVERE,e.getMessage(),e);
+			logger.log(Level.SEVERE,"ha expirado el tiempo de espera del comando test");
+			System.exit(1);
+		}
+		*/
+		
+		logger.log(Level.FINE, "Serie inicializado");
 	}
 	
 	private void initializeWebsockets() {
@@ -104,7 +146,13 @@ public class App {
 	
 	
 	@Inject
-	public App(Firmware firmware, Model model, Leds leds, WebsocketServer websocketServer, SerialDevice sd, Announcer announcer, LogsSynchronizer logsSynchronizer) {
+	public App(Firmware firmware, Model model, 
+								Leds leds, 
+								WebsocketServer websocketServer, 
+								SerialDevice sd, 
+								Announcer announcer, 
+								LogsSynchronizer logsSynchronizer,
+								Test test) {
 		this.firmware = firmware;
 		this.model = model;
 		this.leds = leds;
@@ -112,6 +160,7 @@ public class App {
 		this.sd = sd;
 		this.announcer = announcer;
 		this.logsSynchronizer = logsSynchronizer;
+		this.test = test;
 	}
 	
 	

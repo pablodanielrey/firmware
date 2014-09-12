@@ -3,7 +3,7 @@ package ar.com.dcsys.firmware;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.TimerTask;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,58 +22,12 @@ import ar.com.dcsys.firmware.model.Response;
 @Singleton
 public class Firmware {
 	
-	private final Logger logger;
+	private final Logger logger = Logger.getLogger(Firmware.class.getName());
 	private final LinkedBlockingQueue<Cmd> commands = new LinkedBlockingQueue<Cmd>();
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 
 	private final Identify identify;
 	private volatile boolean end = false;	
-	
-	
-	/**
-	 * Tarea que genera los identify en el caso que la cola de comandos este vacía.
-	 */
-	private final TimerTask generator = new TimerTask() {
-		@Override
-		public void run() {
-			
-			if (!runningCommand.tryAcquire()) {
-				return;
-			}
-
-			try {
-				// chequeo que exista por lo menos 5 segundos despues del ultimo reset.
-				long lastResetLong = 0l;
-				lastResetAccess.acquireUninterruptibly();
-				try {
-					lastResetLong = lastReset.getTime();
-				} finally {
-					lastResetAccess.release();
-				}
-				
-				long currentTime = (new Date()).getTime();
-				if (lastResetLong + 5000l > currentTime) {
-					return;
-				}
-				
-				// genero el comando en el caso de que no exista comando en espera.
-				
-				if (commands.isEmpty()) {
-					/*
-					commands.add(new Runnable() {
-						@Override
-						public void run() {
-							identify.execute("", remote);
-						}
-					});
-					*/
-				}
-				
-			} finally {
-				runningCommand.release();
-			}
-		}
-	};
 	
 	private final Semaphore commandsAvailable = new Semaphore(0);
 	private final Semaphore runningCommand = new Semaphore(1);
@@ -94,13 +48,16 @@ public class Firmware {
 	}
 	
 	public void addCommand(Cmd ... r) {
-		commands.addAll(Arrays.asList(r));
+		List<Cmd> cmds = Arrays.asList(r);
+		commands.addAll(cmds);
 		commandsAvailable.release(r.length);
+		for (Cmd c : cmds) {
+			logger.log(Level.FINE, "Agregando comando a la cola : " + c.toString());
+		}
 	}
 	
 	@Inject
-	public Firmware(Logger logger, Identify identify) {
-		this.logger = logger;
+	public Firmware(Identify identify) {
 		this.identify = identify;
 	}
 	
@@ -116,11 +73,18 @@ public class Firmware {
 	private Cmd runningCmd;
 	
 	public Cmd getRunningCommand() {
+		if (runningCmd == null) {
+			logger.log(Level.FINE, "Comando ejecutandose : null");
+			return null;
+		}
+		logger.log(Level.FINE, "Comando ejecutandose : " + runningCmd.toString());
 		return runningCmd;
 	}
 	
 	
-	
+	/**
+	 * Genera un delay para crear los identify cuando no existen comandos en la cola.
+	 */
 	private final Runnable gen = new Runnable() {
 		
 		private final int end = 2;
@@ -140,6 +104,7 @@ public class Firmware {
 			}
 			
 			if (runningCmd == null) {
+				logger.info("Generando identify ya que no existe comando pendiente");
 				identify.setResponse(remote);
 				addCommand(identify);
 			}
@@ -149,10 +114,6 @@ public class Firmware {
 	
 	
 	public void processCommands() {
-		
-		// genero comandos espaciados por 5 segundos cada uno.
-//		Timer t = new Timer();
-//		t.schedule(generator, 10000l, 5000l);
 		
     	while (!end) {
     		

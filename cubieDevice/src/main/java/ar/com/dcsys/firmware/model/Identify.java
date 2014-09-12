@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ import ar.com.dcsys.firmware.database.FingerprintMappingDAO;
 import ar.com.dcsys.firmware.database.FingerprintMappingException;
 import ar.com.dcsys.firmware.database.Initialize;
 import ar.com.dcsys.firmware.leds.Leds;
+import ar.com.dcsys.firmware.logging.SqlHandler;
 import ar.com.dcsys.firmware.model.inout.InOutModel;
 import ar.com.dcsys.firmware.serial.SerialDevice;
 import ar.com.dcsys.model.log.AttLogsManager;
@@ -33,6 +35,7 @@ public class Identify implements Cmd {
 	private static final Logger logger = Logger.getLogger(Model.class.getName());
 	public static final String CMD = "identify";
 	
+	private final SqlHandler sqlHandler;
 	private final FpCancel fpCancel;
 	private final ar.com.dcsys.firmware.cmd.Identify identify;
 	private final Initialize initialize;
@@ -50,7 +53,8 @@ public class Identify implements Cmd {
 										FpCancel fpCancel,
 										Initialize initialize, 
 										FingerprintMappingDAO fingerprintMappingDAO,
-										AttLogsManager attLogsManager) {
+										AttLogsManager attLogsManager,
+										SqlHandler sqlHandler) {
 		this.identify = identify;
 		this.fpCancel = fpCancel;
 		this.initialize = initialize;
@@ -60,6 +64,8 @@ public class Identify implements Cmd {
 		
 		this.attLogsManager = attLogsManager;
 		this.fingerprintMappingDAO = fingerprintMappingDAO;
+		
+		this.sqlHandler = sqlHandler;
 	}
 	
 	
@@ -158,6 +164,8 @@ public class Identify implements Cmd {
 						
 						remote.sendText("OK " + person + " " + String.valueOf(fpNumber));
 
+						sqlHandler.publish(new LogRecord(Level.INFO, person + " identify ok"));
+						
 						
 					} catch (AttLogException | FingerprintMappingException | DeviceException | IOException e1) {
 						logger.log(Level.SEVERE,e1.getMessage(),e1);
@@ -179,7 +187,9 @@ public class Identify implements Cmd {
 					try {
 						leds.onCommand(Leds.ERROR);
 						remote.sendText("OK huella no encontrada");
-													
+
+						sqlHandler.publish(new LogRecord(Level.INFO, "huella no encontrada"));
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 										
@@ -192,6 +202,8 @@ public class Identify implements Cmd {
 						leds.onCommand(Leds.ERROR);
 						remote.sendText("OK mala calidad de la huella");
 													
+						sqlHandler.publish(new LogRecord(Level.INFO, "mala calidad de la huella"));
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 										
@@ -202,8 +214,11 @@ public class Identify implements Cmd {
 				public void onFailure(int errorCode) {
 					try {
 						leds.onCommand(Leds.ERROR);
-						remote.sendText("ERROR " + String.valueOf(errorCode));
+						String code = String.valueOf(errorCode);
+						remote.sendText("ERROR " + code);
 													
+						sqlHandler.publish(new LogRecord(Level.INFO, "identify error " + code));
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 						
@@ -215,6 +230,8 @@ public class Identify implements Cmd {
 					try {
 						leds.onCommand(Leds.READY);
 						remote.sendText("ERROR identificación cancelada");
+						
+						sqlHandler.publish(new LogRecord(Level.INFO, "identify cancelado"));
 						
 					} catch (IOException e) {
 						e.printStackTrace();
