@@ -38,12 +38,17 @@ public class Firmware {
 	
 	
 	public void addCommand(Cmd ... r) {
+		if (r == null) {
+			logger.log(Level.FINE,"cmds == null");
+			return;
+		}
 		List<Cmd> cmds = Arrays.asList(r);
-		commands.addAll(cmds);
-		commandsAvailable.release(r.length);
 		for (Cmd c : cmds) {
 			logger.log(Level.FINE, "Agregando comando a la cola : " + c.toString());
-		}
+		}	
+		commands.addAll(cmds);
+		logger.log(Level.FINE,"liberando " + r.length + " perms");
+		commandsAvailable.release(r.length);
 	}
 	
 	@Inject
