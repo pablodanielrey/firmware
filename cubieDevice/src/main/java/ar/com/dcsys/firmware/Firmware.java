@@ -128,14 +128,16 @@ public class Firmware {
 	    				executor.execute(gen);
 	    			}
 	    			
+    			} catch (Exception e1) {
+    				logger.log(Level.SEVERE,e1.getMessage(),e1);
+    				
     			} finally {
     				runningCmd = null;
     				runningCommand.release();
     			}
 	    			
 			} catch (Exception e) {
-				logger.log(Level.INFO,e.getMessage(),e);
-				e.printStackTrace();
+				logger.log(Level.SEVERE,e.getMessage(),e);
 			}
     	}
 	}	
