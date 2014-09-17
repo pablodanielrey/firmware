@@ -88,8 +88,6 @@ public class Reader {
 			
 		} else {
 
-			firmware.resetTimer();
-		
 			for (final Cmd c : commands) {
 				if (c.identify(command)) {
 					

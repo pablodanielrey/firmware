@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import ar.com.dcsys.firmware.logging.SqlHandler;
@@ -27,7 +28,7 @@ public class Firmware {
 	private final LinkedBlockingQueue<Cmd> commands = new LinkedBlockingQueue<Cmd>();
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 
-	private final Identify identify;
+	private final Provider<Identify> identify;
 	private volatile boolean end = false;	
 	
 	private final Semaphore commandsAvailable = new Semaphore(0);
@@ -35,18 +36,6 @@ public class Firmware {
 	private final Semaphore lastResetAccess = new Semaphore(1);
 	private Date lastReset = new Date();
 	
-	
-	/**
-	 * Resetea el timer para la generación de los identify.
-	 */
-	public void resetTimer() {
-		lastResetAccess.acquireUninterruptibly();
-		try {
-			lastReset = new Date();
-		} finally {
-			lastResetAccess.release();
-		}
-	}
 	
 	public void addCommand(Cmd ... r) {
 		List<Cmd> cmds = Arrays.asList(r);
@@ -58,7 +47,7 @@ public class Firmware {
 	}
 	
 	@Inject
-	public Firmware(Identify identify, SqlHandler sqlLogging) {
+	public Firmware(Provider<Identify> identify, SqlHandler sqlLogging) {
 		this.identify = identify;
 		logger.addHandler(sqlLogging);
 	}
@@ -107,8 +96,9 @@ public class Firmware {
 			
 			if (runningCmd == null) {
 				logger.info("Generando identify ya que no existe comando pendiente");
-				identify.setResponse(remote);
-				addCommand(identify);
+				Identify i = identify.get();
+				i.setResponse(remote);
+				addCommand(i);
 			}
 			
 		}
