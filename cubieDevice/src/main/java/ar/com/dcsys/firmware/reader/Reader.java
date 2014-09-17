@@ -1,8 +1,8 @@
 package ar.com.dcsys.firmware.reader;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,7 +21,7 @@ public class Reader {
 	private final SerialDevice sd;
 	private final Firmware firmware;
 	private final FpCancel fpCancel;
-	private final List<Cmd> commands = new ArrayList<Cmd>();
+	private final Map<String,Cmd> commands = new HashMap<String,Cmd>();
 
 	
 	@Inject
@@ -37,15 +37,15 @@ public class Reader {
 		this.firmware = firmware;
 		this.fpCancel = fpCancel;
 		this.sd = sd;
-		
-		commands.add(getEmptyId);
-		commands.add(enroll);
-		commands.add(getVersion);
-		commands.add(readTemplate);
-		commands.add(setLed);
-		commands.add(test);
-		commands.add(fpCancel);
-		commands.add(purgeTemplates);
+
+		commands.put(getEmptyId.getCommand(),getEmptyId);
+		commands.put(enroll.getCommand(),enroll);
+		commands.put(getVersion.getCommand(),getVersion);
+		commands.put(readTemplate.getCommand(),readTemplate);
+		commands.put(setLed.getCommand(),setLed);
+		commands.put(test.getCommand(),test);
+		commands.put(fpCancel.getCommand(),fpCancel);
+		commands.put(purgeTemplates.getCommand(),purgeTemplates);
 		
 	}
 	
@@ -59,8 +59,8 @@ public class Reader {
 		
 		if (command.equalsIgnoreCase("help")) {
 			StringBuilder sb = new StringBuilder();
-			for (Cmd c : commands) {
-				sb.append(c.getCommand()).append("\n");
+			for (String c : commands.keySet()) {
+				sb.append(c).append("\n");
 			}
 			try {
 				response.sendText(sb.toString());
@@ -88,7 +88,7 @@ public class Reader {
 			
 		} else {
 
-			for (final Cmd c : commands) {
+			for (final Cmd c : commands.values()) {
 				if (c.identify(command)) {
 					
 					c.setResponse(response);
