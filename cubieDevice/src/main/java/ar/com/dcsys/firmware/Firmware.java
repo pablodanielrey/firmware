@@ -66,6 +66,7 @@ public class Firmware {
 	};
 	
 	
+	private volatile boolean generatingIdentify = false;
 	private Cmd runningCmd;
 	
 	public Cmd getRunningCommand() {
@@ -88,22 +89,27 @@ public class Firmware {
 		@Override
 		public void run() {
 			
+			generatingIdentify = true;
+			try {
 			
-			int count = 1;
-			while (runningCmd == null && count < end) {
-				try {
-					Thread.sleep(1000l);
-					count++;
-				} catch (InterruptedException e) {
+				int count = 1;
+				while (runningCmd == null && count < end) {
+					try {
+						Thread.sleep(1000l);
+						count++;
+					} catch (InterruptedException e) {
+					}
+					
 				}
 				
-			}
-			
-			if (runningCmd == null) {
-				logger.info("Generando identify ya que no existe comando pendiente");
-				Identify i = identify.get();
-				i.setResponse(remote);
-				addCommand(i);
+				if (runningCmd == null) {
+					logger.info("Generando identify ya que no existe comando pendiente");
+					Identify i = identify.get();
+					i.setResponse(remote);
+					addCommand(i);
+				}
+			} finally {
+				generatingIdentify = false;
 			}
 			
 		}
@@ -121,11 +127,14 @@ public class Firmware {
     				runningCmd = commands.poll();
     			
 	    			if (runningCmd != null) {
+	    				
 		    			logger.info("iniciando comando : " + runningCmd.getCommand());
 		   				runningCmd.execute();
 		    			logger.info("comando finalizado : " + runningCmd.getCommand());
-	    			} else {
+		    			
+	    			} else if (!generatingIdentify) {
 	    				executor.execute(gen);
+	    				Thread.yield();
 	    			}
 	    			
     			} catch (Exception e1) {

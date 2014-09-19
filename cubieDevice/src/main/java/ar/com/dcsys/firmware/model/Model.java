@@ -17,14 +17,17 @@ public class Model {
 	private final List<Cmd> commands = new ArrayList<Cmd>();
 
 	private final Firmware firmware;
+	private final RunningCmd runningCmd;
 	
 	@Inject
 	public Model(Firmware firmware, Identify identify, 
 								   PersistPerson persistPerson,
 				  				   PersistFingerprint persistFingerprint,
 				  				   GetAttLogs getAttLogs,
-				  				   DeleteAttLogs deleteAttLogs) {
+				  				   DeleteAttLogs deleteAttLogs,
+				  				   RunningCmd runningCmd) {
 		this.firmware = firmware;
+		this.runningCmd = runningCmd;
 	
 		commands.add(persistPerson);
 		commands.add(persistFingerprint);
@@ -37,6 +40,7 @@ public class Model {
 	public void onCommand(final String command, final Response response) {
 		
 		if (command.equalsIgnoreCase("help")) {
+			
 			StringBuilder sb = new StringBuilder();
 			for (Cmd c : commands) {
 				sb.append(c.getCommand()).append("\n");
@@ -46,6 +50,12 @@ public class Model {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			return;
+		}
+		
+		if (runningCmd.identify(command)) {
+			runningCmd.setResponse(response);
+			runningCmd.execute();
 			return;
 		}
 		
