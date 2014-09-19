@@ -32,7 +32,9 @@ public class Reader {
 									 ReadTemplate readTemplate, 
 									 SetLed setLed, 
 									 Test test,
-									 PurgeTemplates purgeTemplates, SerialDevice sd) {
+									 PurgeTemplates purgeTemplates, 
+									 SetBaudrate setBaudrate, 
+									 SerialDevice sd) {
 		
 		this.firmware = firmware;
 		this.fpCancel = fpCancel;
@@ -46,6 +48,7 @@ public class Reader {
 		commands.put(test.getCommand(),test);
 		commands.put(fpCancel.getCommand(),fpCancel);
 		commands.put(purgeTemplates.getCommand(),purgeTemplates);
+		commands.put(setBaudrate.getCommand(), setBaudrate);
 		
 	}
 	

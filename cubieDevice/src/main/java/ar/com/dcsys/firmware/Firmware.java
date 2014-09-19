@@ -115,6 +115,9 @@ public class Firmware {
 		}
 	};
 	
+	public void setGenerateIdentify(boolean v) {
+		this.generatingIdentify = !v;
+	}
 	
 	public void processCommands() {
 		

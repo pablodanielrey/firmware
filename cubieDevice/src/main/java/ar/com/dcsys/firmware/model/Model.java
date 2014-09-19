@@ -18,6 +18,7 @@ public class Model {
 
 	private final Firmware firmware;
 	private final RunningCmd runningCmd;
+	private final GenerateIdentify generateIdentify;
 	
 	@Inject
 	public Model(Firmware firmware, Identify identify, 
@@ -25,9 +26,11 @@ public class Model {
 				  				   PersistFingerprint persistFingerprint,
 				  				   GetAttLogs getAttLogs,
 				  				   DeleteAttLogs deleteAttLogs,
-				  				   RunningCmd runningCmd) {
+				  				   RunningCmd runningCmd,
+				  				   GenerateIdentify generateIdentify) {
 		this.firmware = firmware;
 		this.runningCmd = runningCmd;
+		this.generateIdentify = generateIdentify;
 	
 		commands.add(persistPerson);
 		commands.add(persistFingerprint);
@@ -58,6 +61,12 @@ public class Model {
 			runningCmd.execute();
 			return;
 		}
+		
+		if (generateIdentify.identify(command)) {
+			generateIdentify.setResponse(response);
+			generateIdentify.execute();
+			return;
+		}		
 		
 		for (final Cmd c : commands) {
 			if (c.identify(command)) {
