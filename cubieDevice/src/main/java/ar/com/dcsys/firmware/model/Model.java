@@ -27,7 +27,8 @@ public class Model {
 				  				   GetAttLogs getAttLogs,
 				  				   DeleteAttLogs deleteAttLogs,
 				  				   RunningCmd runningCmd,
-				  				   GenerateIdentify generateIdentify) {
+				  				   GenerateIdentify generateIdentify,
+				  				   RegenerateFingerprintsInReader regenerateFingerprints) {
 		this.firmware = firmware;
 		this.runningCmd = runningCmd;
 		this.generateIdentify = generateIdentify;
@@ -37,6 +38,7 @@ public class Model {
 		commands.add(getAttLogs);
 		commands.add(deleteAttLogs);
 		commands.add(identify);
+		commands.add(regenerateFingerprints);
 	}
 	
 	

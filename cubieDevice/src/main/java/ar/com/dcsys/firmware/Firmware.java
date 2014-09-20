@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 
 import ar.com.dcsys.firmware.logging.SqlHandler;
 import ar.com.dcsys.firmware.model.Cmd;
+import ar.com.dcsys.firmware.model.GenerateIdentify;
 import ar.com.dcsys.firmware.model.Identify;
 import ar.com.dcsys.firmware.model.Response;
 
@@ -33,9 +34,7 @@ public class Firmware {
 	
 	private final Semaphore commandsAvailable = new Semaphore(0);
 	private final Semaphore runningCommand = new Semaphore(1);
-	private final Semaphore lastResetAccess = new Semaphore(1);
-	private Date lastReset = new Date();
-	
+	private final FirmwareData firmwareData;
 	
 	public void addCommand(Cmd ... r) {
 		if (r == null) {
@@ -52,7 +51,8 @@ public class Firmware {
 	}
 	
 	@Inject
-	public Firmware(Provider<Identify> identify, SqlHandler sqlLogging) {
+	public Firmware(FirmwareData firmwareData, Provider<Identify> identify, SqlHandler sqlLogging) {
+		this.firmwareData = firmwareData;
 		this.identify = identify;
 		logger.addHandler(sqlLogging);
 	}
@@ -120,6 +120,8 @@ public class Firmware {
 	}
 	
 	public void processCommands() {
+		
+		generatingIdentify = !firmwareData.getGenerateIdentify();
 		
     	while (!end) {
     		

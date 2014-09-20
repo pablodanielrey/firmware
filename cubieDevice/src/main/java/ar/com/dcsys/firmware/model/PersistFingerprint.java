@@ -96,38 +96,41 @@ public class PersistFingerprint implements Cmd {
 			
 			String json = cmd.substring(CMD.length() + 1);
 			Fingerprint fp = fingerprintSerializer.read(json);
-			
-			
-			try {
-				// actualizo la huella en la base.
-				fingerprintDAO.persist(fp);
-				
-				leds.onCommand(Leds.SUB_OK);
-				
-			} catch (FingerprintException fe) {
-				try {
-					remote.sendText("ERROR " + fe.getMessage());
-					return;
-							
-				} catch (IOException e) {
-					logger.log(Level.SEVERE,e.getMessage(),e);
-					return;
-					
-				} finally {
-					leds.onCommand(Leds.ERROR);
-				}
-			}
-			
-			updateFingerprintIntoReader(fp,remote);
+			execute(fp);
 			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE,e.getMessage(),e);
 		
 		}
+			
 	}
 	
 	
-	
+	public void execute(Fingerprint fp) {
+
+		try {
+			// actualizo la huella en la base.
+			fingerprintDAO.persist(fp);
+			
+			leds.onCommand(Leds.SUB_OK);
+			
+		} catch (FingerprintException fe) {
+			try {
+				remote.sendText("ERROR " + fe.getMessage());
+				return;
+						
+			} catch (IOException e) {
+				logger.log(Level.SEVERE,e.getMessage(),e);
+				return;
+				
+			} finally {
+				leds.onCommand(Leds.ERROR);
+			}
+		}
+		
+		updateFingerprintIntoReader(fp,remote);
+		
+	}
 	
 	
 	private void updateFingerprintIntoReader(final Fingerprint fp, final Response remote) {

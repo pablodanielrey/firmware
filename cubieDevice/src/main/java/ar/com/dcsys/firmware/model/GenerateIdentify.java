@@ -15,6 +15,7 @@ public class GenerateIdentify implements Cmd {
 
 	private final Firmware firmware;
 	private Response response;
+	private String cmd;
 	
 	
 	@Inject
@@ -29,7 +30,12 @@ public class GenerateIdentify implements Cmd {
 
 	@Override
 	public boolean identify(String cmd) {
-		return getCommand().equals(cmd);
+		if (cmd.startsWith(getCommand())) {
+			this.cmd = cmd;
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override
@@ -41,7 +47,12 @@ public class GenerateIdentify implements Cmd {
 	public void execute() {
 		if (response != null && firmware != null) {
 			try {
-				firmware.setGenerateIdentify(false);
+				String svalue = cmd.substring(getCommand().length() + 1);
+				boolean value = false;
+				if ("on".equalsIgnoreCase(svalue)) {
+					value = true;
+				}
+				firmware.setGenerateIdentify(value);
 				response.sendText("OK");
 				
 			} catch (IOException e) {
