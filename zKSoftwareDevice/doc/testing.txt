@@ -1,0 +1,6 @@
+se puede usar :
+
+http://www.websocket.org/echo.html
+
+para enviarle comandos al websocket.
+

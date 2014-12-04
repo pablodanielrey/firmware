@@ -1,0 +1,67 @@
+<!doctype html>  
+
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ --> 
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+       Remove this if you use the .htaccess -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>WebSocket.org | Echo Test</title>
+
+</head>
+
+<body>
+
+  <div id="container">
+
+    
+    <div id="main-container">
+
+      <div id="main">
+        
+        <h1>Echo Test</h1>
+        
+        <div id="echo">
+          <div id="echo-config" style="float: left;">
+            <strong>Location:</strong><br>
+            <input id="wsUri" value="ws://192.168.23.3:8025/websocket/cmd" size="80">
+            <br>
+            <button id="connect">Connect</button>
+            <button id="disconnect">Disconnect</button>
+            <br>
+            <br>
+            <strong>Message:</strong><br>
+            <input id="sendMessage" size="35" value="reader;test">
+            <br>
+            <button id="send" class="wsButton">Send</button>
+          </div>
+          <div id="echo-log" style="float: left; margin-left: 20px; padding-left: 20px; width: 350px; border-left: solid 1px #cccccc;"> <strong>Log:</strong>
+            <div id="consoleLog"></div>
+            <button id="clearLogBut" style="position: relative; top: 3px;">Clear log</button>
+          </div>
+          <div class="clearfix"></div>
+        </div>
+        
+
+      </div> <!-- #main -->
+    
+    </div> <!-- #main-container -->
+    
+    <div class="clearfix"></div>
+
+    <script type="text/javascript" src="jquery.min.js"></script>
+
+  </div> <!-- #container -->
+
+  <script type="text/javascript" src="echo.js"></script>
+
+</body>
+
+</html>
