@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 import javax.inject.Inject;
 
 import ar.com.dcsys.firmware.cmd.CmdException;
+import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
+import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.model.log.AttLogsManager;
 
 public class DeleteAttLogs implements Cmd {
@@ -15,14 +17,16 @@ public class DeleteAttLogs implements Cmd {
 	public static final String CMD = "deleteAttLogs";
 	
 	private final AttLogsManager attLogsManager;
+	private final ZkSoftware zkSoftware;
 	
 	private String cmd;
 	private Response remote;
 	private boolean cancel = false;
 	
 	@Inject
-	public DeleteAttLogs(AttLogsManager attLogsManager) {
+	public DeleteAttLogs(ZKSoftwareCDI zk, AttLogsManager attLogsManager) {
 		this.attLogsManager = attLogsManager;
+		this.zkSoftware = zk.getZkSoftware();
 	}
 
 	@Override

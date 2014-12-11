@@ -72,11 +72,19 @@ public class Identify implements Cmd {
 			//obtengo los logs del reloj
 			List<ar.com.dcsys.firmware.soap.AttLog> logsDevice = this.zkSoftware.getAllAttLogs();
 			
+			
 			//los agrego en la base, si ya existe el modelo no lo agrega
 			for (ar.com.dcsys.firmware.soap.AttLog l : logsDevice) {
 				AttLog log = AttLogUtils.convertLog(personsManager, device, l);
 				attLogsManager.persist(log);
 			}
+			
+			//borro todas las huellas del reloj
+			/*
+			 * TODO: descomentar cuando se pase a producción
+			 */
+			//this.zkSoftware.deleteAttLogs();
+			//this.zkSoftware.refreshDB();
 								
 			remote.sendText("OK");
 			

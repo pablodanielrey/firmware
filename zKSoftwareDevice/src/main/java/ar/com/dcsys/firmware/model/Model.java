@@ -23,12 +23,12 @@ public class Model {
 	
 	@Inject
 	public Model(Firmware firmware, Identify identify,
-									//PersistPerson persistPerson,
-									//PersistFingerPrint persistFingerPtint,
+									PersistPerson persistPerson,
+									PersistFingerprint persistFingerprint,
 									GetAttLogs getAttLogs,
 									GetPersons getPersons,
 									GetFingerprints getFingerprints,
-									//DeleteAttLogs deleteAttLogs,
+									DeleteAttLogs deleteAttLogs,
 									RunningCmd runningCmd,
 									//RegenerateFingerprintsInReader regenerateFingerprints,
 									GenerateIdentify generateIdentify) {
@@ -36,12 +36,12 @@ public class Model {
 		this.generateIdentify = generateIdentify;
 		this.runningCmd = runningCmd;
 		
-		//commands.add(persistPerson);
-		//commands.add(persistFingerPrint);
+		commands.add(persistPerson);
+		commands.add(persistFingerprint);
 		commands.add(getAttLogs);
 		commands.add(getPersons);
 		commands.add(getFingerprints);
-		//commands.add(deleteAttLogs);
+		commands.add(deleteAttLogs);
 		commands.add(identify);
 		//commands.add(regenerateFingerprints);		
 	}

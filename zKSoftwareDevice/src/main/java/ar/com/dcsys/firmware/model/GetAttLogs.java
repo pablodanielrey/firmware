@@ -10,13 +10,17 @@ import javax.inject.Inject;
 import ar.com.dcsys.assistance.server.AttLogSerializer;
 import ar.com.dcsys.data.device.Device;
 import ar.com.dcsys.data.log.AttLog;
+import ar.com.dcsys.exceptions.AttLogException;
+import ar.com.dcsys.exceptions.DeviceException;
 import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.common.AttLogUtils;
+import ar.com.dcsys.firmware.database.Initialize;
 import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.firmware.soap.ZkSoftwareException;
 import ar.com.dcsys.model.PersonsManager;
+import ar.com.dcsys.model.log.AttLogsManager;
 
 public class GetAttLogs implements Cmd {
 	
@@ -24,17 +28,19 @@ public class GetAttLogs implements Cmd {
 	public static final String CMD = "getAttLogs";
 	
 	private final ZkSoftware zkSoftware;
-	private final Device device;
+	private final Initialize initialize;
 	private final PersonsManager personsManager;
+	private final AttLogsManager attLogsManager;
 	private final AttLogSerializer attLogSerializer;
 	private Response remote;
 	
 	@Inject
-	public GetAttLogs(ZKSoftwareCDI zk, Device device, PersonsManager personsManager, AttLogSerializer attLogSerializer) {
+	public GetAttLogs(ZKSoftwareCDI zk, Initialize initialize, PersonsManager personsManager, AttLogSerializer attLogSerializer, AttLogsManager attLogsManager) {
 		this.zkSoftware = zk.getZkSoftware();
-		this.device = device;
+		this.initialize = initialize;
 		this.personsManager = personsManager;
 		this.attLogSerializer = attLogSerializer;
+		this.attLogsManager = attLogsManager;
 	}
 	
 	
@@ -56,10 +62,20 @@ public class GetAttLogs implements Cmd {
 	@Override
 	public void execute() {
 		try {
-			List<AttLog> logs = AttLogUtils.convertLogs(this.personsManager,this.device,this.zkSoftware.getAllAttLogs());
 			
+			//verifico si hay nuevos logs en el reloj, si los hay los agrego
+			Device device = initialize.getCurrentDevice();
+			List<ar.com.dcsys.firmware.soap.AttLog> logsDevice = this.zkSoftware.getAllAttLogs();
+			for (ar.com.dcsys.firmware.soap.AttLog l : logsDevice) {
+				AttLog log =  AttLogUtils.convertLog(personsManager, device, l);
+				attLogsManager.persist(log);
+			}
+			
+			//retorno los logs de la base
 			int count = 0;
-			for (AttLog log : logs) {
+			List<String> logs = attLogsManager.findAll();
+			for (String logId : logs) {
+				AttLog log = attLogsManager.findById(logId); 
 				String json = attLogSerializer.toJson(log);
 				remote.sendText("ok " + json);
 				count++;				
@@ -67,7 +83,7 @@ public class GetAttLogs implements Cmd {
 			
 			remote.sendText("OK " + count);
 			
-		} catch (PersonException | IOException | ZkSoftwareException e) {
+		} catch (PersonException | IOException | ZkSoftwareException | AttLogException | DeviceException e) {
 			try {
 				remote.sendText("ERROR " + e.getMessage());
 			} catch (IOException e1) {

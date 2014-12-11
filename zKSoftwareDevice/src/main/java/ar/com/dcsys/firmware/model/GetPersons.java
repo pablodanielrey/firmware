@@ -9,6 +9,7 @@ import javax.inject.Inject;
 
 import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.firmware.cmd.CmdException;
+import ar.com.dcsys.firmware.common.PersonUtils;
 import ar.com.dcsys.firmware.soap.UserInfo;
 import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
@@ -58,6 +59,9 @@ public class GetPersons implements Cmd {
 			for (UserInfo ui : users) {
 				String pin = ui.getPin2();
 				Person p = personsManager.findByDni(pin);
+				if (p == null) {
+					p = PersonUtils.createPerson(personsManager, pin);
+				}
 				String json = personSerializer.toJson(p);
 				remote.sendText("ok " + json);
 				count++;

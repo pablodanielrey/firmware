@@ -16,7 +16,7 @@ public class AttLogUtils {
 		Person person = personsManager.findByDni(logDevice.getPin());
 		
 		if (person == null) {
-			throw new PersonException("No existe la persona");
+			person = PersonUtils.createPerson(personsManager, logDevice.getPin());
 		}
 		AttLog log = new AttLog();
 		log.setDate(logDevice.getDate());
