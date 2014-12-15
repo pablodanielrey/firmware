@@ -26,7 +26,8 @@ public class Initialize {
 		if ("initialize".equals(id)) {
 			List<String> ids = devicesManager.findAll();
 			if (ids == null || ids.size() <= 0) {
-				throw new DeviceException("no existe ningun dispositivo");
+				//throw new DeviceException("no existe ningun dispositivo");
+				return null;
 			}
 			id = ids.get(0);
 		}
