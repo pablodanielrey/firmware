@@ -8,11 +8,8 @@ import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
-import ar.com.dcsys.data.log.AttLog;
-import ar.com.dcsys.firmware.database.Initialize;
-import ar.com.dcsys.firmware.database.ZKDeviceData;
 import ar.com.dcsys.firmware.soap.Base64;
+import ar.com.dcsys.firmware.soap.SoapDevice;
 import ar.com.dcsys.firmware.soap.UserTemplate;
 import ar.com.dcsys.security.Finger;
 import ar.com.dcsys.security.Fingerprint;
@@ -26,7 +23,7 @@ public class FingerUtils {
 	 * @param data
 	 * @return
 	 */
-	public static String getAlgorithm(ZKDeviceData data) {
+	public static String getAlgorithm(SoapDevice data) {
 		return "ZK" + data.getAlgorithm();
 	}
 	
@@ -37,7 +34,7 @@ public class FingerUtils {
 	 * @param personId
 	 * @return
 	 */
-	public static Fingerprint toFingerprint(Initialize initialize, UserTemplate ut, String personId) {
+	public static Fingerprint toFingerprint(SoapDevice soapDevice, UserTemplate ut, String personId) {
 		//creo finger
 		String fingerId = ut.getFingerId();
 		int iid = Integer.parseInt(fingerId);
@@ -48,11 +45,10 @@ public class FingerUtils {
 		byte[] template = templateStr.getBytes(charset);
 		
 		//obtengo el algoritmo
-		ZKDeviceData deviceData = initialize.getZKDeviceData();
-		String algorithm = getAlgorithm(deviceData);
+		String algorithm = getAlgorithm(soapDevice);
 
 		//obtengo la codificacion
-		String codification = deviceData.getCodification();
+		String codification = soapDevice.getCodification();
 		
 		//creo fingerprint
 		Fingerprint fp = new Fingerprint(finger, algorithm, codification, template);
@@ -87,7 +83,7 @@ public class FingerUtils {
 	 * @return
 	 * @throws IOException
 	 */
-	public static UserTemplate toUserTemplate(Initialize initialize, Fingerprint fp, String pin) throws IOException {
+	public static UserTemplate toUserTemplate(Fingerprint fp, String pin) throws IOException {
 		//creo UserTemplate
 		UserTemplate ut = new UserTemplate();
 		
@@ -119,7 +115,7 @@ public class FingerUtils {
 	 * @param personId
 	 * @return
 	 */
-	public static boolean equals(Initialize initialize, Fingerprint fp, UserTemplate ut, String personId) {
+	public static boolean equals(SoapDevice soapDevice, Fingerprint fp, UserTemplate ut, String personId) {
 		
 		//comparo la persona
 		if (!personId.equals(fp.getPersonId())) {
@@ -143,17 +139,15 @@ public class FingerUtils {
 		if (!template.equals(fp.getTemplate())) {
 			return false;
 		}
-		
-		ZKDeviceData deviceData = initialize.getZKDeviceData();
-		
+				
 		//comparo el algoritmo
-		String algorithm = getAlgorithm(deviceData);
+		String algorithm = getAlgorithm(soapDevice);
 		if (!algorithm.equals(fp.getAlgorithm())) {
 			return false;
 		}
 		
 		//comparo codificacion
-		String codification = deviceData.getCodification();
+		String codification = soapDevice.getCodification();
 		if (!codification.equals(fp.getCodification())) {
 			return false;
 		}
@@ -161,9 +155,9 @@ public class FingerUtils {
 		return true;
 	}
 	
-	public static Fingerprint getFingerprint(Initialize initialize,List<Fingerprint> fps, UserTemplate t, String personId) {
+	public static Fingerprint getFingerprint(SoapDevice soapDevice,List<Fingerprint> fps, UserTemplate t, String personId) {
 		for (Fingerprint fp : fps) {
-			if (equals(initialize,fp,t,personId)) {
+			if (equals(soapDevice,fp,t,personId)) {
 				return fp;
 			}
 		}
@@ -171,9 +165,9 @@ public class FingerUtils {
 		return null;
 	}
 	
-	public static UserTemplate getUserTemplate(Initialize initialize, List<UserTemplate> uts, Fingerprint fp, String personId) {
+	public static UserTemplate getUserTemplate(SoapDevice soapDevice, List<UserTemplate> uts, Fingerprint fp, String personId) {
 		for (UserTemplate ut : uts) {
-			if (equals(initialize, fp, ut, personId)) {
+			if (equals(soapDevice, fp, ut, personId)) {
 				return ut;
 			}
 		}

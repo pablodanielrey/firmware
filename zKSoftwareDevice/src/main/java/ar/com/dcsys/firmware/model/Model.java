@@ -29,6 +29,7 @@ public class Model {
 									GetPersons getPersons,
 									GetFingerprints getFingerprints,
 									DeleteAttLogs deleteAttLogs,
+									ChangePersonId changePersonId,
 									RunningCmd runningCmd,
 									//RegenerateFingerprintsInReader regenerateFingerprints,
 									GenerateIdentify generateIdentify) {
@@ -42,6 +43,7 @@ public class Model {
 		commands.add(getPersons);
 		commands.add(getFingerprints);
 		commands.add(deleteAttLogs);
+		commands.add(changePersonId);
 		commands.add(identify);
 		//commands.add(regenerateFingerprints);		
 	}

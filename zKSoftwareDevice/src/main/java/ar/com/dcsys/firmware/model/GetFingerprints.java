@@ -12,9 +12,8 @@ import ar.com.dcsys.data.fingerprint.FingerprintDAO;
 import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.common.FingerUtils;
-import ar.com.dcsys.firmware.database.Initialize;
+import ar.com.dcsys.firmware.soap.SoapDevice;
 import ar.com.dcsys.firmware.soap.UserTemplate;
-import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.person.server.PersonSerializer;
 import ar.com.dcsys.security.Fingerprint;
@@ -24,26 +23,23 @@ public class GetFingerprints implements Cmd {
 	public static final String CMD = "getFingerprints";
 	private static final Logger logger = Logger.getLogger(GetFingerprints.class.getName());
 	
-	private final ZkSoftware zkSoftware;
+	private final SoapDevice zkDevice;
 	private final PersonSerializer personSerializer;
 	private final FingerprintDAO fingerprintDAO;
 	private final FingerprintSerializer fingerprintSerializer;
-	private final Initialize initialize;
 
 	private Response remote;
 	private String cmd;
 
 	@Inject
-	public GetFingerprints(ZKSoftwareCDI zk,
+	public GetFingerprints(SoapDevice zk,
 						   PersonSerializer personSerializer,
-						   Initialize initialize,
 						   FingerprintDAO fingerprintDAO,
 						   FingerprintSerializer fingerprintSerializer) {
 		this.fingerprintDAO = fingerprintDAO;
 		this.fingerprintSerializer = fingerprintSerializer;
 		this.personSerializer = personSerializer;
-		this.initialize = initialize;
-		this.zkSoftware = zk.getZkSoftware();
+		this.zkDevice = zk;
 	}
 	
 	@Override
@@ -74,13 +70,15 @@ public class GetFingerprints implements Cmd {
 			Person person = personSerializer.read(json);
 			String pin = person.getDni();
 			
+			ZkSoftware zkSoftware = this.zkDevice.getZkSoftware();
+			
 			List<UserTemplate> templates = zkSoftware.getUserTemplate(pin);
 			List<Fingerprint> fps = fingerprintDAO.findByPerson(person.getId());
 									
 			for (UserTemplate t : templates) {
-				Fingerprint fp = FingerUtils.getFingerprint(this.initialize,fps,t,person.getId());
+				Fingerprint fp = FingerUtils.getFingerprint(this.zkDevice,fps,t,person.getId());
 				if (fp == null) {
-					fp = FingerUtils.toFingerprint(this.initialize,t,person.getId());
+					fp = FingerUtils.toFingerprint(this.zkDevice,t,person.getId());
 					fingerprintDAO.persist(fp);
 				}
 			}

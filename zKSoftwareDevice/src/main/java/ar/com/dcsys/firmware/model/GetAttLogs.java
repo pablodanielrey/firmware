@@ -16,7 +16,7 @@ import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.common.AttLogUtils;
 import ar.com.dcsys.firmware.database.Initialize;
-import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
+import ar.com.dcsys.firmware.soap.SoapDevice;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.firmware.soap.ZkSoftwareException;
 import ar.com.dcsys.model.PersonsManager;
@@ -35,7 +35,7 @@ public class GetAttLogs implements Cmd {
 	private Response remote;
 	
 	@Inject
-	public GetAttLogs(ZKSoftwareCDI zk, Initialize initialize, PersonsManager personsManager, AttLogSerializer attLogSerializer, AttLogsManager attLogsManager) {
+	public GetAttLogs(SoapDevice zk, Initialize initialize, PersonsManager personsManager, AttLogSerializer attLogSerializer, AttLogsManager attLogsManager) {
 		this.zkSoftware = zk.getZkSoftware();
 		this.initialize = initialize;
 		this.personsManager = personsManager;

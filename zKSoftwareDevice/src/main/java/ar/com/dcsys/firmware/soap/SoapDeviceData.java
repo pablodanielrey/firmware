@@ -4,12 +4,32 @@ import javax.inject.Inject;
 
 import ar.com.dcsys.config.Config;
 
-public class ZKSoftwareCDIData {
+public class SoapDeviceData {
 	
 	@Inject @Config String soapUrl;
 	@Inject @Config String ip;
 	@Inject @Config String debug;
+	@Inject @Config String algorithm;
+	@Inject @Config String codification;
 	
+	
+	
+	public String getAlgorithm() {
+		return algorithm;
+	}
+
+	public void setAlgorithm(String algorithm) {
+		this.algorithm = algorithm;
+	}
+
+	public String getCodification() {
+		return codification;
+	}
+
+	public void setCodification(String codification) {
+		this.codification = codification;
+	}
+
 	public String getSoapUrl() {
 		return soapUrl;
 	}

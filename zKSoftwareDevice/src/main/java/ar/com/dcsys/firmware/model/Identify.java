@@ -16,7 +16,7 @@ import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.common.AttLogUtils;
 import ar.com.dcsys.firmware.database.Initialize;
-import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
+import ar.com.dcsys.firmware.soap.SoapDevice;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.firmware.soap.ZkSoftwareException;
 import ar.com.dcsys.model.PersonsManager;
@@ -28,7 +28,7 @@ public class Identify implements Cmd {
 	public static final String CMD = "identify";
 	private static final Logger logger = Logger.getLogger(Identify.class.getName());
 	
-	private final ZkSoftware zkSoftware;
+	private final SoapDevice zkDevice;
 	private final AttLogsManager attLogsManager;
 	private final PersonsManager personsManager;
 	private final Initialize initialize;
@@ -36,8 +36,8 @@ public class Identify implements Cmd {
 	private final Semaphore runnig = new Semaphore(1);
 	
 	@Inject
-	public Identify(ZKSoftwareCDI zk, AttLogsManager attLogsManager, PersonsManager personsManager, Initialize initialize) {
-		this.zkSoftware = zk.getZkSoftware();
+	public Identify(SoapDevice zk, Initialize initialize, AttLogsManager attLogsManager, PersonsManager personsManager) {
+		this.zkDevice = zk;
 		this.attLogsManager = attLogsManager;
 		this.personsManager = personsManager;
 		this.initialize = initialize;
@@ -67,10 +67,12 @@ public class Identify implements Cmd {
 	@Override
 	public void execute() {
 		try {
+			
+			ZkSoftware zkSoftware = this.zkDevice.getZkSoftware();
 			Device device = initialize.getCurrentDevice();
 			
 			//obtengo los logs del reloj
-			List<ar.com.dcsys.firmware.soap.AttLog> logsDevice = this.zkSoftware.getAllAttLogs();
+			List<ar.com.dcsys.firmware.soap.AttLog> logsDevice = zkSoftware.getAllAttLogs();
 			
 			
 			//los agrego en la base, si ya existe el modelo no lo agrega

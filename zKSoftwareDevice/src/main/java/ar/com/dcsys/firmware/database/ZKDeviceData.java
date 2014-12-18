@@ -12,22 +12,8 @@ public class ZKDeviceData {
 	@Inject @Config String name;
 	@Inject @Config String description;
 	@Inject @Config String enabled;
-	@Inject @Config String algorithm;
-	@Inject @Config String codification;
 	
 	
-	public String getCodification() {
-		return codification;
-	}
-	public void setCodification(String codification) {
-		this.codification = codification;
-	}
-	public String getAlgorithm() {
-		return algorithm;
-	}
-	public void setAlgorithm(String algorithm) {
-		this.algorithm = algorithm;
-	}
 	public String getId() {
 		return id;
 	}

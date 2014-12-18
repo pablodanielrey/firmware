@@ -11,7 +11,7 @@ import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.soap.UserInfo;
-import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
+import ar.com.dcsys.firmware.soap.SoapDevice;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.person.server.PersonSerializer;
@@ -28,7 +28,7 @@ public class PersistPerson implements Cmd {
 	private String cmd;
 	
 	@Inject
-	public PersistPerson(ZKSoftwareCDI zk, PersonSerializer personSerializer, PersonsManager personsManager) {
+	public PersistPerson(SoapDevice zk, PersonSerializer personSerializer, PersonsManager personsManager) {
 		this.personSerializer = personSerializer;
 		this.personsManager = personsManager;
 		this.zkSoftware = zk.getZkSoftware();
@@ -64,6 +64,17 @@ public class PersistPerson implements Cmd {
 				logger.log(Level.SEVERE,"Person == null");
 				remote.sendText("ERROR person == null" );
 				throw new PersonException("Person == null");
+			}
+			
+			//busco si existe en la base por el dni, si existe y posee otro id tiro una exepcion
+			String dni = person.getDni();
+			if (dni != null) {
+				Person p = personsManager.findByDni(dni);
+				if (p != null && !(p.getId().equals(person.getId()))) {
+					logger.log(Level.SEVERE,"La persona ya existe en la base del firmware y posee otro id");
+					remote.sendText("ERROR La persona ya existe en la base del firmware y posee otro id" );
+					throw new PersonException("La persona ya existe en la base del firmware y posee otro id");
+				}
 			}
 			
 			//lo actualizo en el sistema

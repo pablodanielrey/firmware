@@ -14,10 +14,8 @@ import ar.com.dcsys.exceptions.FingerprintException;
 import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.common.FingerUtils;
-import ar.com.dcsys.firmware.database.Initialize;
-import ar.com.dcsys.firmware.database.ZKDeviceData;
+import ar.com.dcsys.firmware.soap.SoapDevice;
 import ar.com.dcsys.firmware.soap.UserTemplate;
-import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.security.Fingerprint;
@@ -30,19 +28,17 @@ public class PersistFingerprint implements Cmd {
 	private Response remote;
 	private String cmd;
 	
-	private final ZkSoftware zkSoftware;
+	private final SoapDevice zkDevice;
 	private final FingerprintSerializer fingerprintSerializer;
 	private final FingerprintDAO fingerprintDAO;
 	private final PersonsManager personsManager;
-	private final Initialize initialize;
 	
 	@Inject
-	public PersistFingerprint(Initialize initialize, ZKSoftwareCDI zk, FingerprintSerializer fingerprintSerializer, FingerprintDAO fingerprintDAO, PersonsManager personsManager) {
-		this.zkSoftware = zk.getZkSoftware();
+	public PersistFingerprint(SoapDevice zk, FingerprintSerializer fingerprintSerializer, FingerprintDAO fingerprintDAO, PersonsManager personsManager) {
+		this.zkDevice = zk;
 		this.fingerprintDAO =  fingerprintDAO;
 		this.fingerprintSerializer = fingerprintSerializer;
 		this.personsManager = personsManager;
-		this.initialize = initialize;
 	}
 
 	@Override
@@ -88,15 +84,14 @@ public class PersistFingerprint implements Cmd {
 			}
 			
 			//verifico que la huella tenga el mismo algoritmo y la misma codificacion
-			ZKDeviceData deviceData = initialize.getZKDeviceData();
-			String algorithm = FingerUtils.getAlgorithm(deviceData);
+			String algorithm = FingerUtils.getAlgorithm(zkDevice);
 			if (!algorithm.equals(fp.getAlgorithm())) {
 				logger.log(Level.SEVERE, "el algoritmo de la huella es diferente al del reloj");
 				remote.sendText("ERROR el algoritmo de la huella es diferente al del reloj");
 				throw new FingerprintException(new Throwable("el algoritmo de la huella es diferente al del reloj"));				
 			}
 			
-			String codification = deviceData.getCodification();
+			String codification = zkDevice.getCodification();
 			if (!codification.equals(fp.getCodification())) {
 				logger.log(Level.SEVERE, "la codificacion de la huella es diferente al del reloj");
 				remote.sendText("ERROR la codificacion de la huella es diferente al del reloj");
@@ -106,13 +101,15 @@ public class PersistFingerprint implements Cmd {
 			//lo  actualizo en la base
 			fingerprintDAO.persist(fp);
 			
+			ZkSoftware zkSoftware = zkDevice.getZkSoftware();
+			
 			//busco si existe en el reloj
 			String pin = person.getDni();
 			List<UserTemplate> uts = zkSoftware.getUserTemplate(pin);
 			UserTemplate ut = FingerUtils.findUserTemplate(uts, fp, pin);
 			
 			if (ut == null) {
-				ut = FingerUtils.toUserTemplate(initialize, fp, pin);
+				ut = FingerUtils.toUserTemplate(fp, pin);
 			}
 			
 			//lo actualizo en el reloj

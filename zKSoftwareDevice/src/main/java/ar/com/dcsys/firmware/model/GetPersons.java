@@ -11,7 +11,7 @@ import ar.com.dcsys.data.person.Person;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.common.PersonUtils;
 import ar.com.dcsys.firmware.soap.UserInfo;
-import ar.com.dcsys.firmware.soap.ZKSoftwareCDI;
+import ar.com.dcsys.firmware.soap.SoapDevice;
 import ar.com.dcsys.firmware.soap.ZkSoftware;
 import ar.com.dcsys.model.PersonsManager;
 import ar.com.dcsys.person.server.PersonSerializer;
@@ -27,7 +27,7 @@ public class GetPersons implements Cmd {
 	private Response remote;
 
 	@Inject
-	public GetPersons(ZKSoftwareCDI zk,
+	public GetPersons(SoapDevice zk,
 					  PersonsManager personsManager,
 					  PersonSerializer personSerializer) {
 		this.zkSoftware = zk.getZkSoftware();
