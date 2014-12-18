@@ -1,5 +1,9 @@
 package ar.com.dcsys.firmware.common;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +14,21 @@ import ar.com.dcsys.exceptions.PersonException;
 import ar.com.dcsys.model.PersonsManager;
 
 public class AttLogUtils {
+	
+
+	public static AttLog deepCopy(AttLog log) throws Exception {
+        //Serialization of object
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(bos);
+        out.writeObject(log);
+ 
+        //De-serialization of object
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        ObjectInputStream in = new ObjectInputStream(bis);
+        AttLog copied = (AttLog) in.readObject();
+  
+        return copied;
+    }
 	
 	public static AttLog convertLog(PersonsManager personsManager, Device device, ar.com.dcsys.firmware.soap.AttLog logDevice) throws PersonException {
 		

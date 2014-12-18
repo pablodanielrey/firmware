@@ -1,10 +1,15 @@
 package ar.com.dcsys.firmware.common;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import ar.com.dcsys.data.log.AttLog;
 import ar.com.dcsys.firmware.database.Initialize;
 import ar.com.dcsys.firmware.database.ZKDeviceData;
 import ar.com.dcsys.firmware.soap.Base64;
@@ -193,5 +198,20 @@ public class FingerUtils {
 		
 		return null;
 	}
+	
+	
+	public static Fingerprint deepCopy(Fingerprint fp) throws Exception {
+        //Serialization of object
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(bos);
+        out.writeObject(fp);
+ 
+        //De-serialization of object
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        ObjectInputStream in = new ObjectInputStream(bis);
+        Fingerprint copied = (Fingerprint) in.readObject();
+  
+        return copied;
+    }
 	
 }
