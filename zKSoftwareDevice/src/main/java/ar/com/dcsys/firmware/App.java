@@ -11,6 +11,7 @@ import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
 
 import ar.com.dcsys.firmware.model.Model;
+import ar.com.dcsys.firmware.model.logs.LogsSynchronizer;
 import ar.com.dcsys.firmware.websocket.WebsocketServer;
 
 /**
@@ -30,13 +31,18 @@ public class App {
 	private final Model model;
 	private final Announcer announcer;
 	private final WebsocketServer websocketServer;
+	private final LogsSynchronizer logsSynchronizer;
 	
 	@Inject
-	public App(Firmware firmware, Model model, Announcer announcer, WebsocketServer websocketServer) {
+	public App(Firmware firmware, Model model,
+								Announcer announcer,
+								LogsSynchronizer logsSynchronizer, 
+								WebsocketServer websocketServer) {
 		this.firmware = firmware;
 		this.model = model;
 		this.announcer = announcer;
 		this.websocketServer = websocketServer;
+		this.logsSynchronizer = logsSynchronizer;
 	}
 	
 	private void initializeWebsockets() {
