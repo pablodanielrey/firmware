@@ -131,6 +131,9 @@ public class LogsSynchronizer implements Runnable {
 						logger.log(Level.SEVERE,e.getMessage(),e);
 						sem.release();
 					}
+				
+				} else {
+					sem.release();
 				}
 			}
 		});
@@ -174,7 +177,7 @@ public class LogsSynchronizer implements Runnable {
 
 			
 			
-			// limpio todas las sesiones que hayan quedado habiertas.
+			// limpio todas las sesiones que hayan quedado abiertas.
 			for (Session s : sessions) {
 				try {
 					if (s.isOpen()) {
