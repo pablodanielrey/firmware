@@ -31,7 +31,7 @@ public class InOutModel {
 	
 	private void sayTheTime(String status, Date date) {
 		String time = InOutModel.sdf.format(date);
-		ttsPlayer.say(status + ". " + time);
+		ttsPlayer.say(status + ". " + time + ".");
 	}
 	
 	public void onLog(AttLog log) {
