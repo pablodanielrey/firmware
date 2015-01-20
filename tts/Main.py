@@ -5,7 +5,6 @@ import thread
 import time
 import datetime
 import Queue
-import pyttsx
 
 from config import Config
 from speaker import SpeakerThread

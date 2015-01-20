@@ -1,7 +1,10 @@
-import threading, Queue
+import threading, Queue, inject
 from espeak import espeak
+from config import Config
 
 class SpeakerThread(threading.Thread):
+
+    config = inject.attr(Config)
 
     def __init__(self, wordsQueue):
         super(SpeakerThread,self).__init__()
@@ -14,7 +17,7 @@ class SpeakerThread(threading.Thread):
 
 
     def run(self):
-        espeak.set_voice('spanish-latin-am')
+        espeak.set_voice(self.config.configs['espeak_name'])
         espeak.set_parameter(espeak.Parameter.Rate,120)
 
         while not self.finish:
@@ -24,22 +27,3 @@ class SpeakerThread(threading.Thread):
 
             except Queue.Empty:
                 continue
-
-
-        """
-        self.enginetts = pyttsx.init()
-        self.enginetts.setProperty('rate',140)
-        self.enginetts.setProperty('voice','spanish-latin-am')
-
-        self.enginetts.say('motor inicializado')
-        self.enginetts.runAndWait()
-
-        while True:
-            try:
-                phrase = self.wordsQueue.get(True,0.05)
-                self.enginetts.say(phrase)
-                self.enginetts.runAndWait()
-
-            except Queue.Empty:
-                continue
-        """
