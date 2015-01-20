@@ -1,0 +1,4 @@
+console=tty0
+root=/dev/nandb rootwait 
+extraargs=console=ttyS0,115200 hdmi.audio=EDID:0 disp.screen0_output_mode=EDID:1280x800p60 panic=10 consoleblank=0
+machid=10bb
