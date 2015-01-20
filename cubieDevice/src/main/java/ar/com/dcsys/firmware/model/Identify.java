@@ -28,6 +28,7 @@ import ar.com.dcsys.firmware.leds.Leds;
 import ar.com.dcsys.firmware.logging.SqlHandler;
 import ar.com.dcsys.firmware.model.inout.InOutModel;
 import ar.com.dcsys.firmware.serial.SerialDevice;
+import ar.com.dcsys.firmware.sound.TTSPlayer;
 import ar.com.dcsys.model.log.AttLogsManager;
 
 public class Identify implements Cmd {
@@ -105,11 +106,11 @@ public class Identify implements Cmd {
 			
 		attLogsManager.persist(log);
 			
-		inOutModel.onLog(log.getPerson().getId());
+		inOutModel.onLog(log);
 		
 		return fpm.getPersonId();
-	}	
-	
+	}
+
 	
 	@Override
 	public void setResponse(Response remote) {

@@ -54,7 +54,6 @@ public class App {
 	private final Test test;
 	
 	
-
 	private void initializeSerialDevice() {
 
 		logger.log(Level.FINE, "inicializando el dispositivo serie");
@@ -128,10 +127,10 @@ public class App {
 	@PostConstruct
 	private void initialize() {
 		leds.onCommand(Leds.BLOCKED);
-	
+		
 		initializeWebsockets();
 		initializeSerialDevice();
-		
+				
 		leds.onCommand(Leds.READY);
 	}
 
