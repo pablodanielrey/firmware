@@ -41,6 +41,7 @@ public class Identify implements Cmd {
 	private final ar.com.dcsys.firmware.cmd.Identify identify;
 	private final Initialize initialize;
 
+	private final TTSPlayer ttsPlayer;
 	private final Leds leds;
 	private final InOutModel inOutModel;
 	private final SerialDevice sd;
@@ -49,7 +50,7 @@ public class Identify implements Cmd {
 	private final FingerprintMappingDAO fingerprintMappingDAO;
 	
 	@Inject
-	public Identify(SerialDevice sd, Leds leds, InOutModel inOutModel,
+	public Identify(SerialDevice sd, Leds leds, TTSPlayer ttsPlayer, InOutModel inOutModel,
 										ar.com.dcsys.firmware.cmd.Identify identify,
 										FpCancel fpCancel,
 										Initialize initialize, 
@@ -59,6 +60,7 @@ public class Identify implements Cmd {
 		this.identify = identify;
 		this.fpCancel = fpCancel;
 		this.initialize = initialize;
+		this.ttsPlayer = ttsPlayer;
 		this.leds = leds;
 		this.inOutModel = inOutModel;
 		this.sd = sd;
@@ -138,6 +140,7 @@ public class Identify implements Cmd {
 		running.acquireUninterruptibly();
 		try {
 			leds.onCommand(Leds.IDENTIFY);
+			ttsPlayer.say("identificando");
 			
 			identify.execute(sd, new IdentifyResult() {
 				
