@@ -36,18 +36,24 @@ if __name__ == '__main__':
 
     websocketServer = SimpleWebSocketServer(config.configs['server_ip'],int(config.configs['server_port']),WebsocketServer,phraseQueue)
 
+    print('iniciando thread de reproduccion')
     speaker = SpeakerThread(phraseQueue)
     speaker.start()
 
     def close_sig_handler(signal,frame):
+        print "se detecto fin"
+        speaker.finish()
         websocketServer.close()
-        speaker.finish(True)
         sys.exit()
 
+    print('configurando ctrl-c handler')
     signal.signal(signal.SIGINT,close_sig_handler)
+
+    print('iniciando websocket')
     thread.start_new_thread(serveWebsockets,(websocketServer,1))
 
-
+    while True:
+        time.sleep(5000)
 
 
 

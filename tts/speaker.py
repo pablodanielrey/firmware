@@ -9,18 +9,18 @@ class SpeakerThread(threading.Thread):
     def __init__(self, wordsQueue):
         super(SpeakerThread,self).__init__()
         self.wordsQueue = wordsQueue
-        self.finish = False
+        self._stop = threading.Event()
 
-    def finish(v):
+    def finish(self):
         print 'terminando thread'
-        self.finish = v
+        self._stop.set()
 
 
     def run(self):
         espeak.set_voice(self.config.configs['espeak_name'])
         espeak.set_parameter(espeak.Parameter.Rate,120)
 
-        while not self.finish:
+        while not self._stop.isSet():
             try:
                 phrase = self.wordsQueue.get(True,0.05)
                 espeak.synth(phrase)
