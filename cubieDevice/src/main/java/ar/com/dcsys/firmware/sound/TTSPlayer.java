@@ -48,7 +48,7 @@ public class TTSPlayer {
 					// armo el json que entiende el servidor. protocolo 0.0.0.1 
 					String msg = "{\"say\":\"" + textToSay + "\"}";
 					
-					s.getBasicRemote().sendText(textToSay);
+					s.getBasicRemote().sendText(msg);
 					
 				} catch (IOException e) {
 					logger.log(Level.SEVERE,e.getMessage(),e);
