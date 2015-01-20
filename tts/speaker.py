@@ -17,8 +17,11 @@ class SpeakerThread(threading.Thread):
 
 
     def run(self):
-        espeak.set_voice(self.config.configs['espeak_name'])
-        espeak.set_parameter(espeak.Parameter.Rate,120)
+        name = self.config.configs['espeak_name']
+        rate = int(self.config.configs['espeak_rate'])
+        
+        espeak.set_voice(name)
+        espeak.set_parameter(espeak.Parameter.Rate,rate)
 
         while not self._stop.isSet():
             try:
