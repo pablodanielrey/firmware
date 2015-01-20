@@ -41,6 +41,7 @@ public class Identify implements Cmd {
 	private final ar.com.dcsys.firmware.cmd.Identify identify;
 	private final Initialize initialize;
 
+	private final IdentifyData identifyData;
 	private final TTSPlayer ttsPlayer;
 	private final Leds leds;
 	private final InOutModel inOutModel;
@@ -50,7 +51,7 @@ public class Identify implements Cmd {
 	private final FingerprintMappingDAO fingerprintMappingDAO;
 	
 	@Inject
-	public Identify(SerialDevice sd, Leds leds, TTSPlayer ttsPlayer, InOutModel inOutModel,
+	public Identify(SerialDevice sd, Leds leds, TTSPlayer ttsPlayer, IdentifyData identifyData, InOutModel inOutModel,
 										ar.com.dcsys.firmware.cmd.Identify identify,
 										FpCancel fpCancel,
 										Initialize initialize, 
@@ -60,6 +61,7 @@ public class Identify implements Cmd {
 		this.identify = identify;
 		this.fpCancel = fpCancel;
 		this.initialize = initialize;
+		this.identifyData = identifyData;
 		this.ttsPlayer = ttsPlayer;
 		this.leds = leds;
 		this.inOutModel = inOutModel;
@@ -139,15 +141,24 @@ public class Identify implements Cmd {
 
 		running.acquireUninterruptibly();
 		try {
+			String say = identifyData.getInit();
+			if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+				ttsPlayer.say(say);
+			}
+
 			leds.onCommand(Leds.IDENTIFY);
-			ttsPlayer.say("identificando");
+			
 			
 			identify.execute(sd, new IdentifyResult() {
 				
 				@Override
 				public void releaseFinger() {
 					try {
-						
+						String say = identifyData.getReleaseFinger();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}
+
 						remote.sendText("ok liberar dedo");
 						
 					} catch (IOException e) {
@@ -189,6 +200,11 @@ public class Identify implements Cmd {
 				@Override
 				public void onNotFound() {
 					try {
+						String say = identifyData.getNotFound();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 						leds.onCommand(Leds.ERROR);
 						remote.sendText("OK huella no encontrada");
 
@@ -203,6 +219,11 @@ public class Identify implements Cmd {
 				@Override
 				public void onBadQuality() {
 					try {
+						String say = identifyData.getBadQuality();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 						leds.onCommand(Leds.ERROR);
 						remote.sendText("OK mala calidad de la huella");
 													
@@ -217,6 +238,11 @@ public class Identify implements Cmd {
 				@Override
 				public void onFailure(int errorCode) {
 					try {
+						String say = identifyData.getError();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 						leds.onCommand(Leds.ERROR);
 						String code = String.valueOf(errorCode);
 						remote.sendText("ERROR " + code);
@@ -232,6 +258,11 @@ public class Identify implements Cmd {
 				@Override
 				public void onCancel() {
 					try {
+						String say = identifyData.getCancel();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 						leds.onCommand(Leds.READY);
 						remote.sendText("ERROR identificación cancelada");
 						
@@ -245,6 +276,11 @@ public class Identify implements Cmd {
 			});
 			
 		} catch (CmdException e) {
+			String say = identifyData.getError();
+			if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+				ttsPlayer.say(say);
+			}			
+			
 			logger.log(Level.SEVERE,e.getMessage(),e);
 			leds.onCommand(Leds.ERROR);
 			
