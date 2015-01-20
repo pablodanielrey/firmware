@@ -23,7 +23,6 @@ import logging
 from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 from select import select
-import pyttsx
 
 
 class HTTPRequest(BaseHTTPRequestHandler):
