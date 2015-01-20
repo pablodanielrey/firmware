@@ -19,4 +19,4 @@ data2 = ser.read(len(data))
 if data2 == None:
     print('No se leyo ningun byte')
 else:
-    camabio.printArray(data2)
+    camabio.printHexString(data2)
