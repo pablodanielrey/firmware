@@ -21,11 +21,11 @@ public class TTSPlayer {
 
 	private static final Logger logger = Logger.getLogger(TTSPlayer.class.getName());
 	
-	private final TSSPlayerData serverData;
+	private final TTSPlayerData serverData;
 	private final Boolean enable;
 	
 	@Inject
-	public TTSPlayer(TSSPlayerData serverData) {
+	public TTSPlayer(TTSPlayerData serverData) {
 		this.serverData = serverData;
 		this.enable = serverData.getEnableSound();
 	}

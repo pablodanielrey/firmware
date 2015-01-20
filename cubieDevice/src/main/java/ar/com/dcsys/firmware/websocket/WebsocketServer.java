@@ -12,8 +12,12 @@ public class WebsocketServer {
 	private final Server server;
 	
 	@Inject
-	public WebsocketServer() {
-    	server = new Server("localhost",8025, "/websocket", null, CommandsEndpoint.class);
+	public WebsocketServer(WebsocketServerData wsd) {
+		String ip = wsd.getIp();
+		int port = wsd.getPort();
+		String url = wsd.getUrl();
+		
+    	server = new Server(ip,port,url, null, CommandsEndpoint.class);
 	}
 	
 	public void start() throws DeploymentException {

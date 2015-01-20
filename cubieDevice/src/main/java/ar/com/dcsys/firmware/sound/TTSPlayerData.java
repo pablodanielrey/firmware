@@ -5,7 +5,7 @@ import javax.inject.Inject;
 import ar.com.dcsys.config.Config;
 
 
-public class TSSPlayerData {
+public class TTSPlayerData {
 
 	@Inject @Config String proto;
 	@Inject @Config String ip;
