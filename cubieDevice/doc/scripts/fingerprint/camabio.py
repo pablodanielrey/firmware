@@ -3,7 +3,7 @@
 def calcChksum(data):
     sum = 0
     for i in range(len(data) - 2):
-        sum = sum + data[i]
+        sum = (sum + data[i]) & 0xffff
     return sum
 
 """ setea el checksum en el paquete de datos """
