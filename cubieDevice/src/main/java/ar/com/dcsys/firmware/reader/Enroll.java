@@ -9,7 +9,6 @@ import javax.inject.Inject;
 
 import ar.com.dcsys.auth.server.FingerprintSerializer;
 import ar.com.dcsys.firmware.Firmware;
-import ar.com.dcsys.firmware.MutualExclusion;
 import ar.com.dcsys.firmware.cmd.CmdException;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollAndStoreInRam;
 import ar.com.dcsys.firmware.cmd.enroll.EnrollData;
@@ -19,6 +18,7 @@ import ar.com.dcsys.firmware.model.Cmd;
 import ar.com.dcsys.firmware.model.Model;
 import ar.com.dcsys.firmware.model.Response;
 import ar.com.dcsys.firmware.serial.SerialDevice;
+import ar.com.dcsys.firmware.sound.TTSPlayer;
 import ar.com.dcsys.security.Finger;
 import ar.com.dcsys.security.Fingerprint;
 
@@ -31,16 +31,20 @@ public class Enroll implements Cmd {
 	
 	private final Firmware app;
 	private final Leds leds;
+	private final EnrollConfig enrollConfig;
 	private final SerialDevice sd;
+	private final TTSPlayer ttsPlayer;
 	
 	private final FingerprintSerializer fingerprintSerializer;
 	
 	@Inject
-	public Enroll(Firmware app, SerialDevice sd, Leds leds, EnrollAndStoreInRam enroll, FingerprintSerializer fingerprintSerializer) {
+	public Enroll(Firmware app, SerialDevice sd, EnrollConfig enrollConfig, TTSPlayer ttsPlayer, Leds leds, EnrollAndStoreInRam enroll, FingerprintSerializer fingerprintSerializer) {
 		this.enroll = enroll;
 		this.app = app;
 		this.leds = leds;
+		this.enrollConfig = enrollConfig;
 		this.sd = sd;
+		this.ttsPlayer = ttsPlayer;
 		
 		this.fingerprintSerializer = fingerprintSerializer;
 	}
@@ -99,6 +103,11 @@ public class Enroll implements Cmd {
 				remote.sendText("ERROR wrong person.id format");
 				return;
 			}
+
+			String say = enrollConfig.getInit();
+			if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+				ttsPlayer.say(say);
+			}			
 			
 			leds.onCommand(Leds.ENROLL);
 			
@@ -131,6 +140,12 @@ public class Enroll implements Cmd {
 //								String template = DatatypeConverter.printBase64Binary(fp.getTemplate());
 						
 						remote.sendText(sb.toString());
+						
+						
+						String say = enrollConfig.getOk();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
 					
 						leds.onCommand(Leds.OK);
 						
@@ -149,6 +164,12 @@ public class Enroll implements Cmd {
 						
 						remote.sendText("ERROR huella duplicada");
 						
+
+						String say = enrollConfig.getFingerprintDupplicated();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -160,6 +181,12 @@ public class Enroll implements Cmd {
 						leds.onCommand(Leds.ERROR);
 						
 						remote.sendText("ERROR " + String.valueOf(errorCode));
+						
+
+						String say = enrollConfig.getError();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -173,6 +200,12 @@ public class Enroll implements Cmd {
 						
 						remote.sendText("ERROR comando cancelado");
 						
+
+						String say = enrollConfig.getCancel();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -182,6 +215,11 @@ public class Enroll implements Cmd {
 				public void releaseFinger() {
 					try {
 						remote.sendText("ok levantar el dedo del lector");
+						
+						String say = enrollConfig.getReleaseFinger();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -195,6 +233,11 @@ public class Enroll implements Cmd {
 					
 						remote.sendText("error timeout");
 						
+						String say = enrollConfig.getTimeout();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -207,6 +250,11 @@ public class Enroll implements Cmd {
 					
 						remote.sendText("error mala calidad");
 						
+						String say = enrollConfig.getBadQuality();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+					
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -219,6 +267,12 @@ public class Enroll implements Cmd {
 						leds.onCommand(Leds.PHASE_OK + ";3");
 						
 						remote.sendText("ok necesita tercera huella");
+						
+						String say = enrollConfig.getNeddThirdFinger();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -233,6 +287,12 @@ public class Enroll implements Cmd {
 						
 						remote.sendText("ok necesita segunda huella");
 						
+						String say = enrollConfig.getNeedSecondFinger();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
+						
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -245,6 +305,12 @@ public class Enroll implements Cmd {
 						leds.onCommand(Leds.PHASE_OK + ";1");
 						
 						remote.sendText("ok necesita primera huella");
+
+						String say = enrollConfig.getNeedFirstFinger();
+						if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+							ttsPlayer.say(say);
+						}						
+						
 						
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -262,6 +328,11 @@ public class Enroll implements Cmd {
 				logger.log(Level.SEVERE,e1.getMessage(),e1);
 			}
 			
+			String say = enrollConfig.getError();
+			if (say != null && (say.compareToIgnoreCase("null") != 0)) {
+				ttsPlayer.say(say);
+			}						
+				
 		}
 	}
 	
