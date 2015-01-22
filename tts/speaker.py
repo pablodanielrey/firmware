@@ -19,14 +19,14 @@ class SpeakerThread(threading.Thread):
     def run(self):
         name = self.config.configs['espeak_name']
         rate = int(self.config.configs['espeak_rate'])
-        
+
         espeak.set_voice(name)
         espeak.set_parameter(espeak.Parameter.Rate,rate)
 
         while not self._stop.isSet():
             try:
                 phrase = self.wordsQueue.get(True,0.05)
-                espeak.synth(phrase)
+                espeak.synth(phrase.encode('utf8'))
 
             except Queue.Empty:
                 continue
