@@ -34,6 +34,5 @@ public class WebsocketServerData {
 		this.url = url;
 	}
 
-	
-	
+
 }
