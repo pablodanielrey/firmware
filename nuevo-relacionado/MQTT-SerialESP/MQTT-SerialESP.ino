@@ -10,7 +10,7 @@
 #define TOKEN "ARDUINO_DEMO_TOKEN"
 
 
-char mqttserver[] = "mqtt.econo.unlp.edu.ar";
+char mqtt_server[] = "mqtt.econo.unlp.edu.ar";
 
 // Initialize the Ethernet client object
 WiFiEspClient espClient;
@@ -55,7 +55,7 @@ void loop() {
 
 void enviarDatos()
 {
-  String jsonAEnviar = "{\"datos\":\"desde-aruinooooo\"}";
+  String jsonAEnviar = "{\"datos\":\"" + String(millis()) + "\"}";
   char attributes[100];
   jsonAEnviar.toCharArray( attributes, 100 );
   client.publish( "arduino", attributes );
