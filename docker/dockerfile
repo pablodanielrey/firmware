@@ -1,4 +1,10 @@
 FROM python:3.7-stretch
 
+RUN apt-get update
+RUN apt-get install -y \
+            nano \
+            supervisor
+
 RUN pip install paho-mqtt
 
+CMD /bin/bash
