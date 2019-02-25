@@ -6,4 +6,10 @@ def on_mqtt(client, userdata, message):
     print(message.payload)
     print('-------------------------')
 
-subscribe.callback(on_mqtt, "#", hostname="169.254.254.254")
+def suscribir():
+    subscribe.callback(on_mqtt, "#", hostname="169.254.254.254")
+
+
+if __main__ == '__name__':
+    
+    suscribir()
