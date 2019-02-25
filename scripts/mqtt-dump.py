@@ -10,6 +10,6 @@ def suscribir():
     subscribe.callback(on_mqtt, "#", hostname="169.254.254.254")
 
 
-if __main__ == '__name__':
-    
+if __name__ == '__main__':
+
     suscribir()
