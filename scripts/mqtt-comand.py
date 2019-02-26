@@ -1,3 +1,3 @@
 import paho.mqtt.publish as publish
 
-publish.single("cmnd/sonoff/power", "ON", hostname="169.254.254.254")
+publish.single("cmnd/sonoff/power", "TOGGLE", hostname="169.254.254.254")
