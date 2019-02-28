@@ -9,6 +9,7 @@ archivo = get_filename_datetime()
 
 salida=open(archivo, "a")
 
+topico = re.compile(r".*/(.*)/POWER")
 
 
 def on_mqtt(client, userdata, message):
@@ -17,19 +18,22 @@ def on_mqtt(client, userdata, message):
     print(message.payload)
     print('-------------------------')
 
-    m1 = re.match(r'.*/(.*)', str(message.topic))
+    if topico.match(message.topic):
+        print("ok")
+
+""" m1 = re.match(r'.*/(.*)', str(message.topic))
     m2 = re.match(r'.*\'(.*)\'', str(message.payload))
     s1 = str(m1.group(1))
     s2 = str(m2.group(1))
     print('-->' + s1)
     print('-->' + s2)
 
-    l1 = ('---'+ str(date.today())+ '---' +'\n')
-    salida.write(l1 + s1 +'\n'+ s2 +'\n'+'\n')
+    l1 = ('---'+ str(date.today())+ '---')
+    salida.write(l1 + s1 + s2 )"""
 
 
 def suscribir():
-    subscribe.callback(on_mqtt, "#", hostname="169.254.254.254")
+    subscribe.callback(on_mqtt, "stat/#", hostname="169.254.254.254")
 
 if __name__ == '__main__':
     suscribir()
