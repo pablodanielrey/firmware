@@ -8,8 +8,15 @@ logging.getLogger().setLevel(logging.INFO)
 dispositivo = {}
 
 topico = re.compile(r".*/(.*)/POWER")
-prendido = re.compile(r"ON")
-apagado = re.compile(r"OFF")
+prendidos = [
+    re.compile(r"ON"),
+    re.compile(r"on")
+]
+apagados = [
+    re.compile(r"OFF")
+]
+
+
 
 
 def on_mqtt(client, userdata, message):
@@ -24,12 +31,15 @@ def on_mqtt(client, userdata, message):
         nombre = gnombre.group(1)
 
         texto = message.payload.decode('UTF-8')
-        if prendido.match(texto):
-            dispositivo[nombre] = True
-        elif apagado.match(texto):
-            dispositivo[nombre] = False
-        else:
-            logging.warn('ERROR EN TEXTO')
+        for prendido in prendidos:
+            if prendido.match(texto):
+                dispositivo[nombre] = True
+                break
+
+        for apagado in apagados:
+            if apagado.match(texto):
+                dispositivo[nombre] = False
+                break
 
         logging.info(dispositivo)
         logging.info('----------------')
