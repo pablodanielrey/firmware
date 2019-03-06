@@ -1,66 +1,85 @@
-"""
-    guardar en un diccionario los sonoff que se prenden y la información
-    asociada a ellos
-    ip, hostname, etc
-"""
-
 from datetime import date
 import re
 import paho.mqtt.subscribe as subscribe
-
+import json
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
+
 dispositivo = {}
 
-topico = re.compile(r".*/(.*)/POWER")
-prendidos = [
-    re.compile(r"ON"),
-    re.compile(r"on")
-]
-apagados = [
-    re.compile(r"OFF")
-]
+topico1 = re.compile(r".*/(.*)/INFO2")
+topico2 = re.compile(r".*/(.*)/LWT")
 
 
-
+def parsear(info):
+    p = json.loads(info)
+    return p
 
 def on_mqtt(client, userdata, message):
-    # print('-------------------------')
-    # print(message.topic)
-    # print(message.payload.decode('UTF-8'))
+    logging.info('----------------')
+    logging.info(message.topic)
+    logging.info(message.payload.decode('UTF-8'))
+    logging.info('----------------')
 
-    # print (prendido.match(message.payload))
-    gnombre = topico.match(message.topic)
-    if gnombre:
-        logging.info('-------------------')
-        nombre = gnombre.group(1)
+    nombre = topico1.match(message.topic)
+    if nombre:
+        recibidos = parsear(message.payload.decode('UTF-8'))
+        hostname = recibidos['Hostname']
+        ip = recibidos['IPAddress']
 
-        texto = message.payload.decode('UTF-8')
-        for prendido in prendidos:
-            if prendido.match(texto):
-                dispositivo[nombre] = True
-                break
+        nomb = nombre.group(1)
 
-        for apagado in apagados:
-            if apagado.match(texto):
-                dispositivo[nombre] = False
-                break
+        if nomb not in dispositivo:
+            dispositivo[nomb] = {}
 
-        logging.info(dispositivo)
-        logging.info('----------------')
+        datos = dispositivo[nomb]
+        datos['Hostname'] = hostname
+        datos['IPAddress'] = ip
 
-    # on = prendido.match(message.payload.decode('UTF-8'))
-    # off = apagado.match(message.payload.decode('UTF-8'))
 
-    # if on:
-    #     print("prendido")
-    # else:
-    #     if off:
-    #         print("apagado")
+
+
+    lwt = topico2.match(message.topic)
+    if lwt:
+        l = lwt.group(1)
+        if l not in dispositivo:
+            dispositivo[l] = {}
+        datos = dispositivo[l]
+        datos['Estado'] =  message.payload.decode('UTF-8')
+
+
+    logging.info(dispositivo)
+    logging.info(datos)
+    logging.info('**************')
+
+
+
+
+    # if True:
+    #     """ topico 1 """
+    #     """ guardamos los datos  """
+    #     datos['nombre'] = hostname
+    #     datos['ip'] = ip
+    #
+    # if True:
+    #     """ topico 2 """
+    #     datos['ap'] = hostname
+    #     datos['wifi'] = ip
+    #
+    # if True:
+    #     """ topico 3 """
+    #     datos['ip'] = hostname
+    #     datos['dato'] = ip
+    #
+    # st = json.dumps(datos)
+    # with open('/tmp/datos.json','w') as f:
+    #     f.write(st)
+
+
 
 def suscribir():
-    subscribe.callback(on_mqtt, "stat/#", hostname="169.254.254.254")
+    subscribe.callback(on_mqtt, "tele/#", hostname="169.254.254.254")
 
 
 
