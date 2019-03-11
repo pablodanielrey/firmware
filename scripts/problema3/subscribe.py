@@ -10,32 +10,23 @@ topico = re.compile(r".*/(.*)/RESULT")
 estado = re.compile(r"\{\s*\"POWER\"\s*:\s*\"(.*)\"\s*}")
 
 def on_mqtt(client, userdata, message):
-    logging.info('------------------------------------------------------------')
-    logging.info(message.topic)
-    logging.info(message.payload.decode('UTF-8'))
-    # logging.info(type(message.payload.decode('UTF-8')))
-    a = message.payload.decode('UTF-8')
-    x = json.loads(a)
-    logging.info('******************')
-
     try:
+        logging.info('------------------------------------------------------------')
+        logging.info(message.topic)
+        logging.info(message.payload.decode('UTF-8'))
+        # logging.info(type(message.payload.decode('UTF-8')))
 
+        logging.info('******************')
         nombre = topico.match(message.topic)
 
-    except Exception as ex1:
-        logging.info(ex1)
+        if nombre:
 
-    if nombre:
-        try:
             logging.info('if nombre:')
 
             power = estado.match(message.payload.decode('UTF-8'))
             if power:
-                try:
-                    n = nombre.group(1)
-                    p = power.group(1)
-                except Exception as e3:
-                    logging.exception(e3)
+                n = nombre.group(1)
+                p = power.group(1)
 
             if n not in dispositivos:
                 logging.info('n NO existe en dispositivios:')
@@ -63,8 +54,8 @@ def on_mqtt(client, userdata, message):
 
             logging.info(dispositivos)
 
-        except Exception as ex:
-            logging.info(ex)
+    except Exception as ex:
+        logging.exception(ex)
 
 topic = 'stat/#'
 servidor = '169.254.254.254'

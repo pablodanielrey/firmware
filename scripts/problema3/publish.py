@@ -4,15 +4,13 @@ import logging
 logging.getLogger().setLevel(logging.INFO)
 
 dispositivo = {
-    'algo':'dato',
-    'algo2':'dato2'
-}
+    "Hola":"PEPE"}
 payload = json.dumps(dispositivo)
 
 logging.info(dispositivo)
 
 servidor = '169.254.254.254'
-topico = 'ejemplo/XXXX/topico'
+topico = 'stat/XXXX/topico'
 
 logging.info(payload)
 
