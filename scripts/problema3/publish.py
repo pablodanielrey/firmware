@@ -3,13 +3,16 @@ import json
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
-dispositivo = {"POWER":"ON"}
+dispositivo = {
+    'algo':'dato',
+    'algo2':'dato2'
+}
+payload = json.dumps(dispositivo)
 
 logging.info(dispositivo)
 
 servidor = '169.254.254.254'
-payload = json.dumps(dispositivo)
-topico = 'stat/XXXXXX/RESULT'
+topico = 'ejemplo/XXXX/topico'
 
 logging.info(payload)
 

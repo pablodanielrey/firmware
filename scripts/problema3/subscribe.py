@@ -7,7 +7,7 @@ logging.getLogger().setLevel(logging.INFO)
 dispositivos = {}
 
 topico = re.compile(r".*/(.*)/RESULT")
-estado = re.compile(r'\{"POWER":"(.*)\"}')
+estado = re.compile(r"\{\s*\"POWER\"\s*:\s*\"(.*)\"\s*}")
 
 def on_mqtt(client, userdata, message):
     logging.info('------------------------------------------------------------')
@@ -30,9 +30,12 @@ def on_mqtt(client, userdata, message):
             logging.info('if nombre:')
 
             power = estado.match(message.payload.decode('UTF-8'))
-
-            n = nombre.group(1)
-            p = power.group(1)
+            if power:
+                try:
+                    n = nombre.group(1)
+                    p = power.group(1)
+                except Exception as e3:
+                    logging.exception(e3)
 
             if n not in dispositivos:
                 logging.info('n NO existe en dispositivios:')
