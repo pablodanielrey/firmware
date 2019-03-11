@@ -10,7 +10,7 @@
             solucion de como almacenar los datos (diccionario)
 
     4 - recibir el comando de apagado,
-        analizar en la estructura de datos cuales reles estan prendidos,
+        analizar en la estructura de datos   cuales reles estan prendidos,
         y enviar el mesanje mqtt para cada rele prendido para apagarlo
 
         se usa for e if

@@ -4,7 +4,8 @@ import logging
 logging.getLogger().setLevel(logging.INFO)
 
 dispositivo = {
-    "Hola":"PEPE"}
+    "Hola":"PEPE"
+}
 payload = json.dumps(dispositivo)
 
 logging.info(dispositivo)
