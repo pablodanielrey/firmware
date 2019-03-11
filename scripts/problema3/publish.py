@@ -7,7 +7,6 @@ dispositivo = {
     "Hola":"PEPE"
 }
 payload = json.dumps(dispositivo)
-
 logging.info(dispositivo)
 
 servidor = '169.254.254.254'

@@ -20,24 +20,22 @@ def on_mqtt(client, userdata, message):
         if nombre:
             logging.info('if nombre:')
             power = estado.match(message.payload.decode('UTF-8'))
-            if power:
-                n = nombre.group(1)
-                p = power.group(1)
+            n = nombre.group(1)
+            # p = power.group(1)
             if n not in dispositivos:
                 logging.info('n NO existe en dispositivios:')
                 dispositivos[n] = {}
                 logging.info(dispositivos)
                 if power:
+                    p = power.group(1)
                     logging.info('if power:')
                     logging.info(p)
                     dispositivos [n] = {'POWER': p}
-                else:
-                    logging.info(p)
             else:
                 logging.info('n SI existe en dispositivios:')
                 if power:
+                    p = power.group(1)
                     logging.info('if power:')
-                    # p = power.group(1)
                     dispositivos [n] = {'POWER': p}
             logging.info(dispositivos)
 
