@@ -8,7 +8,15 @@ mensajes = {
     'stat/zxxx/RESULT': [
         'On',
         'off',
-        '{"POWER":"ON"}'
+        '{"POWER":"ON"}',
+        '{"POWER":"ON"',
+        '{"POWER": "OFF"}',
+        '{"POWER":"HOLAAAAA"}',
+        '{power:"ON"}',
+        "{'POWER':'ON'}",
+        '{"POWER" "ON"}',
+        '{"ON"}',
+        ''
     ],
     'stat/XXXXXXRESULT': [
         'algo',
