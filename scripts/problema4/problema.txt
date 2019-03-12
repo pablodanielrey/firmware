@@ -1,0 +1,20 @@
+1 - armar 3 scripts.
+
+    script 1 - permita mandar un comando de apertura de puerta
+               (simula una cerradura que esta enviando cuando una persona ingresa o sale de la oficna)
+               envía que persona abre la puerta
+
+               /cerraduras/ditesi <--- jano
+
+    script 2 - escucha el comando enviado por el script 1. y guarda el estado de la persona
+                lleva un diccionario para guardar si la persona esta adentro o afuera
+                cuando recibe el comando de la cerradura, envía un comando mqtt indicando si la persona esta afuera o adentro.
+                este script representa a una oficina (o sea es la oficina que sabe los ocupantes)
+                se supone todas las personas estan afuera.
+
+                /oficina/jano/estado <-- salio|entro
+
+    script3 - escucha el estado de los sonoff
+              escucha el comando enviado por el estado de la peronsa. (script2)
+              cuando ingresa la persona prende todos los sonoff.
+              cuando se va la persona apaga todos los sonoff
