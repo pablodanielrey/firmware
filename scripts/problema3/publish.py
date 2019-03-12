@@ -1,17 +1,16 @@
 import paho.mqtt.publish as publish
 import json
 import logging
+import sys
 logging.getLogger().setLevel(logging.INFO)
 
 dispositivo = {
-    "Hola":"PEPE"
+    "POWER":sys.argv[1]
 }
 payload = json.dumps(dispositivo)
-logging.info(dispositivo)
 
 servidor = '169.254.254.254'
-topico = 'stat/XXXX/topico'
+topico = 'stat/mi-programa'
 
-logging.info(payload)
 
 publish.single(topico, payload, hostname=servidor)

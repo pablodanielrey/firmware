@@ -1,4 +1,6 @@
 import paho.mqtt.subscribe as subscribe
+import paho.mqtt.publish as publish
+
 import json
 import re
 import logging
@@ -9,6 +11,11 @@ dispositivos = {}
 topico = re.compile(r".*/(.*)/RESULT")
 estado = re.compile(r"\{\s*\"POWER\"\s*:\s*\"(.*)\"\s*}")
 
+topicop = re.compile(r".*(mi-programa)")
+estadop = re.compile(r"\{\s*\"(.*)\"\s*:\s*\"(.*)\"\s*}")
+
+
+
 def on_mqtt(client, userdata, message):
     try:
         #logging.info('------------------------------------------------------------')
@@ -18,24 +25,50 @@ def on_mqtt(client, userdata, message):
         #logging.info('******************')
         nombre = topico.match(message.topic)
         if nombre:
-            # logging.info('if nombre:')
+            logging.info("SONOFF")
             power = estado.match(message.payload.decode('UTF-8'))
             n = nombre.group(1)
-            # p = power.group(1)
             if n not in dispositivos:
-                # logging.info('n NO existe en dispositivios:')
                 dispositivos[n] = {}
-                # logging.info(dispositivos)
             if power:
-                logging.info("if power")
                 p = power.group(1)
                 if p == "ON":
-                    logging.info("p = on")
                     dispositivos[n] = {'POWER': True}
                 if p == "OFF":
-                    logging.info("p = off")
                     dispositivos[n] = {'POWER': False}
-                logging.info(dispositivos)
+            logging.info(dispositivos)
+
+        nombrep = topicop.match(message.topic)
+        if nombrep:
+            logging.info("PROGRAMA")
+            power = estadop.match(message.payload.decode('UTF-8'))
+            np = nombrep.group(1)
+            for n in dispositivos.keys():
+                p = power.group(2)
+                if p == 'OFF':
+                    if dispositivos[n]['POWER'] == True:
+                        # dispositivos[n]['POWER'] = False
+                        publish.single(f"cmnd/{n}/POWER", "OFF", hostname="169.254.254.254")
+                elif p == 'ON':
+                    if dispositivos[n]['POWER'] == False:
+                        # dispositivos[n]['POWER'] = True
+                        publish.single(f"cmnd/{n}/POWER", "ON", hostname="169.254.254.254")
+
+
+
+            logging.info(dispositivos)
+            # if np not in dispositivos:
+            #     dispositivos[np] = {}
+            # if power:
+            #     p = power.group(1)
+            #     if p == "ON":
+            #         dispositivos[np] = {'POWER': True}
+            #     if p == "OFF":
+            #         dispositivos[np] = {'POWER': False}
+            #     logging.info(dispositivos)
+
+
+
 
     except Exception as ex:
         logging.exception(ex)
