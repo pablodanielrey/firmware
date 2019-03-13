@@ -18,24 +18,24 @@ def on_mqtt(client, userdata, message):
         personaAccion = payloadprograma.match(message.payload.decode('UTF-8'))
         if ofi:
             if oficina not in Office:
-                logging.info('La oficina no existe, la creo')
-                logging.info(oficina)
+                logging.info(f'{oficina} no existe, la creo')
                 Office[oficina] = {}
             if personaAccion:
                 persona = personaAccion.group(1)
                 accion = personaAccion.group(2)
                 personasenoficina = Office[oficina]
                 if persona not in personasenoficina:
-                    logging.info('La persona no existe, la agrego')
-                    logging.info(persona)
+                    logging.info(f'{persona} no existe, lo agrego')
                     personasenoficina[persona] = False
                 if accion == 'abrir':
                     if personasenoficina[persona] == True: #me fijo si esta adentro
                         personasenoficina[persona] = False
-                        publish.single(f"ditesi/asistencia", "personasenoficina", hostname="169.254.254.254")
+                        po = json.dumps(personasenoficina)
+                        publish.single(f"ditesi/asistencia", po, hostname="169.254.254.254")
                     elif personasenoficina[persona] == False: #me fijo si esta afuera
                         personasenoficina[persona] = True
-                        publish.single(f"ditesi/asistencia", "personasenoficina", hostname="169.254.254.254")
+                        po = json.dumps(personasenoficina)
+                        publish.single(f"ditesi/asistencia", po, hostname="169.254.254.254")
             logging.info(Office)
     except Exception as ex:
         logging.exception(ex)
