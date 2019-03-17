@@ -5,6 +5,10 @@ RUN apt-get install -y \
             nano \
             supervisor
 
+ENV PIP_DEFAULT_TIMEOUT=3600
+RUN pip install -U pip
+RUN pip install -U ptvsd
+
 RUN pip install paho-mqtt
 
 CMD /bin/bash
