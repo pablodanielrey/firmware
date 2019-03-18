@@ -31,7 +31,7 @@ def manejar_entrar_salir(persona, accion):
             for sonoff in dispositivos[persona]:
                 if sonoff not in sonoffs.keys():
                     publish.single(f"cmnd/{sonoff}/power", "ON", hostname="169.254.254.254")
-                elif not sonoffs[sonoff]:
+                elif sonoffs[sonoff]:
                     publish.single(f"cmnd/{sonoff}/power", "ON", hostname="169.254.254.254")
         else:
             logging.info(f'{persona} NO tiene asignado un dispositivo')
@@ -40,7 +40,7 @@ def manejar_entrar_salir(persona, accion):
         if persona in dispositivos.keys():
             logging.info(f'{persona} tiene asignado un dispositivo')
             for sonoff in dispositivos[persona]:
-                if sonoff not in sonoffs.keys():
+                if sonoff in sonoffs.keys():
                     publish.single(f"cmnd/{sonoff}/power", "OFF", hostname="169.254.254.254")
                 elif not sonoffs[sonoff]:
                     logging.info(f'{persona} tiene asignado un dispositivo')
