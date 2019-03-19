@@ -1,0 +1,20 @@
+FROM python:3.7-stretch
+
+RUN apt-get update
+RUN apt-get install -y \
+            nano \
+            supervisor
+
+ENV PIP_DEFAULT_TIMEOUT=3600
+RUN pip install -U pip
+RUN pip install -U ptvsd
+
+RUN pip install paho-mqtt
+
+
+COPY supervisord.conf /etc/supervisor/conf.d/
+COPY entrypoint.sh /
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD /bin/bash
