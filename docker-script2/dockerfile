@@ -15,6 +15,4 @@ RUN pip install paho-mqtt
 COPY supervisord.conf /etc/supervisor/conf.d/
 COPY entrypoint.sh /
 
-ENTRYPOINT ["/entrypoint.sh"]
-
-CMD /bin/bash
+ENTRYPOINT ["python3", "/scripts/problema4/script2.py"]
