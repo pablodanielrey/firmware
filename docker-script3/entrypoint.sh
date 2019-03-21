@@ -2,8 +2,10 @@
 
 set -e
 
+ln -s /etc/supervisor/supervisord.conf /etc/supervisord.conf
+
 if [ -z "$@" ]; then
   exec /usr/bin/supervisord -c /etc/supervisord.conf --nodaemon
 else
-  exec PATH=/usr/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin $@
+  exec $@
 fi
