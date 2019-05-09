@@ -1,0 +1,3 @@
+
+exec(open('/src/github/firmware/Cerraduras/esp8266/workSpace/workSpace/ umqttsimple.py').read(),globals())
+

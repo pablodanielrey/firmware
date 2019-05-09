@@ -12,5 +12,4 @@ payload = json.dumps(ditesi)
 servidor = '169.254.254.254'
 topico = 'puerta/ditesi'
 
-
 publish.single(topico, payload, hostname=servidor)
