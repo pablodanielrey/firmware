@@ -1,30 +1,64 @@
-def sub_cb(topic, msg):
-  print((topic, msg))
+import network
+sta = network.WLAN(network.STA_IF)
+sta.active(True)
+sta.connect("sistemas", "ditesisitedi")
 
-def connect_and_subscribe():
-  global client_id, mqtt_server, topic_sub
-  client = MQTTClient(client_id, mqtt_server)
-  client.set_callback(sub_cb)
-  client.connect()
-  client.subscribe(topic_sub)
-  print('Connected to %s MQTT broker, subscribed to %s topic' % (mqtt_server, topic_sub))
-  return client
+import paho.mqtt.subscribe as subscribe
+import paho.mqtt.publish as publish
 
-def restart_and_reconnect():
-  print('Failed to connect to MQTT broker. Reconnecting...')
-  time.sleep(10)
-  machine.reset()
+import json
+import re
+import logging
+logging.getLogger().setLevel(logging.INFO)
 
-try:
-  client = connect_and_subscribe()
-except OSError as e:
-  restart_and_reconnect()
+Office = {}
 
-while True:
-  try:
-    new_message = client.check_msg()
-    if new_message != 'None':
-      client.publish(topic_pub, b'received')
-    time.sleep(1)
-  except OSError as e:
-    restart_and_reconnect()
+topicoprograma = re.compile(r"puerta\/(.*)") #puerta/ditesi
+payloadprograma = re.compile(r"\{\s*\"(.*)\"\s*:\s*\"(.*)\"\s*}") #ditesi = {sys.argv[1]:sys.argv[2]}
+
+def manejar_cerradura(oficina, personaAccion):
+    logging.info('----Manejar cerradura----')
+    personaactual = {}
+    if oficina not in Office:
+        logging.info(f'{oficina} no existe, la creo')
+        Office[oficina] = {}
+    if personaAccion:
+        persona = personaAccion.group(1)
+        accion = personaAccion.group(2)
+        personasenoficina = Office[oficina]
+        if persona not in personasenoficina:
+            logging.info(f'{persona} no existe, lo agrego')
+            personasenoficina[persona] = False
+            personaactual[persona] = False
+        if accion == 'abrir':
+            if personasenoficina[persona] == False: #me fijo si esta afuera
+                personasenoficina[persona] = True
+                personaactual[persona] = True
+                po = json.dumps(personaactual)
+                logging.info(po)
+                publish.single("ditesi/asistencia", po, hostname="169.254.254.254")
+            elif personasenoficina[persona] == True: #me fijo si esta adentro
+                personasenoficina[persona] = False
+                personaactual[persona] = False
+                po = json.dumps(personaactual)
+                logging.info(po)
+                publish.single("ditesi/asistencia", po, hostname="169.254.254.254")
+    logging.info('----Offcie----')
+    logging.info(Office)
+
+def on_mqtt(client, userdata, message):
+    try:
+
+        cerradura = topicoprograma.match(message.topic)
+        if cerradura:
+            oficina = cerradura.group(1)
+            personaAccion = payloadprograma.match(message.payload.decode('UTF-8'))
+            manejar_cerradura(oficina, personaAccion)
+
+    except Exception as ex:
+        logging.exception(ex)
+
+# topic = 'puerta/ditesi'
+topic = "puerta/#"
+servidor = '169.254.254.254'
+subscribe.callback(on_mqtt, topic, hostname=servidor)
