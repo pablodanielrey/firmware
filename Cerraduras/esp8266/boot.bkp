@@ -1,3 +1,8 @@
-
-exec(open('/src/github/firmware/Cerraduras/esp8266/workSpace/workSpace/ umqttsimple.py').read(),globals())
-
+# This file is executed on every boot (including wake-boot from deepsleep)\n
+#import esp\n
+#esp.osdebug(None)\n
+import uos, machine\n
+#uos.dupterm(None, 1) # disable REPL on UART(0)\n
+import gc\n
+#import webrepl\n
+#webrepl.start()\ngc.collect()\n
