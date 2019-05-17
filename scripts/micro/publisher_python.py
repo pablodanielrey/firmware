@@ -5,14 +5,20 @@ import sys
 
 usuario = sys.argv[1]
 
+server = "169.254.254.254"
+port = 1883
+topic_pub = "topico/prueba"
+pyload = "Puerta abierta por " + usuario
+arc = 'ditesi.txt'
+
 def publish():
     client = mqtt.Client()
-    client.connect("169.254.254.254",1883,60)
-    client.publish("topico/prueba", "Puerta abierta!")
+    client.connect(server,port)
+    client.publish(topic_pub, pyload)
     client.disconnect()
 
 def check_string():
-    archivo=open('ditesi.txt', 'r')
+    archivo=open(arc, 'r')
     for line in archivo:
         if usuario in line:
             publish()
