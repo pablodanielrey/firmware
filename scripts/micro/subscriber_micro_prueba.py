@@ -8,6 +8,7 @@ mqttClient = "umqtt_client"
 topic_sub = "topico/prueba"
 topic_pub = "puerta/estado"
 led = Pin(15, Pin.OUT)
+led2 = Pin(2, Pin.OUT)
 
 c = MQTTClient(mqttClient, server)
 
@@ -25,6 +26,10 @@ def subscriber(server):
     c.connect()
     c.subscribe(topic_sub)
     while True:
-        c.wait_msg()
-        print('despues de whait!')
+        c.check_msg()
+        print('check_msg')
+        led2(1)
+        time.sleep(0.5)
+        led2(0)
+        time.sleep(0.5)
     c.disconnect()
