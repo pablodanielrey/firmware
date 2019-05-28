@@ -16,6 +16,7 @@ def publish():
     client.connect(server,port)
     client.publish(topic_pub, pyload)
     client.disconnect()
+    print(topic_pub, pyload)
 
 def check_string():
     archivo=open(arc, 'r')
