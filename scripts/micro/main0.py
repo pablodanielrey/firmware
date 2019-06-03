@@ -21,7 +21,6 @@ def sub_cb(topic, msg):
     msg_decode = msg.decode('UTF-8')
     global persona
     persona = msg_decode
-
     return persona
     
 def abrir_cerrar(persona):
