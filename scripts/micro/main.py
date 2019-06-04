@@ -21,7 +21,7 @@ def sub_cb(topic, msg):
     persona = msg.decode('UTF-8')[19:]
     print("***********")
     print(persona)
-    return persona        
+
 
 def abrir_cerrar(persona):
     global puerta_cerrada
@@ -33,16 +33,20 @@ def abrir_cerrar(persona):
         c.publish(topic_pub, persona)
         print("puerta_cerrada") 
         print(puerta_cerrada)
+
         def timer(t):
             global puerta_cerrada
             led(0)
-            persona = "PUERTA CERRADA!!"
-            c.publish(topic_pub, persona)
+            mensaje = "PUERTA CERRADA!!"
+            c.publish(topic_pub, mensaje)
             puerta_cerrada=True
             print("puerta_cerrada") 
             print(puerta_cerrada)
             print("----------------------------")
+
+
         tiempo.init(period=3000, mode=Timer.ONE_SHOT, callback=timer)
+
     elif not puerta_cerrada:
         print("\\\\\\\\\\\\PUERTA ABIERTA\\\\\\\\\\\\")
     
