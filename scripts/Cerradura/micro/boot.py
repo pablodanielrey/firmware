@@ -9,5 +9,5 @@ webrepl.start()
 gc.collect()
 
 #esto es el programa principal
-import main
-main.ejecutar()
+import programa
+programa.ejecutar()
