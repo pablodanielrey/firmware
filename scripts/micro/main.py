@@ -15,13 +15,11 @@ c = MQTTClient(mqttClient, server)
 puerta_cerrada = True
 tiempo = Timer(-1)
 
-
 def sub_cb(topic, msg):
     global persona
     persona = msg.decode('UTF-8')[19:]
     print("***********")
     print(persona)
-
 
 def abrir_cerrar(persona):
     global puerta_cerrada
@@ -44,15 +42,12 @@ def abrir_cerrar(persona):
             print(puerta_cerrada)
             print("----------------------------")
 
-
         tiempo.init(period=3000, mode=Timer.ONE_SHOT, callback=timer)
 
     elif not puerta_cerrada:
         print("\\\\\\\\\\\\PUERTA ABIERTA\\\\\\\\\\\\")
     
-
-
-def subscriber(server):
+def subscriber():
     global persona
     c.set_callback(sub_cb)
     c.connect()
@@ -63,3 +58,5 @@ def subscriber(server):
             abrir_cerrar(persona)
             persona = " "
     c.disconnect()
+
+subscriber()
