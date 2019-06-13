@@ -47,7 +47,7 @@ def abrir_cerrar(persona):
     elif not puerta_cerrada:
         print("\\\\\\\\\\\\PUERTA ABIERTA\\\\\\\\\\\\")
     
-def subscriber(server):
+def subscriber():
     global persona
     c.set_callback(sub_cb)
     c.connect()
