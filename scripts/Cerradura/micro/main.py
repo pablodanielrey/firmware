@@ -1,0 +1,2 @@
+import programa
+programa.ejecutar()

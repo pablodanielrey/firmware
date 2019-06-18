@@ -6,14 +6,15 @@ import sys
 usuario = sys.argv[1]
 
 server = "169.254.254.254"
-port = 1883
+#port = 1883
 topic_pub = "topico/prueba"
 pyload = "Puerta abierta por " + usuario
-arc = 'ditesi.txt'
+arc = '/scripts/Cerradura/programa/ditesi.txt'
 
 def publish():
     client = mqtt.Client()
-    client.connect(server,port)
+    #client.connect(server,port)
+    client.connect(server)
     client.publish(topic_pub, pyload)
     client.disconnect()
     print(topic_pub, pyload)
