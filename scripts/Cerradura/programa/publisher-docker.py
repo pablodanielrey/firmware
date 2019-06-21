@@ -9,7 +9,7 @@ server = "169.254.254.254"
 #port = 1883
 topic_pub = "topico/prueba"
 pyload = "Puerta abierta por " + usuario
-arc = 'ditesi.txt'
+arc = '/scripts/Cerradura/programa/ditesi.txt'
 
 def publish():
     client = mqtt.Client()
