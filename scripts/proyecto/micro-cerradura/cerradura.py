@@ -7,8 +7,8 @@ persona = " "
 
 server="169.254.254.254"
 mqttClient = "umqtt_client"
-topic_sub = "topico/prueba"
-topic_pub = "puerta/estado"
+topic_sub = "ditesi/usuario"
+topic_pub = "oficina/persona/estado"
 led = Pin(15, mode=Pin.OUT)
 c = MQTTClient(mqttClient, server)
 
@@ -17,7 +17,7 @@ tiempo = Timer(-1)
 
 def sub_cb(topic, msg):
     global persona
-    persona = msg.decode('UTF-8')[19:]
+    persona = topic.decode('UTF-8')
     print("***********")
     print(persona)
 
