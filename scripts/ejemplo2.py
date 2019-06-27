@@ -8,14 +8,18 @@ def abrir_puerta(oficina, persona):
     enviar_mensaje(topico, payload)
     if persona is not personas:
         personas[persona]= "adentro"
+    if persona in personas:
+        if personas[persona]=="adentro":
+            personas[persona]= "afuera"
+        elif if personas[persona]=="afuera":
+            personas[persona]= "adentro"
+    print(personas)
 
 def cerrar_puerta(oficina, persona):
     topico = oficina
     payload = 'cerrar,puerta'
     enviar_mensaje(topico, payload)
-    if persona in personas:
-        personas[persona]= "afuera"
-    print(personas)
+    
 
 def prender_luz(oficina):
     topico = oficina
