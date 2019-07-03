@@ -25,7 +25,7 @@ def prender_luz(oficina):
     topico = oficina
     payload = 'prender,luz'
     enviar_mensaje(topico, payload)
-
+No tanto po
 def apagar_luz(oficina):
     topico = oficina
     payload = 'apagar,luz'
