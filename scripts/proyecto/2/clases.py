@@ -6,51 +6,38 @@ import time
 import paho.mqtt.client as paho
 
 class Lector:
-    def __init__(self, identificador, server, payload):
+    def __init__(self,identificador, server, payload):
         self.client = mqtt.Client(identificador)
-        self.topic  = identificador
         self.server = server
+        self.topic  = identificador
         self.client.on_message = payload
         
-    
     def publish(self):
-        print("Conectando ",self.server)
         self.client.connect(self.server)
-        self.client.loop_start()
-        print("publicando en  ", self.topic)
-        self.client.publish(self.topic, self.client.on_message )
-        print(self.client.on_message )
-        self.client.disconnect()
-        self.client.loop_stop()
-        
+        self.client.publish(self.topic, self.client.on_message)
 
 
 class Cerradura:
     def __init__(self, identificador, server, topic):
-        self.client= mqtt.Client(identificador)
-        self.identificador = identificador
+        self.client = mqtt.Client(identificador)
         self.server = server
-        self.client.on_message = topic
+        self.identificador = identificador
+        self.topic = topic
+        
 
     def on_message(client, userdata, message):
-        print("MENSAJE RECIBIDO =",str(self.message.payload.decode("utf-8")))
-   
-    def on_connect(self):
-        print("Conectando ",self.server)
-        self.client.subscribe(self.client.on_message)
-        print("Subscribiendo a  " ,self.client.on_message)
+        print("TOPICO ",self.message.topic)
+        print("PAYLOAD " ,self.message.payload)
+
+    def subscriber(self):
+        self.client.on_message = self.on_message 
+        print("CONECTANDO CON EL SERVIDOR....")
         self.client.connect(self.server)
-        self.client.loop_forever()
-
-
-        #print("Conectando ",self.server)
-        #self.client.connect(self.server)
-        #self.client.loop_forever()()
-        #self.client.subscribe(self.client.on_message)
-        #print("Subscribiendo a  " ,self.client.on_message)
-        
-    
-
+        self.client.loop_start()
+        print("SUBSCRIBIENDO A TOPICO", self.topic)
+        self.client.subscribe(self.topic)
+        time.sleep(10)
+        self.client.loop_stop()
 
 
 
