@@ -10,11 +10,11 @@ class Lector:
         self.client = mqtt.Client(identificador)
         self.server = server
         self.topic  = identificador
-        self.client.on_message = payload
+        self.payload = payload
         
     def publish(self):
         self.client.connect(self.server)
-        self.client.publish(self.topic, self.client.on_message)
+        self.client.publish(self.topic, self.payload)
 
 
 class Cerradura:
@@ -25,16 +25,16 @@ class Cerradura:
         self.topic = topic
         
 
-    def on_message(client, userdata, message):
+    def on_message(self, client, userdata, message):
         print("TOPICO ",self.message.topic)
         print("PAYLOAD " ,self.message.payload)
 
     def subscriber(self):
         self.client.on_message = self.on_message 
-        print("CONECTANDO CON EL SERVIDOR....")
+        print(self.on_message)
         self.client.connect(self.server)
         self.client.loop_start()
-        print("SUBSCRIBIENDO A TOPICO", self.topic)
+        print("SUSCRIBIENDO A TOPICO", self.topic)
         self.client.subscribe(self.topic)
         time.sleep(10)
         self.client.loop_stop()

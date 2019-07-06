@@ -11,12 +11,11 @@ def on_message(client, userdata, message):
 
 
 def subscriber():
-
     client.on_message=on_message 
     print("CONECTANDO CON EL SERVIDOR....")
     client.connect(server) 
     client.loop_start() 
-    print("SUBSCRIBIENDO A TOPICO", topic)
+    print("SUSCRIBIENDO A TOPICO", topic)
     client.subscribe(topic)
     time.sleep(10)
     client.loop_stop()
