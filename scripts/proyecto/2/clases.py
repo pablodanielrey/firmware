@@ -6,7 +6,7 @@ import time
 import paho.mqtt.client as paho
 
 class Lector:
-    def __init__(self,identificador, server, payload):
+    def __init__(self, identificador, server, payload):
         self.client = mqtt.Client(identificador)
         self.server = server
         self.topic  = identificador
@@ -23,11 +23,10 @@ class Cerradura:
         self.server = server
         self.identificador = identificador
         self.topic = topic
-        
 
     def on_message(self, client, userdata, message):
-        print("TOPICO ",self.message.topic)
-        print("PAYLOAD " ,self.message.payload)
+        print("TOPICO ", message.topic)
+        print("PAYLOAD " , message.payload)
 
     def subscriber(self):
         self.client.on_message = self.on_message 
@@ -38,7 +37,6 @@ class Cerradura:
         self.client.subscribe(self.topic)
         time.sleep(10)
         self.client.loop_stop()
-
 
 
 class Luz:

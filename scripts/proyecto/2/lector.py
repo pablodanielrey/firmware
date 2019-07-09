@@ -1,7 +1,8 @@
 import sys
 from clases import Lector
 
-usuario = sys.argv[1]
+# esta linea estaba de mas
+#usuario = sys.argv[1]
 
 identificador = "lector01Ditesi" #usado como topico
 server = "127.0.0.1"
