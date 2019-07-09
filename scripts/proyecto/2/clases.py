@@ -1,5 +1,7 @@
 import paho.mqtt.client as mqtt
 import time
+import logging
+logging.getLogger().setLevel(logging.INFO)
 
 class Lector:
     def __init__(self, identificador, server, topicos, payloads):
