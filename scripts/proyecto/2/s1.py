@@ -14,10 +14,10 @@ def subscriber():
     client.on_message=on_message 
     print("CONECTANDO CON EL SERVIDOR....")
     client.connect(server) 
-    client.loop_start() 
+    #client.loop_start() 
     print("SUSCRIBIENDO A TOPICO", topic)
     client.subscribe(topic)
-    time.sleep(10)
-    client.loop_stop()
+    #time.sleep(10)
+    client.loop_forever()
 
 subscriber()

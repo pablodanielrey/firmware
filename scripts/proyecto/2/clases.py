@@ -17,18 +17,15 @@ class Lector:
             print(self.topic[1], self.payload)
             self.client.publish(self.topic[1], self.payload)
 
-    def abrir(self): #hay  que mejorar esta funcion
+    def abrirPuerta(self): #hay  que mejorar esta funcion
         self.payload = self.contenido['puerta'][0]
-        print(self.payload)
         self.publish('puerta')
         time.sleep(3)
         self.payload = self.contenido['puerta'][1]
-        print(self.payload)
         self.publish('puerta')
 
-    def prender(self): #hay  que mejorar esta funcion
+    def prenderLuz(self): #hay  que mejorar esta funcion
         self.payload = self.contenido['luminaria'][0]
-        print(self.payload)
         self.publish('luminaria')
 
 class Cerradura:
@@ -39,20 +36,20 @@ class Cerradura:
         self.topic = topic
 
     def on_message(self, client, userdata, message):
-        print("TOPICO ", message.topic)
-        print("PAYLOAD " , message.payload.decode("utf8"))
         print("DISPOSITIVO ", self.identificador)
+        print("PAYLOAD " , message.payload.decode("utf8"))
         print("********************************")
 
     def subscriber(self):
         self.client.on_message = self.on_message 
         self.client.connect(self.server)
-        self.client.loop_start()
+        #self.client.loop_start()
         print("SUSCRIBIENDO A TOPICO", self.topic)
         print("-------------------------------")
         self.client.subscribe(self.topic)
-        time.sleep(10)
-        self.client.loop_stop()
+        #time.sleep(10)
+        #self.client.loop_stop()
+        self.client.loop_forever()
 
 
 class Luz:
@@ -63,20 +60,20 @@ class Luz:
         self.topic = topic
 
     def on_message(self, client, userdata, message):
-        print("TOPICO ", message.topic)
-        print("PAYLOAD " , message.payload.decode("utf8"))
         print("DISPOSITIVO ", self.identificador)
+        print("PAYLOAD " , message.payload.decode("utf8"))
         print("********************************")
 
     def subscriber(self):
         self.client.on_message = self.on_message 
         self.client.connect(self.server)
-        self.client.loop_start()
+        #self.client.loop_start()
         print("SUSCRIBIENDO A TOPICO", self.topic)
         print("-------------------------------")
         self.client.subscribe(self.topic)
-        time.sleep(10)
-        self.client.loop_stop()
+        #time.sleep(10)
+        #self.client.loop_stop()
+        self.client.loop_forever()
 
 
 
