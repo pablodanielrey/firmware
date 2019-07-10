@@ -4,6 +4,7 @@ import time
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
+
 class Lector:
     def __init__(self, identificador, server, topicos, payloads):
         self.client = mqtt.Client(identificador)
@@ -34,8 +35,6 @@ class Lector:
 
 
 if __name__ == '__main__':
-    # esta linea estaba de mas
-    #usuario = sys.argv[1]
     identificador = "lector01Ditesi" #usado para el topico
     topicos = [identificador+'/puertas', identificador+'/luminarias']
     #server = "127.0.0.1"
