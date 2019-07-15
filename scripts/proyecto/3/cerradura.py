@@ -5,24 +5,26 @@ import logging
 logging.getLogger().setLevel(logging.INFO)
 
 
-class Lector:
-    def __init__(self, identificador, server, topic, payload):
-        self.client = mqtt.Client(identificador)
+class Cerradura:
+    def __init__(self, identifier, server, topic, payload):
+        self.client = mqtt.Client(identifier)
         self.server = server
         self.topic = topic
         self.payload = payload
 
-    def publish(self, dispositivo):
+    def publish(self):
         self.client.connect(self.server)
         logging.info(f'{self.topic, self.payload}')
         self.client.publish(self.topic, self.payload)
         
 
 if __name__ == '__main__':
-    identificador = "lectorUnoDitesi"
+    identifier = "cerraduraUnoDitesi"
     topic = 'sistemaPrincipal'
-    #server = "127.0.0.1"
-    server = "169.254.254.254"
-    payload = identificador
+    server = "127.0.0.1"
+    #server = "169.254.254.254"
+    payload = identifier
 
-    lectorDitesi = Lector(identificador, server, topicos, payloads)
+    lectorDitesi = Cerradura(identifier, server, topic, payload)
+
+    lectorDitesi.publish()

@@ -28,8 +28,8 @@ class Luz:
 
 if __name__ == '__main__':
     identificador = "luz01Ditesi"
-    #server = "127.0.0.1"
-    server = "169.254.254.254"
+    server = "127.0.0.1"
+    #server = "169.254.254.254"
     topic = "lector01Ditesi/luminarias"
     luzDitesi = Luz(identificador, server, topic)
 

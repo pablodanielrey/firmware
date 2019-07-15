@@ -37,8 +37,8 @@ class Lector:
 if __name__ == '__main__':
     identificador = "lector01Ditesi" #usado para el topico
     topicos = [identificador+'/puertas', identificador+'/luminarias']
-    #server = "127.0.0.1"
-    server = "169.254.254.254"
+    server = "127.0.0.1"
+    #server = "169.254.254.254"
     payloads = {'puerta': ['abrir','cerrar'], 'luminaria': ['prender','apagar'] }
 
     lectorDitesi = Lector(identificador, server, topicos,payloads)
