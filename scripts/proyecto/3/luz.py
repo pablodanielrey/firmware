@@ -20,9 +20,9 @@ class Luz:
 
 if __name__ == '__main__':
     identifier = "luzUnoDitesi"
-    topic = 'sistemaPrincipal'
-    server = "127.0.0.1"
-    #server = "169.254.254.254"
+    topic = ['distpositivos', 'sistemaPrincipal']
+    #server = "127.0.0.1"
+    server = "169.254.254.254"
     payload = identifier
 
     lectorDitesi = Luz(identifier, server, topic, payload)

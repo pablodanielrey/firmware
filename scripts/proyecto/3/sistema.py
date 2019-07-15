@@ -13,11 +13,10 @@ class Sistema:
         self.client.on_message = self.on_message
         self.card = True
 
-
     def on_message(self, client, userdata, message):
-        logging.info("TOPICO -->"f'{self.topics}')
-        self.pay = message.payload.decode("utf8")
-        logging.info("Payload --> "f'{self.pay}')
+        logging.info("TOPICO --> "f'{self.topics}')
+        self.payl = message.payload.decode("utf8")
+        logging.info("Payload --> "f'{self.payl}')
         self.addtopics()
         logging.info("********************************")
 
@@ -30,20 +29,22 @@ class Sistema:
         self.client.loop_forever()
 
     
-    
-    def addtopics(self):
-        if self.pay not in self.topics:
-            self.topics.append(self.pay)
-            logging.info(f'{self.pay}'" Agregado a la lista de topicos "f'{self.topics}')
-        else:
-            logging.info("EL DISPOSITIVO/TOPICO YA EXISTE")
+    def addtopics(self, devices):
+        pass 
+        
+        #if self.payl not in self.topics:
+        #    devices.append(self.payl)
+        #    logging.info(f'{self.payl}'" Agregado a la lista de DISP/TOPICOS "f'{devices}')
+        #else:
+        #    logging.info("EL DISPOSITIVO/TOPICO YA EXISTE")
         
 
 if __name__ == '__main__':
     identifier = 'sistemaPrincipal'
-    server = '127.0.0.1'
-    #server = "169.254.254.254"
-    topics = [identifier, 'tarjetaDetectada']
+    devices = []
+    #server = '127.0.0.1'
+    server = "169.254.254.254"
+    topics = ['devices', identifier,'tarjetaDetectada']
     payloads = {'puerta': ['abrir','cerrar'], 'luminaria': ['prender','apagar'] }
 
     sistemaPrincipal = Sistema(identifier, server, topics, payloads)

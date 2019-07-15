@@ -21,8 +21,8 @@ class Cerradura:
 if __name__ == '__main__':
     identifier = "cerraduraUnoDitesi"
     topic = 'sistemaPrincipal'
-    server = "127.0.0.1"
-    #server = "169.254.254.254"
+    #server = "127.0.0.1"
+    server = "169.254.254.254"
     payload = identifier
 
     lectorDitesi = Cerradura(identifier, server, topic, payload)
