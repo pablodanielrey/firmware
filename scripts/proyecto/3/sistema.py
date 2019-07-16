@@ -11,16 +11,17 @@ class Sistema:
         self.topics = topics
         self.identifier = identifier
         self.client.on_message = self.on_message
-        self.card = True
+        #self.card = True
 
-    def on_message(self, client, userdata, message):
-        logging.info("TOPICO --> "f'{self.topics}')
+    def on_message(self, client, userdata, message):#se ejecuta cada vez que detecta un nuevo mensaje
+        self.topi = message.topic
+        logging.info("TOPICO --> "f'{self.topi}')
         self.payl = message.payload.decode("utf8")
         logging.info("Payload --> "f'{self.payl}')
-        self.addtopics()
-        logging.info("********************************")
+        self._addtopics()
+        print("********************************")
 
-    def subscriber(self):
+    def subscriber(self): #se ejecuta una sola vez
         self.client.connect(self.server)
         for topic in self.topics:
             logging.info("SUSCRIBIENDO A topico  "f'{topic}')
@@ -29,21 +30,21 @@ class Sistema:
         self.client.loop_forever()
 
     
-    def addtopics(self, devices):
-        pass 
+    def _addtopics(self):
+        if self.topi == self.topics[0]:
+            if self.payl not in dispositivos:
+                dispositivos.append(self.payl)
+                logging.info("DISPOSITIVOS" f'{dispositivos}')
+            else:
+                logging.info("El dispositivo " f'{self.payl}' " ya existe")   
         
-        #if self.payl not in self.topics:
-        #    devices.append(self.payl)
-        #    logging.info(f'{self.payl}'" Agregado a la lista de DISP/TOPICOS "f'{devices}')
-        #else:
-        #    logging.info("EL DISPOSITIVO/TOPICO YA EXISTE")
         
 
 if __name__ == '__main__':
     identifier = 'sistemaPrincipal'
-    devices = []
-    #server = '127.0.0.1'
-    server = "169.254.254.254"
+    dispositivos = []
+    server = '127.0.0.1'
+    #server = "169.254.254.254"
     topics = ['devices', identifier,'tarjetaDetectada']
     payloads = {'puerta': ['abrir','cerrar'], 'luminaria': ['prender','apagar'] }
 

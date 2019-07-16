@@ -11,6 +11,14 @@ class Luz:
         self.server = server
         self.topic = topic
         self.payload = payload
+        self._publish_identifier()
+
+    def _publish_identifier(self):
+        self.client.connect(self.server)
+        logging.info("TOPICO: " f'{self.topic[0]}')
+        logging.info("PAYLOAD/ID: " f'{self.payload}')
+        self.client.publish(self.topic[0], self.payload)
+
 
     def publish(self):
         self.client.connect(self.server)
@@ -20,11 +28,11 @@ class Luz:
 
 if __name__ == '__main__':
     identifier = "luzUnoDitesi"
-    topic = ['distpositivos', 'sistemaPrincipal']
-    #server = "127.0.0.1"
-    server = "169.254.254.254"
+    topic = topic = ['devices', 'sistemaPrincipal']
+    server = "127.0.0.1"
+    #server = "169.254.254.254"
     payload = identifier
 
-    lectorDitesi = Luz(identifier, server, topic, payload)
+    luzDitesi = Luz(identifier, server, topic, payload)
 
-    lectorDitesi.publish()
+    #lectorDitesi.publish()
