@@ -8,8 +8,8 @@ logging.getLogger().setLevel(logging.INFO)
 client = mqtt.Client("Tarjeta")
 card = sys.argv[1]
 topic = 'usuariosDitesi'
-server = "127.0.0.1"
-#server = "169.254.254.254"
+#server = "127.0.0.1"
+server = "169.254.254.254"
 payload = card
 
 def publish():

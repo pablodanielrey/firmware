@@ -30,7 +30,7 @@ class Sistema:
         self.client.loop_forever()
 
     
-    def _addtopics(self):
+    def _addtopics(self): #agrega nuevos topicos en el caso de que no esten en la lista
         if self.topi == self.topics[0]:
             if self.payl not in dispositivos:
                 dispositivos.append(self.payl)
@@ -43,8 +43,9 @@ class Sistema:
 if __name__ == '__main__':
     identifier = 'sistemaPrincipal'
     dispositivos = []
-    server = '127.0.0.1'
-    #server = "169.254.254.254"
+    usuarios = {}
+    #server = '127.0.0.1'
+    server = "169.254.254.254"
     topics = ['devices', identifier,'tarjetaDetectada']
     payloads = {'puerta': ['abrir','cerrar'], 'luminaria': ['prender','apagar'] }
 

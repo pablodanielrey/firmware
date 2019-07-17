@@ -13,7 +13,7 @@ class Luz:
         self.payload = payload
         self._publish_identifier()
 
-    def _publish_identifier(self):
+    def _publish_identifier(self):#publica el identificador del dispositivo
         self.client.connect(self.server)
         logging.info("TOPICO: " f'{self.topic[0]}')
         logging.info("PAYLOAD/ID: " f'{self.payload}')
@@ -29,8 +29,8 @@ class Luz:
 if __name__ == '__main__':
     identifier = "luzUnoDitesi"
     topic = topic = ['devices', 'sistemaPrincipal']
-    server = "127.0.0.1"
-    #server = "169.254.254.254"
+    #server = "127.0.0.1"
+    server = "169.254.254.254"
     payload = identifier
 
     luzDitesi = Luz(identifier, server, topic, payload)
